@@ -1,0 +1,54 @@
+{
+  "name": "resume-generator-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for Resume Generator",
+  "engines": {
+    "node": "18.20.2"
+  },
+  "scripts": {
+    "start": "cross-env PORT=4080 npx react-scripts start",
+    "build": "npx react-scripts build",
+    "dev": "cross-env PORT=4080 npx react-scripts start",
+    "test": "npx react-scripts test",
+    "eject": "npx react-scripts eject"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^5.15.6",
+    "@mui/material": "^5.17.1",
+    "@mui/x-data-grid": "^8.5.2",
+    "axios": "^1.9.0",
+    "cross-env": "^7.0.3",
+    "dayjs": "^1.11.13",
+    "docx": "^8.5.0",
+    "docx-preview": "^0.3.5",
+    "file-saver": "^2.0.5",
+    "html2canvas": "^1.4.1",
+    "http-proxy-middleware": "^3.0.5",
+    "jspdf": "^3.0.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-quill": "^2.0.0",
+    "react-router-dom": "^6.22.0",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^5.0.1"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.4.2",
+    "@testing-library/react": "^14.2.1",
+    "@testing-library/user-event": "^14.5.2"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
