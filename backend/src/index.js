@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const { BedrockRuntimeClient, InvokeModelCommand } = require('@aws-sdk/client-bedrock-runtime');
+const OpenAI = require('openai');
 const jwt = require('jsonwebtoken');
 const User = require('./models/User');
 const auth = require('./middleware/auth');
@@ -75,14 +75,16 @@ const cleanupExpiredJobs = () => {
 // Clean up expired jobs every 5 minutes
 setInterval(cleanupExpiredJobs, 5 * 60 * 1000);
 
-// Initialize AWS Bedrock
-const bedrock = new BedrockRuntimeClient({
-  region: process.env.AWS_REGION || 'us-east-1',
-  credentials: process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY ? {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    sessionToken: process.env.AWS_SESSION_TOKEN
-  } : undefined
+// Initialize OpenAI
+// Validate OpenAI API key
+const hasOpenAICredentials = process.env.OPENAI_API_KEY;
+if (!hasOpenAICredentials) {
+  console.warn('⚠️  WARNING: OpenAI API key not found. Resume generation will fail.');
+  console.warn('   Please set OPENAI_API_KEY environment variable.');
+}
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 // Initialize SendGrid
@@ -547,34 +549,25 @@ If ${user.github_url} is empty or not applicable, include it as an empty string 
 
 console.log(selectedModel, maxTokens)
 
-    const modelId = process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-sonnet-4-20250514-v1:0';
-    const bedrockInput = {
-      modelId,
-      contentType: 'application/json',
-      accept: 'application/json',
-      body: JSON.stringify({
-        anthropic_version: 'bedrock-2023-05-31',
-        max_tokens: maxTokens,
-        temperature: 0.5,
-        system: [
-          {
-            type: 'text',
-            text: 'You are a professional resume writer with expertise in creating tailored resumes for job applications. You excel at crafting authentic, detailed, and impactful resumes that highlight the candidate\'s unique strengths and experiences. Always respond with valid JSON.'
-          }
-        ],
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: prompt }
-            ]
-          }
-        ]
-      })
-    };
-    const bedrockResponse = await bedrock.send(new InvokeModelCommand(bedrockInput));
-    const decoded = JSON.parse(new TextDecoder('utf-8').decode(bedrockResponse.body));
-    const completionText = decoded?.content?.[0]?.text || '';
+    const modelId = selectedModel || 'gpt-4o';
+    const openaiResponse = await openai.chat.completions.create({
+      model: modelId,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a professional resume writer with expertise in creating tailored resumes for job applications. You excel at crafting authentic, detailed, and impactful resumes that highlight the candidate\'s unique strengths and experiences. Always respond with valid JSON.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      max_tokens: maxTokens,
+      temperature: 0.5,
+      response_format: { type: 'json_object' }
+    });
+    
+    const completionText = openaiResponse.choices[0]?.message?.content || '';
     const generatedResume = parseJsonFromText(completionText);
     
     // Track resume generation
@@ -723,12 +716,29 @@ console.log(selectedModel, maxTokens)
   } catch (error) {
     console.error('Error generating resume:', error);
     
+    // Provide more specific error messages for OpenAI API issues
+    let errorMessage = error.message || 'Failed to generate resume';
+    
+    if (error.status === 401 || error.message?.includes('Invalid API key') || error.message?.includes('Incorrect API key')) {
+      errorMessage = 'OpenAI API key is invalid or missing. Please check OPENAI_API_KEY environment variable.';
+      console.error('OpenAI API Key Error:', errorMessage);
+    } else if (error.status === 429 || error.message?.includes('rate limit')) {
+      errorMessage = 'OpenAI API rate limit exceeded. Please try again later.';
+      console.error('OpenAI Rate Limit Error:', errorMessage);
+    } else if (error.status === 500 || error.message?.includes('server error')) {
+      errorMessage = 'OpenAI API server error. Please try again later.';
+      console.error('OpenAI Server Error:', errorMessage);
+    } else if (!hasOpenAICredentials) {
+      errorMessage = 'OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable.';
+      console.error('Missing OpenAI API Key:', errorMessage);
+    }
+    
     // Update job with error
     jobs.set(jobId, {
       ...jobs.get(jobId),
       status: JOB_STATUS.FAILED,
       completedAt: Date.now(),
-      error: error.message || 'Failed to generate resume'
+      error: errorMessage
     });
   }
 };
@@ -1241,29 +1251,24 @@ Question: ${question}
 Answer (in a friendly, simple, native American English style):
 `;
 
-    const modelId = process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-sonnet-4-20250514-v1:0';
-    const bedrockInput = {
-      modelId,
-      contentType: 'application/json',
-      accept: 'application/json',
-      body: JSON.stringify({
-        anthropic_version: 'bedrock-2023-05-31',
-        max_tokens: maxTokens,
-        temperature: 0.7,
-        system: [
-          { type: 'text', text: 'You are a helpful assistant who answers questions in clear, simple, native American English.' }
-        ],
-        messages: [
-          {
-            role: 'user',
-            content: [ { type: 'text', text: prompt } ]
-          }
-        ]
-      })
-    };
-    const bedrockResponse = await bedrock.send(new InvokeModelCommand(bedrockInput));
-    const decoded = JSON.parse(new TextDecoder('utf-8').decode(bedrockResponse.body));
-    const answer = (decoded?.content?.[0]?.text || '').trim();
+    const modelId = user.openai_model || 'gpt-4o';
+    const openaiResponse = await openai.chat.completions.create({
+      model: modelId,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a helpful assistant who answers questions in clear, simple, native American English.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      max_tokens: maxTokens,
+      temperature: 0.7
+    });
+    
+    const answer = (openaiResponse.choices[0]?.message?.content || '').trim();
     res.json({ answer });
   } catch (error) {
     console.error('Error answering question:', error);

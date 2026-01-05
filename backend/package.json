@@ -12,8 +12,8 @@
     "test": "jest"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "^3.645.0",
     "@sendgrid/mail": "^7.7.0",
+    "openai": "^4.28.0",
     "bcryptjs": "^2.4.3",
     "cloudmersive-convert-api-client": "^2.8.0",
     "cors": "^2.8.5",
