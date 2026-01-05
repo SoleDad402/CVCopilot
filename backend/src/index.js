@@ -19,6 +19,7 @@ const libreofficeConvert = require('libreoffice-convert');
 const { TextDecoder } = require('util');
 const convertAsync = promisify(libreofficeConvert.convert);
 const CloudmersiveConvertApiClient = require("cloudmersive-convert-api-client");
+const crypto = require('crypto');
 
 const app = express();
 const port = process.env.PORT || 4090;
@@ -641,56 +642,75 @@ console.log(selectedModel, maxTokens)
     });
 
     // Convert DOCX buffer to PDF using LibreOffice
-    let pdfContent = null;
+    let pdfBuffer = null;
     try {
       // Write buffer to a temp file
       const tmpDocxPath = path.join(__dirname, 'tmp_input.docx');
       fs.writeFileSync(tmpDocxPath, buffer);
       
       // Convert DOCX to PDF using libreoffice-convert
-      const pdfBuffer = await convertAsync(buffer, '.pdf', undefined);
-      pdfContent = pdfBuffer.toString('base64');
+      pdfBuffer = await convertAsync(buffer, '.pdf', undefined);
       
       // Clean up temp file
       fs.unlinkSync(tmpDocxPath);
     } catch (err) {
       console.error('Failed to convert DOCX to PDF (LibreOffice):', err);
-      pdfContent = null;
+      pdfBuffer = null;
     }
 
-    // Save files to disk under backend/resumes/<email>/<company>/
-    let docxFilePath = null;
-    let pdfFilePath = null;
+    // Upload files to Airtable as attachments
+    let docxAttachment = null;
+    let pdfAttachment = null;
+    
     try {
-      const safeEmail = (user.personal_email || user.email || 'user').replace(/[^a-zA-Z0-9@._-]/g, '_');
-      const safeCompany = (jobs.get(jobId)?.companyName || 'company').toString().replace(/[^a-zA-Z0-9._-]/g, '_');
-      const baseDir = path.join(__dirname, '../resumes', safeEmail, safeCompany);
-      fs.mkdirSync(baseDir, { recursive: true });
+      // Helper function to create Airtable attachment from buffer
+      const createAttachment = async (buffer, filename, contentType) => {
+        // For Airtable attachments, we need to upload to a publicly accessible URL
+        // For now, we'll store files temporarily and create URLs
+        // In production, you might want to use a cloud storage service (S3, Cloudinary, etc.)
+        
+        // Create a unique file ID
+        const fileId = crypto.randomBytes(16).toString('hex');
+        const tempDir = path.join(__dirname, '../temp_uploads');
+        if (!fs.existsSync(tempDir)) {
+          fs.mkdirSync(tempDir, { recursive: true });
+        }
+        
+        const tempFilePath = path.join(tempDir, `${fileId}_${filename}`);
+        fs.writeFileSync(tempFilePath, buffer);
+        
+        // Create a URL that will be served by our Express server
+        const baseUrl = process.env.BACKEND_URL || `http://localhost:${port}`;
+        const fileUrl = `${baseUrl}/api/files/${fileId}_${filename}`;
+        
+        return [{
+          url: fileUrl,
+          filename: filename
+        }];
+      };
 
-      // DOCX
-      docxFilePath = path.join(baseDir, 'resume.docx');
-      fs.writeFileSync(docxFilePath, buffer);
-
-      // PDF
-      if (pdfContent) {
-        pdfFilePath = path.join(baseDir, 'resume.pdf');
-        fs.writeFileSync(pdfFilePath, Buffer.from(pdfContent, 'base64'));
+      // Upload DOCX file
+      docxAttachment = await createAttachment(buffer, 'resume.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      
+      // Upload PDF file if available
+      if (pdfBuffer) {
+        pdfAttachment = await createAttachment(pdfBuffer, 'resume.pdf', 'application/pdf');
       }
 
-      // Record metadata in DB (non-blocking for failures)
+      // Record metadata in Airtable with file attachments
       try {
         await User.addResumeRequest(user.id, {
           company_name: jobs.get(jobId)?.companyName || null,
           role: jobs.get(jobId)?.role || null,
           job_description: cleanedJobDescription,
-          docx_path: docxFilePath,
-          pdf_path: pdfFilePath
+          docx_file: docxAttachment,
+          pdf_file: pdfAttachment
         });
       } catch (metaErr) {
         console.error('Failed saving resume request metadata:', metaErr);
       }
     } catch (saveErr) {
-      console.error('Failed saving files to disk:', saveErr);
+      console.error('Failed uploading files to Airtable:', saveErr);
     }
 
     // Update job with completed results
@@ -1173,6 +1193,33 @@ app.post('/api/convert-to-pdf', auth, upload.single('docx'), async (req, res) =>
   } catch (error) {
     console.error('Error converting DOCX to PDF:', error);
     res.status(500).json({ error: 'Failed to convert DOCX to PDF' });
+  }
+});
+
+// File serving endpoint for Airtable attachments
+app.get('/api/files/:filename', (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, '../temp_uploads', filename);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    
+    // Determine content type based on file extension
+    const ext = path.extname(filename).toLowerCase();
+    const contentTypes = {
+      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.pdf': 'application/pdf'
+    };
+    const contentType = contentTypes[ext] || 'application/octet-stream';
+    
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error('Error serving file:', error);
+    res.status(500).json({ error: 'Failed to serve file' });
   }
 });
 

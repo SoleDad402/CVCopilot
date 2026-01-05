@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@sendgrid/mail": "^7.7.0",
+    "airtable": "^0.12.2",
     "openai": "^4.28.0",
     "bcryptjs": "^2.4.3",
     "cloudmersive-convert-api-client": "^2.8.0",

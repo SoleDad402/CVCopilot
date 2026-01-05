@@ -1,307 +1,263 @@
-const sqlite3 = require('sqlite3').verbose();
+const Airtable = require('airtable');
 const bcrypt = require('bcryptjs');
-const path = require('path');
 const crypto = require('crypto');
-const fs = require('fs');
 
-// Ensure data directory exists
-const dataDir = path.join(__dirname, '../../data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+// Initialize Airtable
+if (!process.env.AIRTABLE_API_KEY || !process.env.AIRTABLE_BASE_ID) {
+  console.warn('⚠️  WARNING: Airtable credentials not found. Database operations will fail.');
 }
 
-// Initialize database
-const db = new sqlite3.Database(path.join(__dirname, '../../data/resume_generator.db'));
+const base = process.env.AIRTABLE_API_KEY && process.env.AIRTABLE_BASE_ID
+  ? new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(process.env.AIRTABLE_BASE_ID)
+  : null;
 
-// Create tables if they don't exist
-db.serialize(() => {
-  // Users table
-  db.run(`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    full_name TEXT NOT NULL,
-    phone TEXT,
-    personal_email TEXT,
-    linkedin_url TEXT,
-    github_url TEXT,
-    location TEXT,
-    reset_token TEXT,
-    reset_token_expires DATETIME,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    openai_model TEXT DEFAULT 'gpt-4.1-2025-04-14',
-    max_tokens INTEGER DEFAULT 30000,
-    daily_generation_limit INTEGER DEFAULT 150
-  )`);
-
-  // Employment history table
-  db.run(`CREATE TABLE IF NOT EXISTS employment_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    company_name TEXT NOT NULL,
-    location TEXT,
-    position TEXT NOT NULL,
-    start_date TEXT NOT NULL,
-    end_date TEXT,
-    is_current BOOLEAN DEFAULT 0,
-    description TEXT,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  )`);
-
-  // Education table
-  db.run(`CREATE TABLE IF NOT EXISTS education (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    school_name TEXT NOT NULL,
-    location TEXT,
-    degree TEXT NOT NULL,
-    field_of_study TEXT,
-    start_date TEXT NOT NULL,
-    end_date TEXT,
-    is_current BOOLEAN DEFAULT 0,
-    gpa TEXT,
-    description TEXT,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  )`);
-
-  // Resume Generations table
-  db.run(`CREATE TABLE IF NOT EXISTS resume_generations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    generation_date TEXT NOT NULL, -- YYYY-MM-DD
-    count INTEGER DEFAULT 1,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, generation_date),
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  )`);
-
-  // Resume Requests table (stores each generation metadata and saved file paths)
-  db.run(`CREATE TABLE IF NOT EXISTS resume_requests (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    company_name TEXT,
-    role TEXT,
-    job_description TEXT,
-    docx_path TEXT,
-    pdf_path TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  )`);
-});
-
-// MIGRATION: Add location column if it doesn't exist
-// This will run once on startup and add the column if missing
-const addLocationColumn = () => {
-  db.all("PRAGMA table_info(users)", (err, columns) => {
-    if (err) return;
-    const hasLocation = columns.some(col => col.name === 'location');
-    if (!hasLocation) {
-      db.run('ALTER TABLE users ADD COLUMN location TEXT', (err) => {
-        if (err) console.error('Failed to add location column:', err);
-        else console.log('Added location column to users table');
-      });
-    }
-  });
+// Table names (can be overridden via env vars)
+const TABLE_NAMES = {
+  users: process.env.AIRTABLE_USERS_TABLE || 'Users',
+  employment: process.env.AIRTABLE_EMPLOYMENT_TABLE || 'Employment History',
+  education: process.env.AIRTABLE_EDUCATION_TABLE || 'Education',
+  generations: process.env.AIRTABLE_GENERATIONS_TABLE || 'Resume Generations',
+  requests: process.env.AIRTABLE_REQUESTS_TABLE || 'Resume Requests'
 };
-addLocationColumn();
 
-const addOpenAISettingsColumns = () => {
-  db.all("PRAGMA table_info(users)", (err, columns) => {
-    if (err) {
-      console.error('Error checking users table info:', err);
-      return;
-    }
-    const hasOpenAIModel = columns.some(col => col.name === 'openai_model');
-    const hasMaxTokens = columns.some(col => col.name === 'max_tokens');
-
-    if (!hasOpenAIModel) {
-      db.run('ALTER TABLE users ADD COLUMN openai_model TEXT DEFAULT \'gpt-4.1-2025-04-14\'', (err) => {
-        if (err) console.error('Failed to add openai_model column:', err);
-        else console.log('Added openai_model column to users table');
-      });
-    }
-
-    if (!hasMaxTokens) {
-      db.run('ALTER TABLE users ADD COLUMN max_tokens INTEGER DEFAULT 30000', (err) => {
-        if (err) console.error('Failed to add max_tokens column:', err);
-        else console.log('Added max_tokens column to users table');
-      });
-    }
-  });
+// Helper function to check if Airtable is configured
+const checkAirtableConfig = () => {
+  if (!base) {
+    throw new Error('Airtable is not configured. Please set AIRTABLE_API_KEY and AIRTABLE_BASE_ID environment variables.');
+  }
 };
-addOpenAISettingsColumns();
 
-const addDailyGenerationLimitColumn = () => {
-  db.all("PRAGMA table_info(users)", (err, columns) => {
-    if (err) {
-      console.error('Error checking users table info:', err);
-      return;
-    }
-    const hasDailyGenerationLimit = columns.some(col => col.name === 'daily_generation_limit');
-
-    if (!hasDailyGenerationLimit) {
-      db.run('ALTER TABLE users ADD COLUMN daily_generation_limit INTEGER DEFAULT 150', (err) => {
-        if (err) console.error('Failed to add daily_generation_limit column:', err);
-        else console.log('Added daily_generation_limit column to users table');
-      });
-    }
-  });
+// Helper function to convert Airtable record to plain object
+const recordToObject = (record) => {
+  if (!record) return null;
+  const obj = { id: record.id, ...record.fields };
+  
+  // Map Airtable field names to expected property names for backward compatibility
+  // Also keep original Airtable field names for flexibility
+  if (obj['Email']) obj.email = obj['Email'];
+  if (obj['Password']) obj.password = obj['Password'];
+  if (obj['Full Name']) obj.full_name = obj['Full Name'];
+  if (obj['Phone']) obj.phone = obj['Phone'];
+  if (obj['Personal Email']) obj.personal_email = obj['Personal Email'];
+  if (obj['LinkedIn URL']) obj.linkedin_url = obj['LinkedIn URL'];
+  if (obj['GitHub URL']) obj.github_url = obj['GitHub URL'];
+  if (obj['Location']) obj.location = obj['Location'];
+  if (obj['OpenAI Model']) obj.openai_model = obj['OpenAI Model'];
+  if (obj['Max Tokens']) obj.max_tokens = obj['Max Tokens'];
+  if (obj['Daily Generation Limit']) obj.daily_generation_limit = obj['Daily Generation Limit'];
+  if (obj['Reset Token']) obj.reset_token = obj['Reset Token'];
+  if (obj['Reset Token Expires']) {
+    obj.reset_token_expires = obj['Reset Token Expires'];
+  }
+  if (obj['Created At']) {
+    obj.created_at = obj['Created At'];
+  }
+  if (obj['Generation Date']) {
+    obj.generation_date = obj['Generation Date'];
+  }
+  return obj;
 };
-addDailyGenerationLimitColumn();
+
+// Helper function to convert array of records
+const recordsToArray = (records) => {
+  return records.map(recordToObject);
+};
 
 class User {
   static async create(userData) {
+    checkAirtableConfig();
+    
     const { email, password, full_name, phone, personal_email, linkedin_url, github_url, location, openai_model, max_tokens } = userData;
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    return new Promise((resolve, reject) => {
-      db.run(
-        `INSERT INTO users (
-          email, password, full_name, phone, personal_email,
-          linkedin_url, github_url, location, openai_model, max_tokens
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [email, hashedPassword, full_name, phone, personal_email, linkedin_url, github_url, location, openai_model, max_tokens],
-        function(err) {
-          if (err) reject(err);
-          else resolve({ id: this.lastID });
-        }
-      );
-    });
+    const fields = {
+      'Email': email,
+      'Password': hashedPassword,
+      'Full Name': full_name,
+      'Phone': phone || '',
+      'Personal Email': personal_email || '',
+      'LinkedIn URL': linkedin_url || '',
+      'GitHub URL': github_url || '',
+      'Location': location || '',
+      'OpenAI Model': openai_model || 'gpt-4o',
+      'Max Tokens': max_tokens || 30000,
+      'Daily Generation Limit': 150,
+      'Created At': new Date().toISOString()
+    };
+
+    try {
+      const records = await base(TABLE_NAMES.users).create([{ fields }]);
+      return { id: records[0].id };
+    } catch (error) {
+      throw new Error(`Failed to create user: ${error.message}`);
+    }
   }
 
   static async findByEmail(email) {
-    return new Promise((resolve, reject) => {
-      db.get('SELECT * FROM users WHERE email = ?', [email], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
+    checkAirtableConfig();
+    
+    try {
+      const records = await base(TABLE_NAMES.users)
+        .select({ filterByFormula: `{Email} = "${email.replace(/"/g, '\\"')}"`, maxRecords: 1 })
+        .firstPage();
+      
+      if (records.length === 0) return null;
+      return recordToObject(records[0]);
+    } catch (error) {
+      throw new Error(`Failed to find user: ${error.message}`);
+    }
   }
 
   static async verifyPassword(email, password) {
     const user = await this.findByEmail(email);
     if (!user) return false;
-    return bcrypt.compare(password, user.password);
+    return bcrypt.compare(password, user.Password || user.password);
   }
 
   static async updateProfile(userId, userData) {
     const { full_name, phone, personal_email, linkedin_url, github_url, location, openai_model, max_tokens } = userData;
-    return new Promise((resolve, reject) => {
-      db.run(
-        `UPDATE users 
-         SET full_name = ?, phone = ?, personal_email = ?, linkedin_url = ?, github_url = ?, location = ?, openai_model = ?, max_tokens = ?
-         WHERE id = ?`,
-        [full_name, phone, personal_email, linkedin_url, github_url, location, openai_model, max_tokens, userId],
-        (err) => {
-          if (err) reject(err);
-          else resolve(true);
-        }
-      );
-    });
+    
+    const fields = {};
+    if (full_name !== undefined) fields['Full Name'] = full_name;
+    if (phone !== undefined) fields['Phone'] = phone;
+    if (personal_email !== undefined) fields['Personal Email'] = personal_email;
+    if (linkedin_url !== undefined) fields['LinkedIn URL'] = linkedin_url;
+    if (github_url !== undefined) fields['GitHub URL'] = github_url;
+    if (location !== undefined) fields['Location'] = location;
+    if (openai_model !== undefined) fields['OpenAI Model'] = openai_model;
+    if (max_tokens !== undefined) fields['Max Tokens'] = max_tokens;
+
+    try {
+      await base(TABLE_NAMES.users).update([{ id: userId, fields }]);
+      return true;
+    } catch (error) {
+      throw new Error(`Failed to update profile: ${error.message}`);
+    }
   }
 
   static async generatePasswordResetToken(email) {
     const token = crypto.randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 3600000); // 1 hour from now
 
-    return new Promise((resolve, reject) => {
-      db.run(
-        `UPDATE users 
-         SET reset_token = ?, reset_token_expires = ?
-         WHERE email = ?`,
-        [token, expires.toISOString(), email],
-        function(err) {
-          if (err) reject(err);
-          else resolve(token);
+    try {
+      const user = await this.findByEmail(email);
+      if (!user) throw new Error('User not found');
+
+      await base(TABLE_NAMES.users).update([{
+        id: user.id,
+        fields: {
+          'Reset Token': token,
+          'Reset Token Expires': expires.toISOString()
         }
-      );
-    });
+      }]);
+      return token;
+    } catch (error) {
+      throw new Error(`Failed to generate reset token: ${error.message}`);
+    }
   }
 
   static async resetPassword(token, newPassword) {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     
-    return new Promise((resolve, reject) => {
-      db.run(
-        `UPDATE users 
-         SET password = ?, reset_token = NULL, reset_token_expires = NULL
-         WHERE reset_token = ? AND reset_token_expires > datetime('now')`,
-        [hashedPassword, token],
-        function(err) {
-          if (err) reject(err);
-          else resolve(this.changes > 0);
+    try {
+      const records = await base(TABLE_NAMES.users)
+        .select({
+          filterByFormula: `AND({Reset Token} = "${token}", {Reset Token Expires} > NOW())`,
+          maxRecords: 1
+        })
+        .firstPage();
+
+      if (records.length === 0) return false;
+
+      await base(TABLE_NAMES.users).update([{
+        id: records[0].id,
+        fields: {
+          'Password': hashedPassword,
+          'Reset Token': null,
+          'Reset Token Expires': null
         }
-      );
-    });
+      }]);
+      return true;
+    } catch (error) {
+      throw new Error(`Failed to reset password: ${error.message}`);
+    }
   }
 
   static async addEmploymentHistory(userId, employmentData) {
     const { company_name, location, position, start_date, end_date, is_current, description } = employmentData;
-    return new Promise((resolve, reject) => {
-      db.run(
-        `INSERT INTO employment_history 
-         (user_id, company_name, location, position, start_date, end_date, is_current, description)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, company_name, location, position, start_date, end_date, is_current ? 1 : 0, description],
-        function(err) {
-          if (err) reject(err);
-          else resolve(this.lastID);
-        }
-      );
-    });
+    
+    const fields = {
+      'User ID': [userId], // Link field - array of record IDs
+      'Company Name': company_name,
+      'Location': location || '',
+      'Position': position,
+      'Start Date': start_date,
+      'End Date': end_date || '',
+      'Is Current': is_current || false,
+      'Description': description || ''
+    };
+
+    try {
+      const records = await base(TABLE_NAMES.employment).create([{ fields }]);
+      return records[0].id;
+    } catch (error) {
+      throw new Error(`Failed to add employment history: ${error.message}`);
+    }
   }
 
   static async getEmploymentHistory(userId) {
-    return new Promise((resolve, reject) => {
-      db.all(
-        'SELECT * FROM employment_history WHERE user_id = ?',
-        [userId],
-        (err, rows) => {
-          if (err) {
-            reject(err);
-            return;
-          }
-          
-          // Sort by parsed date, handling various date formats
-          const sortedRows = rows.sort((a, b) => {
-            const dateA = this.parseDateString(a.start_date);
-            const dateB = this.parseDateString(b.start_date);
-            return dateB - dateA; // DESC order (newest first)
-          });
-          
-          resolve(sortedRows);
-        }
-      );
-    });
+    try {
+      const records = await base(TABLE_NAMES.employment)
+        .select({
+          filterByFormula: `FIND("${userId}", ARRAYJOIN({User ID}))`,
+          sort: [{ field: 'Start Date', direction: 'desc' }]
+        })
+        .all();
+      
+      const rows = recordsToArray(records);
+      
+      // Sort by parsed date, handling various date formats
+      const sortedRows = rows.sort((a, b) => {
+        const dateA = this.parseDateString(a['Start Date'] || a.start_date);
+        const dateB = this.parseDateString(b['Start Date'] || b.start_date);
+        return dateB - dateA; // DESC order (newest first)
+      });
+      
+      return sortedRows;
+    } catch (error) {
+      throw new Error(`Failed to get employment history: ${error.message}`);
+    }
   }
 
   static async updateEmploymentHistory(employmentId, employmentData) {
     const { company_name, location, position, start_date, end_date, is_current, description } = employmentData;
-    return new Promise((resolve, reject) => {
-      db.run(
-        `UPDATE employment_history 
-         SET company_name = ?, location = ?, position = ?, start_date = ?, 
-             end_date = ?, is_current = ?, description = ?
-         WHERE id = ?`,
-        [company_name, location, position, start_date, end_date, is_current ? 1 : 0, description, employmentId],
-        (err) => {
-          if (err) reject(err);
-          else resolve(true);
-        }
-      );
-    });
+    
+    const fields = {};
+    if (company_name !== undefined) fields['Company Name'] = company_name;
+    if (location !== undefined) fields['Location'] = location;
+    if (position !== undefined) fields['Position'] = position;
+    if (start_date !== undefined) fields['Start Date'] = start_date;
+    if (end_date !== undefined) fields['End Date'] = end_date;
+    if (is_current !== undefined) fields['Is Current'] = is_current;
+    if (description !== undefined) fields['Description'] = description;
+
+    try {
+      await base(TABLE_NAMES.employment).update([{ id: employmentId, fields }]);
+      return true;
+    } catch (error) {
+      throw new Error(`Failed to update employment history: ${error.message}`);
+    }
   }
 
   static async deleteEmploymentHistory(employmentId) {
-    return new Promise((resolve, reject) => {
-      db.run('DELETE FROM employment_history WHERE id = ?', [employmentId], (err) => {
-        if (err) reject(err);
-        else resolve(true);
-      });
-    });
+    try {
+      await base(TABLE_NAMES.employment).destroy([employmentId]);
+      return true;
+    } catch (error) {
+      throw new Error(`Failed to delete employment history: ${error.message}`);
+    }
   }
 
-  // Education methods
   static async addEducation(userId, educationData) {
     const { 
       school_name, 
@@ -315,42 +271,49 @@ class User {
       description 
     } = educationData;
 
-    return new Promise((resolve, reject) => {
-      db.run(
-        `INSERT INTO education 
-         (user_id, school_name, location, degree, field_of_study, start_date, end_date, is_current, gpa, description)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, school_name, location, degree, field_of_study, start_date, end_date, is_current ? 1 : 0, gpa, description],
-        function(err) {
-          if (err) reject(err);
-          else resolve(this.lastID);
-        }
-      );
-    });
+    const fields = {
+      'User ID': [userId], // Link field
+      'School Name': school_name,
+      'Location': location || '',
+      'Degree': degree,
+      'Field of Study': field_of_study || '',
+      'Start Date': start_date,
+      'End Date': end_date || '',
+      'Is Current': is_current || false,
+      'GPA': gpa || '',
+      'Description': description || ''
+    };
+
+    try {
+      const records = await base(TABLE_NAMES.education).create([{ fields }]);
+      return records[0].id;
+    } catch (error) {
+      throw new Error(`Failed to add education: ${error.message}`);
+    }
   }
 
   static async getEducation(userId) {
-    return new Promise((resolve, reject) => {
-      db.all(
-        'SELECT * FROM education WHERE user_id = ?',
-        [userId],
-        (err, rows) => {
-          if (err) {
-            reject(err);
-            return;
-          }
-          
-          // Sort by parsed date, handling various date formats
-          const sortedRows = rows.sort((a, b) => {
-            const dateA = this.parseDateString(a.start_date);
-            const dateB = this.parseDateString(b.start_date);
-            return dateB - dateA; // DESC order (newest first)
-          });
-          
-          resolve(sortedRows);
-        }
-      );
-    });
+    try {
+      const records = await base(TABLE_NAMES.education)
+        .select({
+          filterByFormula: `FIND("${userId}", ARRAYJOIN({User ID}))`,
+          sort: [{ field: 'Start Date', direction: 'desc' }]
+        })
+        .all();
+      
+      const rows = recordsToArray(records);
+      
+      // Sort by parsed date, handling various date formats
+      const sortedRows = rows.sort((a, b) => {
+        const dateA = this.parseDateString(a['Start Date'] || a.start_date);
+        const dateB = this.parseDateString(b['Start Date'] || b.start_date);
+        return dateB - dateA; // DESC order (newest first)
+      });
+      
+      return sortedRows;
+    } catch (error) {
+      throw new Error(`Failed to get education: ${error.message}`);
+    }
   }
 
   static async updateEducation(educationId, educationData) {
@@ -366,151 +329,184 @@ class User {
       description 
     } = educationData;
 
-    return new Promise((resolve, reject) => {
-      db.run(
-        `UPDATE education 
-         SET school_name = ?, location = ?, degree = ?, field_of_study = ?, 
-             start_date = ?, end_date = ?, is_current = ?, gpa = ?, description = ?
-         WHERE id = ?`,
-        [school_name, location, degree, field_of_study, start_date, end_date, is_current ? 1 : 0, gpa, description, educationId],
-        (err) => {
-          if (err) reject(err);
-          else resolve(true);
-        }
-      );
-    });
+    const fields = {};
+    if (school_name !== undefined) fields['School Name'] = school_name;
+    if (location !== undefined) fields['Location'] = location;
+    if (degree !== undefined) fields['Degree'] = degree;
+    if (field_of_study !== undefined) fields['Field of Study'] = field_of_study;
+    if (start_date !== undefined) fields['Start Date'] = start_date;
+    if (end_date !== undefined) fields['End Date'] = end_date;
+    if (is_current !== undefined) fields['Is Current'] = is_current;
+    if (gpa !== undefined) fields['GPA'] = gpa;
+    if (description !== undefined) fields['Description'] = description;
+
+    try {
+      await base(TABLE_NAMES.education).update([{ id: educationId, fields }]);
+      return true;
+    } catch (error) {
+      throw new Error(`Failed to update education: ${error.message}`);
+    }
   }
 
   static async deleteEducation(educationId) {
-    return new Promise((resolve, reject) => {
-      db.run('DELETE FROM education WHERE id = ?', [educationId], (err) => {
-        if (err) reject(err);
-        else resolve(true);
-      });
-    });
+    try {
+      await base(TABLE_NAMES.education).destroy([educationId]);
+      return true;
+    } catch (error) {
+      throw new Error(`Failed to delete education: ${error.message}`);
+    }
   }
 
   static async updateOpenAISettings(userId, openai_model, max_tokens) {
-    return new Promise((resolve, reject) => {
-      db.run(
-        `UPDATE users 
-         SET openai_model = ?, max_tokens = ?
-         WHERE id = ?`,
-        [openai_model, max_tokens, userId],
-        (err) => {
-          if (err) reject(err);
-          else resolve(true);
-        }
-      );
-    });
+    const fields = {
+      'OpenAI Model': openai_model,
+      'Max Tokens': max_tokens
+    };
+
+    try {
+      await base(TABLE_NAMES.users).update([{ id: userId, fields }]);
+      return true;
+    } catch (error) {
+      throw new Error(`Failed to update OpenAI settings: ${error.message}`);
+    }
   }
 
   static async trackResumeGeneration(userId) {
-    // Get current date in CST (Central Standard Time)
-    const options = {
-      timeZone: 'America/Chicago',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    };
-    const formatter = new Intl.DateTimeFormat('en-US', options);
-    const parts = formatter.formatToParts(new Date());
+    const todayCST = await this.getTodayCST();
 
-    const year = parts.find(part => part.type === 'year').value;
-    const month = parts.find(part => part.type === 'month').value;
-    const day = parts.find(part => part.type === 'day').value;
+    try {
+      // Check if record exists for today
+      const existingRecords = await base(TABLE_NAMES.generations)
+        .select({
+          filterByFormula: `AND({User ID} = "${userId}", {Generation Date} = "${todayCST}")`,
+          maxRecords: 1
+        })
+        .firstPage();
 
-    const todayCST = `${year}-${month}-${day}`;
-
-    return new Promise((resolve, reject) => {
-      db.run(
-        `INSERT INTO resume_generations (user_id, generation_date, count)
-         VALUES (?, ?, 1)
-         ON CONFLICT(user_id, generation_date) DO UPDATE SET count = count + 1`,
-        [userId, todayCST],
-        function(err) {
-          if (err) reject(err);
-          else resolve(true);
-        }
-      );
-    });
+      if (existingRecords.length > 0) {
+        // Update existing record
+        const currentCount = existingRecords[0].fields['Count'] || 0;
+        await base(TABLE_NAMES.generations).update([{
+          id: existingRecords[0].id,
+          fields: { 'Count': currentCount + 1 }
+        }]);
+      } else {
+        // Create new record
+        await base(TABLE_NAMES.generations).create([{
+          fields: {
+            'User ID': [userId],
+            'Generation Date': todayCST,
+            'Count': 1,
+            'Created At': new Date().toISOString()
+          }
+        }]);
+      }
+      return true;
+    } catch (error) {
+      throw new Error(`Failed to track resume generation: ${error.message}`);
+    }
   }
 
   static async addResumeRequest(userId, requestData) {
-    const { company_name, role, job_description, docx_path, pdf_path } = requestData;
-    return new Promise((resolve, reject) => {
-      db.run(
-        `INSERT INTO resume_requests (user_id, company_name, role, job_description, docx_path, pdf_path)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [userId, company_name || null, role || null, job_description || null, docx_path || null, pdf_path || null],
-        function(err) {
-          if (err) reject(err);
-          else resolve(this.lastID);
-        }
-      );
-    });
+    const { company_name, role, job_description, docx_file, pdf_file } = requestData;
+    
+    const fields = {
+      'User ID': [userId],
+      'Company Name': company_name || '',
+      'Role': role || '',
+      'Job Description': job_description || '',
+      'Created At': new Date().toISOString()
+    };
+
+    // Add file attachments if provided
+    // Airtable attachment format: [{ url: '...', filename: '...' }]
+    if (docx_file) {
+      fields['DOCX File'] = Array.isArray(docx_file) ? docx_file : [docx_file];
+    }
+    if (pdf_file) {
+      fields['PDF File'] = Array.isArray(pdf_file) ? pdf_file : [pdf_file];
+    }
+
+    try {
+      const records = await base(TABLE_NAMES.requests).create([{ fields }]);
+      return records[0].id;
+    } catch (error) {
+      throw new Error(`Failed to add resume request: ${error.message}`);
+    }
   }
 
   static async getResumeRequests(userId) {
-    return new Promise((resolve, reject) => {
-      db.all(
-        `SELECT id, company_name, role, job_description, docx_path, pdf_path, created_at
-         FROM resume_requests
-         WHERE user_id = ?
-         ORDER BY datetime(created_at) DESC`,
-        [userId],
-        (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows || []);
-        }
-      );
-    });
+    try {
+      const records = await base(TABLE_NAMES.requests)
+        .select({
+          filterByFormula: `FIND("${userId}", ARRAYJOIN({User ID}))`,
+          sort: [{ field: 'Created At', direction: 'desc' }]
+        })
+        .all();
+      
+      const rows = recordsToArray(records);
+      
+      // Transform to match expected format
+      return rows.map(row => ({
+        id: row.id,
+        company_name: row['Company Name'] || row.company_name,
+        role: row['Role'] || row.role,
+        job_description: row['Job Description'] || row.job_description,
+        docx_path: row['DOCX File'] || row.docx_path, // Will be attachment array
+        pdf_path: row['PDF File'] || row.pdf_path, // Will be attachment array
+        created_at: row['Created At'] || row.created_at
+      }));
+    } catch (error) {
+      throw new Error(`Failed to get resume requests: ${error.message}`);
+    }
   }
 
   static async getAllUsers() {
-    return new Promise((resolve, reject) => {
-      db.all(
-        `SELECT
-          u.id,
-          u.email,
-          u.password,
-          u.full_name,
-          u.phone,
-          u.personal_email,
-          u.linkedin_url,
-          u.github_url,
-          u.location,
-          u.reset_token,
-          u.reset_token_expires,
-          u.created_at,
-          u.openai_model,
-          u.max_tokens,
-          SUM(rg.count) AS total_generations
-        FROM users u
-        LEFT JOIN resume_generations rg ON u.id = rg.user_id
-        GROUP BY u.id
-        ORDER BY u.created_at DESC`,
-        [],
-        (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows);
+    try {
+      const userRecords = await base(TABLE_NAMES.users)
+        .select({ sort: [{ field: 'Created At', direction: 'desc' }] })
+        .all();
+      
+      const users = recordsToArray(userRecords);
+      
+      // Get generation counts for each user
+      const generationRecords = await base(TABLE_NAMES.generations)
+        .select()
+        .all();
+      
+      const generationCounts = {};
+      generationRecords.forEach(record => {
+        const userId = record.fields['User ID']?.[0];
+        if (userId) {
+          generationCounts[userId] = (generationCounts[userId] || 0) + (record.fields['Count'] || 0);
         }
-      );
-    });
+      });
+      
+      return users.map(user => ({
+        ...user,
+        total_generations: generationCounts[user.id] || 0
+      }));
+    } catch (error) {
+      throw new Error(`Failed to get all users: ${error.message}`);
+    }
   }
 
   static async getDailyGenerationCount(userId) {
     const todayCST = await this.getTodayCST();
-    return new Promise((resolve, reject) => {
-      db.get(
-        `SELECT count FROM resume_generations WHERE user_id = ? AND generation_date = ?`,
-        [userId, todayCST],
-        (err, row) => {
-          if (err) reject(err);
-          else resolve(row ? row.count : 0);
-        }
-      );
-    });
+    
+    try {
+      const records = await base(TABLE_NAMES.generations)
+        .select({
+          filterByFormula: `AND({User ID} = "${userId}", {Generation Date} = "${todayCST}")`,
+          maxRecords: 1
+        })
+        .firstPage();
+      
+      if (records.length === 0) return 0;
+      return records[0].fields['Count'] || 0;
+    } catch (error) {
+      throw new Error(`Failed to get daily generation count: ${error.message}`);
+    }
   }
 
   static async getTodayCST() {
@@ -602,24 +598,38 @@ class User {
   }
 
   static async getDailyGenerations() {
-    return new Promise((resolve, reject) => {
-      db.all(
-        `SELECT
-          rg.user_id,
-          u.email,
-          rg.generation_date,
-          rg.count
-        FROM resume_generations rg
-        JOIN users u ON rg.user_id = u.id
-        ORDER BY rg.generation_date DESC, u.email ASC`,
-        [],
-        (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows);
+    try {
+      const records = await base(TABLE_NAMES.generations)
+        .select({
+          sort: [{ field: 'Generation Date', direction: 'desc' }, { field: 'User ID', direction: 'asc' }]
+        })
+        .all();
+      
+      const rows = recordsToArray(records);
+      
+      // Get user emails for each generation
+      const userIds = [...new Set(rows.map(r => r['User ID']?.[0] || r.user_id).filter(Boolean))];
+      const userMap = {};
+      
+      for (const userId of userIds) {
+        try {
+          const userRecord = await base(TABLE_NAMES.users).find(userId);
+          userMap[userId] = userRecord.fields['Email'];
+        } catch (err) {
+          userMap[userId] = 'Unknown';
         }
-      );
-    });
+      }
+      
+      return rows.map(row => ({
+        user_id: row['User ID']?.[0] || row.user_id,
+        email: userMap[row['User ID']?.[0] || row.user_id] || 'Unknown',
+        generation_date: row['Generation Date'] || row.generation_date,
+        count: row['Count'] || row.count
+      }));
+    } catch (error) {
+      throw new Error(`Failed to get daily generations: ${error.message}`);
+    }
   }
 }
 
-module.exports = User; 
+module.exports = User;
