@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Frontend for Resume Generator",
   "engines": {
-    "node": "18.20.2"
+    "node": "24.x"
   },
   "scripts": {
     "start": "cross-env PORT=4080 npx react-scripts start",
