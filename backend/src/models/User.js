@@ -207,14 +207,20 @@ class User {
 
   static async getEmploymentHistory(userId) {
     try {
-      const records = await base(TABLE_NAMES.employment)
-        .select({
-          filterByFormula: `FIND("${userId}", ARRAYJOIN({User ID}))`,
-          sort: [{ field: 'Start Date', direction: 'desc' }]
-        })
+      // Fetch all records and filter in JavaScript for linked fields
+      // This is more reliable than Airtable formulas for linked record arrays
+      const allRecords = await base(TABLE_NAMES.employment)
+        .select()
         .all();
       
-      const rows = recordsToArray(records);
+      // Filter records where userId is in the User ID linked field
+      const filteredRecords = allRecords.filter(record => {
+        const userIds = record.fields['User ID'] || [];
+        // User ID field contains an array of record IDs
+        return Array.isArray(userIds) && userIds.some(id => id === userId);
+      });
+      
+      const rows = recordsToArray(filteredRecords);
       
       // Sort by parsed date, handling various date formats
       const sortedRows = rows.sort((a, b) => {
@@ -294,14 +300,18 @@ class User {
 
   static async getEducation(userId) {
     try {
-      const records = await base(TABLE_NAMES.education)
-        .select({
-          filterByFormula: `FIND("${userId}", ARRAYJOIN({User ID}))`,
-          sort: [{ field: 'Start Date', direction: 'desc' }]
-        })
+      // Fetch all records and filter in JavaScript for linked fields
+      const allRecords = await base(TABLE_NAMES.education)
+        .select()
         .all();
       
-      const rows = recordsToArray(records);
+      // Filter records where userId is in the User ID linked field
+      const filteredRecords = allRecords.filter(record => {
+        const userIds = record.fields['User ID'] || [];
+        return Array.isArray(userIds) && userIds.some(id => id === userId);
+      });
+      
+      const rows = recordsToArray(filteredRecords);
       
       // Sort by parsed date, handling various date formats
       const sortedRows = rows.sort((a, b) => {
@@ -437,14 +447,25 @@ class User {
 
   static async getResumeRequests(userId) {
     try {
-      const records = await base(TABLE_NAMES.requests)
-        .select({
-          filterByFormula: `FIND("${userId}", ARRAYJOIN({User ID}))`,
-          sort: [{ field: 'Created At', direction: 'desc' }]
-        })
+      // Fetch all records and filter in JavaScript for linked fields
+      const allRecords = await base(TABLE_NAMES.requests)
+        .select()
         .all();
       
-      const rows = recordsToArray(records);
+      // Filter records where userId is in the User ID linked field
+      const filteredRecords = allRecords.filter(record => {
+        const userIds = record.fields['User ID'] || [];
+        return Array.isArray(userIds) && userIds.some(id => id === userId);
+      });
+      
+      const rows = recordsToArray(filteredRecords);
+      
+      // Sort by Created At descending
+      rows.sort((a, b) => {
+        const dateA = new Date(a['Created At'] || a.created_at || 0);
+        const dateB = new Date(b['Created At'] || b.created_at || 0);
+        return dateB - dateA;
+      });
       
       // Transform to match expected format
       return rows.map(row => ({
