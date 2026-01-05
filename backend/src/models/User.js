@@ -81,8 +81,8 @@ class User {
       'Location': location || '',
       'OpenAI Model': openai_model || 'gpt-4o',
       'Max Tokens': max_tokens || 30000,
-      'Daily Generation Limit': 150,
-      'Created At': new Date().toISOString()
+      'Daily Generation Limit': 150
+      // Note: 'Created At' is automatically managed by Airtable, don't set it manually
     };
 
     try {
@@ -396,8 +396,8 @@ class User {
           fields: {
             'User ID': [userId],
             'Generation Date': todayCST,
-            'Count': 1,
-            'Created At': new Date().toISOString()
+            'Count': 1
+            // Note: 'Created At' is automatically managed by Airtable
           }
         }]);
       }
@@ -414,8 +414,8 @@ class User {
       'User ID': [userId],
       'Company Name': company_name || '',
       'Role': role || '',
-      'Job Description': job_description || '',
-      'Created At': new Date().toISOString()
+      'Job Description': job_description || ''
+      // Note: 'Created At' is automatically managed by Airtable
     };
 
     // Add file attachments if provided
