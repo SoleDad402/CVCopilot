@@ -50,19 +50,38 @@ import {
 import { historyService } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
+// Helper function to parse date string (handles YYYY-MM-DD as local date, not UTC)
+const parseLocalDate = (dateString) => {
+  if (!dateString) return null;
+  
+  // If it's in YYYY-MM-DD format, parse it as local date to avoid timezone issues
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day); // month is 0-indexed
+  }
+  
+  // Otherwise, parse normally
+  const date = new Date(dateString);
+  return isNaN(date.getTime()) ? null : date;
+};
+
 // Helper function to format date
 const formatDate = (dateString) => {
   if (!dateString) return 'Undated';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return 'Undated';
+  const date = parseLocalDate(dateString);
+  if (!date) return 'Undated';
   
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
+  
+  const dateOnly = new Date(date);
+  dateOnly.setHours(0, 0, 0, 0);
 
-  if (date.toDateString() === today.toDateString()) {
+  if (dateOnly.getTime() === today.getTime()) {
     return 'Today';
-  } else if (date.toDateString() === yesterday.toDateString()) {
+  } else if (dateOnly.getTime() === yesterday.getTime()) {
     return 'Yesterday';
   } else {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -109,9 +128,20 @@ const getDateRange = (filterType) => {
 // Helper function to check if date is in range
 const isDateInRange = (dateString, range) => {
   if (!range || !dateString) return true;
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return false;
-  return date >= range.start && date <= range.end;
+  const date = parseLocalDate(dateString);
+  if (!date) return false;
+  
+  // Normalize to start of day for comparison
+  const dateOnly = new Date(date);
+  dateOnly.setHours(0, 0, 0, 0);
+  
+  const rangeStart = new Date(range.start);
+  rangeStart.setHours(0, 0, 0, 0);
+  
+  const rangeEnd = new Date(range.end);
+  rangeEnd.setHours(23, 59, 59, 999);
+  
+  return dateOnly >= rangeStart && dateOnly <= rangeEnd;
 };
 
 // Group by month
@@ -125,8 +155,8 @@ const groupByMonth = (groupedByDay) => {
       return;
     }
     
-    const dateObj = new Date(date);
-    if (isNaN(dateObj.getTime())) {
+    const dateObj = parseLocalDate(date);
+    if (!dateObj) {
       undated.push(...items);
       return;
     }
@@ -160,14 +190,17 @@ const groupByMonth = (groupedByDay) => {
 // Helper function to get week range
 const getWeekRange = (dateString) => {
   if (!dateString) return { start: 'Unknown', end: 'Unknown', key: 'undated' };
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return { start: 'Unknown', end: 'Unknown', key: 'undated' };
+  const date = parseLocalDate(dateString);
+  if (!date) return { start: 'Unknown', end: 'Unknown', key: 'undated' };
   
   const day = date.getDay();
   const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(date.setDate(diff));
+  const monday = new Date(date);
+  monday.setDate(diff);
+  monday.setHours(0, 0, 0, 0);
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
   
   return {
     start: monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -334,9 +367,13 @@ export default function History() {
     Object.keys(processed).forEach(date => {
       processed[date] = [...processed[date]].sort((a, b) => {
         if (sortBy === 'date-desc') {
-          return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+          const dateA = parseLocalDate(a.created_at) || new Date(0);
+          const dateB = parseLocalDate(b.created_at) || new Date(0);
+          return dateB.getTime() - dateA.getTime();
         } else if (sortBy === 'date-asc') {
-          return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+          const dateA = parseLocalDate(a.created_at) || new Date(0);
+          const dateB = parseLocalDate(b.created_at) || new Date(0);
+          return dateA.getTime() - dateB.getTime();
         } else if (sortBy === 'company-asc') {
           return (a.company_name || '').localeCompare(b.company_name || '');
         } else if (sortBy === 'company-desc') {
