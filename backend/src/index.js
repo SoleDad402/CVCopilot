@@ -755,14 +755,11 @@ console.log(selectedModel, maxCompletionTokens)
       status: JOB_STATUS.COMPLETED,
       completedAt: Date.now(),
       result: {
-      resume: resumeData,
-      generatedResume,
-      docxContent: buffer.toString('base64'),
-      pdfContent,
-      savedPaths: {
-        docx: docxFilePath,
-        pdf: pdfFilePath
-      }
+        resume: resumeData,
+        generatedResume,
+        docxContent: buffer.toString('base64'),
+        pdfContent: pdfContent || null
+        // Note: Files are now stored in Airtable, not on disk
       }
     });
 
