@@ -123,12 +123,12 @@ Return a JSON object with this exact structure:
   },
   "summary": "3-4 sentence summary with **bold** keywords",
   "skills": [
-    { "section": "Core", "list": ["...", "..."] },
-    { "section": "Domain", "list": ["...", "..."] },
-    { "section": "Tooling", "list": ["...", "..."] },
-    { "section": "Infrastructure", "list": ["...", "..."] },
-    { "section": "Collaboration", "list": ["...", "..."] }
-  ],
+    { "section": "...", "list": ["...", "..."] },
+    { "section": "...", "list": ["...", "..."] },
+    { "section": "...", "list": ["...", "..."] },
+    { "section": "...", "list": ["...", "..."] },
+    { "section": "...", "list": ["...", "..."] }
+  ], // Skills must be in the exact format specified above with 2-5 bold keywords naturally.
   "experience": [
     {
       "title": "Job Title",
@@ -136,7 +136,7 @@ Return a JSON object with this exact structure:
       "location": "Location",
       "dateRange": "MM/YYYY - MM/YYYY or Present",
       "bullets": [
-        "Bullet with **bold** technical terms",
+        "Bullet with **bold** technical terms and notable project names or tools",
         ...
       ],
       "bulletSources": [
