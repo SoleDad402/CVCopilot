@@ -9,12 +9,16 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
-const SidebarQA = ({ jobDescription, resume }) => {
+const SidebarQA = ({ jobDescription, resume, open: externalOpen, onClose: externalOnClose }) => {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  
+  // Use external open/close if provided, otherwise use internal state
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const handleClose = externalOnClose ? externalOnClose : () => setInternalOpen(false);
   const answerRef = useRef(null); // For fallback copy
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -58,12 +62,12 @@ const SidebarQA = ({ jobDescription, resume }) => {
 
   return (
     <>
-      {/* Floating FAB to open the drawer */}
-      {!open && (
+      {/* Floating FAB to open the drawer - only show if not controlled externally */}
+      {externalOpen === undefined && !open && (
         <Fab
           color="primary"
           aria-label="Ask about the job"
-          onClick={() => setOpen(true)}
+          onClick={() => setInternalOpen(true)}
           sx={{
             position: 'fixed',
             right: 24,
@@ -78,7 +82,7 @@ const SidebarQA = ({ jobDescription, resume }) => {
       <Drawer
         anchor={isMobile ? 'bottom' : 'right'}
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={handleClose}
         PaperProps={{
           sx: {
             width: isMobile ? '100vw' : drawerWidth,
@@ -108,7 +112,7 @@ const SidebarQA = ({ jobDescription, resume }) => {
           <Typography variant="h6" fontWeight={700} sx={{ pl: 3, letterSpacing: 1 }}>
             Job Q&A Assistant
           </Typography>
-          <IconButton onClick={() => setOpen(false)} sx={{ color: '#fff', mr: 1 }}>
+          <IconButton onClick={handleClose} sx={{ color: '#fff', mr: 1 }}>
             {isMobile ? <ExpandLessIcon /> : <ChevronLeftIcon />}
           </IconButton>
         </Box>

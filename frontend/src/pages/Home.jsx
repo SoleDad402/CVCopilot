@@ -44,7 +44,8 @@ import {
   Close as CloseIcon,
   Save as SaveIcon,
   Edit as EditIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  QuestionAnswer as QuestionAnswerIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { resumeService, coverLetterService, pollJobStatus } from '../services/api';
@@ -88,6 +89,7 @@ function Home() {
   // UI state
   const [activeSection, setActiveSection] = useState('jd');
   const [revisionDrawerOpen, setRevisionDrawerOpen] = useState(false);
+  const [qaDrawerOpen, setQaDrawerOpen] = useState(false);
   const [evidenceMode, setEvidenceMode] = useState(false);
   const [atsView, setAtsView] = useState(false);
   const [zoom, setZoom] = useState(100);
@@ -715,6 +717,21 @@ function Home() {
                 >
                   <EditIcon fontSize="small" />
                 </IconButton>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setQaDrawerOpen(true)}
+                  startIcon={<QuestionAnswerIcon fontSize="small" />}
+                  sx={{ 
+                    border: '1px solid', 
+                    borderColor: 'divider',
+                    textTransform: 'none',
+                    px: 1.5,
+                    py: 0.5
+                  }}
+                >
+                  Q&A
+                </Button>
               </Paper>
             </>
           ) : (
@@ -855,7 +872,12 @@ function Home() {
       </Snackbar>
 
       {/* Q&A Sidebar */}
-      <SidebarQA jobDescription={jobDescription} resume={resumeData} />
+      <SidebarQA 
+        jobDescription={jobDescription} 
+        resume={resumeData} 
+        open={qaDrawerOpen}
+        onClose={() => setQaDrawerOpen(false)}
+      />
     </Box>
   );
 }
