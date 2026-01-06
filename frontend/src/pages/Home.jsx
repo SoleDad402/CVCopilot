@@ -297,7 +297,7 @@ function Home() {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: '#F6F7FB', position: 'relative' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', bgcolor: '#F6F7FB', position: 'relative' }}>
       {/* Floating Status Indicator */}
       <Box
         sx={{

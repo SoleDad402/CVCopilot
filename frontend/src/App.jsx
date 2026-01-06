@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline, Box, CircularProgress } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
 import Home from './pages/Home';
@@ -16,16 +16,6 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import theme from './theme';
 import Admin from './pages/Admin';
 import History from './pages/History';
-
-// Component to conditionally render navbar
-const ConditionalNavbar = () => {
-  const location = useLocation();
-  // Hide navbar on Home page since it has its own floating status indicator
-  if (location.pathname === '/') {
-    return null;
-  }
-  return <Navbar />;
-};
 
 // Protected Route component
 const ProtectedRoute = ({ children, component: Component }) => {
@@ -52,7 +42,7 @@ function App() {
       <CssBaseline />
       <AuthProvider>
         <Router>
-          <ConditionalNavbar />
+          <Navbar />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<LoginPage />} />
