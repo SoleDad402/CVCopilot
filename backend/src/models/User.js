@@ -473,6 +473,38 @@ class User {
     }
   }
 
+  static async addCoverLetterRequest(userId, requestData) {
+    const { company_name, role, job_description, docx_file, pdf_file } = requestData;
+    
+    // Format date for Airtable (YYYY-MM-DD format for date fields)
+    const now = new Date();
+    const dateString = now.toISOString().split('T')[0];
+    
+    const fields = {
+      [FIELD_NAMES.userId]: [userId],
+      'Company Name': company_name || '',
+      'Role': role || '',
+      'Job Description': job_description || '',
+      'Created At': dateString
+    };
+
+    // Add file attachments if provided
+    if (docx_file) {
+      fields['DOCX File'] = Array.isArray(docx_file) ? docx_file : [docx_file];
+    }
+    if (pdf_file) {
+      fields['PDF File'] = Array.isArray(pdf_file) ? pdf_file : [pdf_file];
+    }
+
+    try {
+      // Use the same requests table for now, or create a separate cover letters table
+      const records = await base(TABLE_NAMES.requests).create([{ fields }]);
+      return records[0].id;
+    } catch (error) {
+      throw new Error(`Failed to add cover letter request: ${error.message}`);
+    }
+  }
+
   static async getResumeRequests(userId) {
     try {
       // Fetch all records and filter in JavaScript for linked fields

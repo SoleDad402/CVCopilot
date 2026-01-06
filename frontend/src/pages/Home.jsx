@@ -47,7 +47,7 @@ import {
   Info as InfoIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { resumeService, pollJobStatus } from '../services/api';
+import { resumeService, coverLetterService, pollJobStatus } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
@@ -77,6 +77,12 @@ function Home() {
   const [resumeData, setResumeData] = useState(null);
   const [docxContent, setDocxContent] = useState(null);
   const [pdfContent, setPdfContent] = useState(null);
+  
+  // Generated cover letter state
+  const [generatedCoverLetter, setGeneratedCoverLetter] = useState(null);
+  const [coverLetterDocxContent, setCoverLetterDocxContent] = useState(null);
+  const [coverLetterPdfContent, setCoverLetterPdfContent] = useState(null);
+  const [documentType, setDocumentType] = useState('resume'); // 'resume' or 'cover-letter'
   
   // UI state
   const [activeSection, setActiveSection] = useState('jd');
@@ -169,12 +175,13 @@ function Home() {
 
   // Render DOCX preview
   useEffect(() => {
-    if (docxContent && previewContainerRef.current && !atsView) {
+    const contentToRender = documentType === 'cover-letter' ? coverLetterDocxContent : docxContent;
+    if (contentToRender && previewContainerRef.current && !atsView) {
       const container = previewContainerRef.current;
       container.innerHTML = ''; // Clear previous content
       
       try {
-        const byteString = atob(docxContent);
+        const byteString = atob(contentToRender);
         const mimeString = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
         const ab = new ArrayBuffer(byteString.length);
         const ia = new Uint8Array(ab);
@@ -200,7 +207,7 @@ function Home() {
         console.error('Error processing docx:', error);
       }
     }
-  }, [docxContent, atsView]);
+  }, [docxContent, coverLetterDocxContent, atsView, documentType]);
 
   const handleGenerateResume = async () => {
     if (!jobDescription.trim()) {
@@ -212,6 +219,7 @@ function Home() {
     setError('');
     setJobStatus('starting');
     setProgress(0);
+    setDocumentType('resume');
 
     try {
       const { data: jobData } = await resumeService.generateResume({ 
@@ -259,29 +267,103 @@ function Home() {
     }
   };
 
+  const handleGenerateCoverLetter = async () => {
+    if (!jobDescription.trim()) {
+      setError('Please enter a job description');
+      return;
+    }
+
+    setIsGenerating(true);
+    setError('');
+    setJobStatus('starting');
+    setProgress(0);
+    setDocumentType('cover-letter');
+
+    try {
+      const { data: jobData } = await coverLetterService.generateCoverLetter({ 
+        jobDescription, 
+        companyName, 
+        role,
+        resume: resumeData // Pass existing resume data if available
+      });
+      const { jobId } = jobData;
+      
+      setJobStatus('processing');
+      
+      const result = await pollJobStatus(
+        jobId,
+        (progressData) => {
+          setJobStatus(progressData.status);
+          setProgress(progressData.progress || 0);
+          if (progressData.error) {
+            setError(progressData.error);
+          }
+        }
+      );
+
+      if (result) {
+        setGeneratedCoverLetter(result.coverLetter);
+        setCoverLetterDocxContent(result.docxContent);
+        setCoverLetterPdfContent(result.pdfContent);
+        setLastGenerated(new Date());
+        
+        localStorage.setItem('generatedCoverLetter', JSON.stringify({
+          coverLetter: result.coverLetter,
+          docxContent: result.docxContent,
+          pdfContent: result.pdfContent,
+          companyName,
+          role,
+          jobDescription
+        }));
+      }
+    } catch (error) {
+      setError(error.message || 'Failed to generate cover letter. Please try again.');
+      setJobStatus('error');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
 
   const handleDownload = async (format) => {
-    if (format === 'pdf' && pdfContent) {
-      const link = document.createElement('a');
-      link.href = `data:application/pdf;base64,${pdfContent}`;
-      link.download = `resume-${companyName || 'resume'}.pdf`;
-      link.click();
-    } else if (format === 'docx' && docxContent) {
-      const link = document.createElement('a');
-      link.href = `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${docxContent}`;
-      link.download = `resume-${companyName || 'resume'}.docx`;
-      link.click();
+    if (documentType === 'cover-letter') {
+      if (format === 'pdf' && coverLetterPdfContent) {
+        const link = document.createElement('a');
+        link.href = `data:application/pdf;base64,${coverLetterPdfContent}`;
+        link.download = `cover-letter-${companyName || 'cover-letter'}.pdf`;
+        link.click();
+      } else if (format === 'docx' && coverLetterDocxContent) {
+        const link = document.createElement('a');
+        link.href = `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${coverLetterDocxContent}`;
+        link.download = `cover-letter-${companyName || 'cover-letter'}.docx`;
+        link.click();
+      }
+    } else {
+      if (format === 'pdf' && pdfContent) {
+        const link = document.createElement('a');
+        link.href = `data:application/pdf;base64,${pdfContent}`;
+        link.download = `resume-${companyName || 'resume'}.pdf`;
+        link.click();
+      } else if (format === 'docx' && docxContent) {
+        const link = document.createElement('a');
+        link.href = `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${docxContent}`;
+        link.download = `resume-${companyName || 'resume'}.docx`;
+        link.click();
+      }
     }
   };
 
   const handleCopyText = async () => {
-    if (generatedResume) {
-      try {
+    try {
+      if (documentType === 'cover-letter' && generatedCoverLetter) {
+        await navigator.clipboard.writeText(generatedCoverLetter);
+        setSnackbar({ open: true, message: 'Cover letter text copied to clipboard', severity: 'success' });
+      } else if (generatedResume) {
         await navigator.clipboard.writeText(generatedResume);
         setSnackbar({ open: true, message: 'Resume text copied to clipboard', severity: 'success' });
-      } catch (e) {
-        setSnackbar({ open: true, message: 'Failed to copy text', severity: 'error' });
       }
+    } catch (e) {
+      setSnackbar({ open: true, message: 'Failed to copy text', severity: 'error' });
     }
   };
 
@@ -435,17 +517,30 @@ function Home() {
 
               {/* Section D: Generate */}
               <Box>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  size="medium"
-                  onClick={handleGenerateResume}
-                  disabled={isGenerating || !jobDescription.trim()}
-                  startIcon={isGenerating ? <CircularProgress size={18} color="inherit" /> : <RefreshIcon />}
-                  sx={{ py: 1.25, fontWeight: 600 }}
-                >
-                  {isGenerating ? 'Generating...' : 'Generate Resume'}
-                </Button>
+                <Stack spacing={1.5}>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    size="medium"
+                    onClick={handleGenerateResume}
+                    disabled={isGenerating || !jobDescription.trim()}
+                    startIcon={isGenerating ? <CircularProgress size={18} color="inherit" /> : <RefreshIcon />}
+                    sx={{ py: 1.25, fontWeight: 600 }}
+                  >
+                    {isGenerating ? 'Generating...' : 'Generate Resume'}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    size="medium"
+                    onClick={handleGenerateCoverLetter}
+                    disabled={isGenerating || !jobDescription.trim()}
+                    startIcon={isGenerating ? <CircularProgress size={18} color="inherit" /> : <RefreshIcon />}
+                    sx={{ py: 1.25, fontWeight: 600 }}
+                  >
+                    {isGenerating ? 'Generating...' : 'Generate Cover Letter'}
+                  </Button>
+                </Stack>
                 {isGenerating && (
                   <Box sx={{ mt: 2 }}>
                     <LinearProgress variant="determinate" value={progress} />
@@ -466,7 +561,7 @@ function Home() {
 
         {/* Right Panel: Preview (flex) */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: '#F6F7FB' }}>
-          {generatedResume ? (
+          {(generatedResume || generatedCoverLetter) ? (
             <>
               {/* Preview Body */}
               <Box sx={{ flex: 1, overflow: 'auto', p: 2, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', position: 'relative', minHeight: 0 }}>
@@ -484,26 +579,50 @@ function Home() {
                     maxHeight: '100%'
                   }}
                 >
-                  {atsView ? (
-                    <pre style={{ 
-                      fontFamily: 'monospace', 
-                      whiteSpace: 'pre-wrap',
-                      fontSize: '14px',
-                      margin: 0
-                    }}>
-                      {generatedResume.replace(/\*\*/g, '')}
-                    </pre>
-                  ) : docxContent ? (
-                    <Box ref={previewContainerRef} sx={{ width: '100%', minHeight: '100%' }} />
+                  {documentType === 'cover-letter' ? (
+                    atsView ? (
+                      <pre style={{ 
+                        fontFamily: 'monospace', 
+                        whiteSpace: 'pre-wrap',
+                        fontSize: '14px',
+                        margin: 0
+                      }}>
+                        {generatedCoverLetter}
+                      </pre>
+                    ) : coverLetterDocxContent ? (
+                      <Box ref={previewContainerRef} sx={{ width: '100%', minHeight: '100%' }} />
+                    ) : (
+                      <pre style={{ 
+                        fontFamily: 'inherit', 
+                        whiteSpace: 'pre-wrap',
+                        fontSize: '14px',
+                        margin: 0
+                      }}>
+                        {generatedCoverLetter}
+                      </pre>
+                    )
                   ) : (
-                    <pre style={{ 
-                      fontFamily: 'inherit', 
-                      whiteSpace: 'pre-wrap',
-                      fontSize: '14px',
-                      margin: 0
-                    }}>
-                      {generatedResume}
-                    </pre>
+                    atsView ? (
+                      <pre style={{ 
+                        fontFamily: 'monospace', 
+                        whiteSpace: 'pre-wrap',
+                        fontSize: '14px',
+                        margin: 0
+                      }}>
+                        {generatedResume?.replace(/\*\*/g, '') || ''}
+                      </pre>
+                    ) : docxContent ? (
+                      <Box ref={previewContainerRef} sx={{ width: '100%', minHeight: '100%' }} />
+                    ) : (
+                      <pre style={{ 
+                        fontFamily: 'inherit', 
+                        whiteSpace: 'pre-wrap',
+                        fontSize: '14px',
+                        margin: 0
+                      }}>
+                        {generatedResume}
+                      </pre>
+                    )
                   )}
                   
                   {/* Evidence Mode Overlay */}

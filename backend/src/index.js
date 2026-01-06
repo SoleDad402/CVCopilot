@@ -413,6 +413,234 @@ app.delete('/api/education/:id', auth, async (req, res) => {
   }
 });
 
+// Async cover letter generation function
+const generateCoverLetterAsync = async (jobId, userId, cleanedJobDescription, companyName, role, resumeData) => {
+  try {
+    // Update job status to processing
+    jobs.set(jobId, {
+      ...jobs.get(jobId),
+      status: JOB_STATUS.PROCESSING,
+      startedAt: Date.now()
+    });
+
+    // Get user data
+    const userRaw = await User.findByEmail(userId);
+    const user = {
+      id: userRaw.id,
+      email: userRaw.email || userRaw.Email,
+      full_name: userRaw.full_name || userRaw['Full Name'] || '',
+      phone: userRaw.phone || userRaw.Phone || '',
+      personal_email: userRaw.personal_email || userRaw['Personal Email'] || '',
+      location: userRaw.location || userRaw.Location || ''
+    };
+
+    // Build candidate information from resume data if available
+    let candidateInfo = `- Name: ${user.full_name}\n`;
+    if (resumeData) {
+      if (resumeData.summary) {
+        candidateInfo += `- Summary: ${resumeData.summary}\n`;
+      }
+      if (resumeData.experience && Array.isArray(resumeData.experience) && resumeData.experience.length > 0) {
+        const recentRoles = resumeData.experience.slice(0, 2).map(exp => {
+          const position = exp.position || exp.title || '';
+          const company = exp.company || exp.company_name || '';
+          return position && company ? `${position} at ${company}` : '';
+        }).filter(Boolean).join(', ');
+        if (recentRoles) {
+          candidateInfo += `- Recent Roles: ${recentRoles}\n`;
+        }
+      }
+      if (resumeData.skills && Array.isArray(resumeData.skills) && resumeData.skills.length > 0) {
+        const skillsList = resumeData.skills.map(s => {
+          if (typeof s === 'string') return s;
+          if (s.list && Array.isArray(s.list)) return s.list.join(', ');
+          return '';
+        }).filter(Boolean).join(', ');
+        if (skillsList) {
+          candidateInfo += `- Key Skills: ${skillsList}\n`;
+        }
+      }
+    }
+
+    // Generate cover letter content using LLM
+    const coverLetterPrompt = `You are an expert cover letter writer. Write a compelling, professional cover letter for this job application.
+
+Job Details:
+- Company: ${companyName || 'Company'}
+- Role: ${role || 'Position'}
+- Job Description: ${cleanedJobDescription}
+
+Candidate Information:
+${candidateInfo}
+
+Requirements:
+1. Write a professional, confident cover letter (3-4 paragraphs)
+2. First paragraph: Express interest and mention the specific role and company
+3. Middle paragraph(s): Highlight 2-3 most relevant experiences/achievements from the resume that align with the job requirements
+4. Final paragraph: Express enthusiasm, mention why you're a good fit, and include a call to action
+5. Use a professional but warm tone - not overly formal or generic
+6. Avoid clichés like "I am writing to apply", "I am the perfect candidate", "I am very excited"
+7. Be specific about achievements and use concrete examples when possible
+8. Keep it concise (300-400 words total)
+9. Write in first person but avoid overusing "I"
+10. Make it sound human and authentic, not AI-generated
+
+Return ONLY the cover letter body text (no headers, no "Dear Hiring Manager", no signatures - just the paragraphs).`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-5.2",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert cover letter writer. Write compelling, professional cover letters that are specific, authentic, and tailored to each job application. Avoid generic phrases and clichés."
+        },
+        { role: "user", content: coverLetterPrompt }
+      ],
+      temperature: 0.7,
+      max_completion_tokens: 2000
+    });
+
+    const coverLetterContent = completion.choices[0].message.content.trim();
+
+    // Format current date
+    const currentDate = new Date().toLocaleDateString('en-US', { 
+      month: 'long', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+
+    // Generate DOCX content using cover letter template
+    const templatePath = path.join(__dirname, 'templates', 'cover-letter-template.docx');
+    const content = fs.readFileSync(templatePath, 'binary');
+    const zip = new PizZip(content);
+    const doc = new Docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+    });
+
+    const templateData = {
+      name: user.full_name || '',
+      role: role || '',
+      address: user.location || '',
+      phone: user.phone || '',
+      mail: user.personal_email || user.email || '',
+      current_date: currentDate,
+      content: coverLetterContent
+    };
+
+    // Render the document
+    doc.render(templateData);
+
+    // Generate the output
+    const buffer = doc.getZip().generate({
+      type: 'nodebuffer',
+      compression: 'DEFLATE'
+    });
+
+    // Convert DOCX to PDF using Cloudmersive
+    let pdfContent = null;
+    let pdfBuffer = null;
+    try {
+      const tmpDocxPath = path.join(__dirname, 'tmp_input_cover.docx');
+      fs.writeFileSync(tmpDocxPath, buffer);
+      const inputFile = fs.createReadStream(tmpDocxPath);
+      const convertDocxToPdf = () => new Promise((resolve, reject) => {
+        apiInstance.convertDocumentDocxToPdf(inputFile, (error, data, response) => {
+          if (error) reject(error);
+          else resolve(data);
+        });
+      });
+      const pdfBufferFromApi = await convertDocxToPdf();
+      pdfBuffer = Buffer.from(pdfBufferFromApi);
+      pdfContent = pdfBuffer.toString('base64');
+      fs.unlinkSync(tmpDocxPath);
+    } catch (err) {
+      console.error('Failed to convert cover letter DOCX to PDF (Cloudmersive):', err);
+      pdfContent = null;
+      pdfBuffer = null;
+    }
+
+    // Upload files to Airtable as attachments
+    let docxAttachment = null;
+    let pdfAttachment = null;
+    
+    try {
+      const createAttachment = async (buffer, filename, contentType) => {
+        const timestamp = Date.now();
+        const fileId = crypto.randomBytes(8).toString('hex');
+        const uploadsDir = path.join(__dirname, '../uploads');
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+        
+        const storedFilename = `${timestamp}_${fileId}_${filename}`;
+        const filePath = path.join(uploadsDir, storedFilename);
+        fs.writeFileSync(filePath, buffer);
+        
+        const baseUrl = process.env.BACKEND_URL || `http://localhost:${port}`;
+        const fileUrl = `${baseUrl}/api/files/${storedFilename}`;
+        
+        return [{
+          url: fileUrl,
+          filename: filename
+        }];
+      };
+
+      docxAttachment = await createAttachment(buffer, 'cover-letter.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      
+      if (pdfBuffer) {
+        pdfAttachment = await createAttachment(pdfBuffer, 'cover-letter.pdf', 'application/pdf');
+      }
+
+      // Store cover letter in Airtable
+      try {
+        await User.addCoverLetterRequest(user.id, {
+          company_name: companyName || null,
+          role: role || null,
+          job_description: cleanedJobDescription,
+          docx_file: docxAttachment,
+          pdf_file: pdfAttachment
+        });
+        console.log('Cover letter files saved to Airtable successfully');
+      } catch (metaErr) {
+        console.error('Failed saving cover letter metadata:', metaErr);
+      }
+    } catch (saveErr) {
+      console.error('Failed uploading cover letter files to Airtable:', saveErr);
+    }
+
+    // Update job with completed results
+    jobs.set(jobId, {
+      ...jobs.get(jobId),
+      status: JOB_STATUS.COMPLETED,
+      completedAt: Date.now(),
+      result: {
+        coverLetter: coverLetterContent,
+        docxContent: buffer.toString('base64'),
+        pdfContent: pdfContent || null
+      }
+    });
+
+  } catch (error) {
+    console.error('Error generating cover letter:', error);
+    
+    let errorMessage = error.message || 'Failed to generate cover letter';
+    
+    if (error.status === 401 || error.message?.includes('Invalid API key')) {
+      errorMessage = 'OpenAI API key is invalid or missing.';
+    } else if (error.status === 429 || error.message?.includes('rate limit')) {
+      errorMessage = 'OpenAI API rate limit exceeded. Please try again later.';
+    }
+    
+    jobs.set(jobId, {
+      ...jobs.get(jobId),
+      status: JOB_STATUS.FAILED,
+      completedAt: Date.now(),
+      error: errorMessage
+    });
+  }
+};
+
 // Async resume generation function
 const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
   try {
@@ -767,7 +995,7 @@ app.post('/api/generate-resume', auth, async (req, res) => {
     });
 
     // Start async processing
-    generateResumeAsync(jobId, req.user.email, cleanedJobDescription, companyName || '', role || '');
+    generateResumeAsync(jobId, req.user.email, cleanedJobDescription);
 
     // Return job ID immediately
     res.json({ 
@@ -778,6 +1006,60 @@ app.post('/api/generate-resume', auth, async (req, res) => {
   } catch (error) {
     console.error('Error starting resume generation:', error);
     res.status(500).json({ error: 'Failed to start resume generation' });
+  }
+});
+
+// Cover letter generation endpoint
+app.post('/api/generate-cover-letter', auth, async (req, res) => {
+  try {
+    const { jobDescription, companyName, role, resume } = req.body;
+
+    if (!jobDescription) {
+      return res.status(400).json({ error: 'Job description is required' });
+    }
+
+    // Clean the job description
+    const cleanedJobDescription = cleanJobDescription(jobDescription);
+
+    // Get user data
+    const user = await User.findByEmail(req.user.email);
+
+    // Check daily generation limit
+    const currentGenerations = await User.getDailyGenerationCount(req.user.id);
+    if (currentGenerations >= user.daily_generation_limit) {
+      return res.status(403).json({
+        error: `Daily generation limit (${user.daily_generation_limit}) reached. Please try again tomorrow.`
+      });
+    }
+
+    // Generate job ID
+    const jobId = generateJobId();
+
+    // Create job entry
+    jobs.set(jobId, {
+      id: jobId,
+      userId: req.user.email,
+      jobDescription: cleanedJobDescription,
+      companyName: companyName || '',
+      role: role || '',
+      type: 'cover-letter',
+      status: JOB_STATUS.PENDING,
+      createdAt: Date.now(),
+      progress: 0
+    });
+
+    // Start async processing
+    generateCoverLetterAsync(jobId, req.user.email, cleanedJobDescription, companyName || '', role || '', resume || null);
+
+    // Return job ID immediately
+    res.json({ 
+      jobId,
+      message: 'Cover letter generation started. Use the job ID to check status and fetch results.'
+    });
+
+  } catch (error) {
+    console.error('Error starting cover letter generation:', error);
+    res.status(500).json({ error: 'Failed to start cover letter generation' });
   }
 });
 

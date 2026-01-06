@@ -58,6 +58,18 @@ export const resumeService = {
     api.get(`/api/resume/${id}/download`, { responseType: 'blob' })
 };
 
+export const coverLetterService = {
+  generateCoverLetter: (payload) =>
+    // payload: { jobDescription, companyName, role, resume }
+    api.post('/api/generate-cover-letter', payload),
+  
+  getJobStatus: (jobId) => 
+    api.get(`/api/status/${jobId}`),
+  
+  getJobResults: (jobId, options = {}) => 
+    api.get(`/api/results/${jobId}`, options)
+};
+
 export const authService = {
   login: (credentials) => 
     api.post('/api/auth/login', credentials),
