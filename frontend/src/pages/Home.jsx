@@ -593,7 +593,7 @@ function Home() {
                     width: '8.5in',
                     bgcolor: 'white',
                     p: 3,
-                    transform: `scale(${Math.min(zoom / 100, 0.75)})`,
+                    transform: `scale(${Math.min(zoom / 100, 0.96)})`,
                     transformOrigin: 'top center',
                     transition: 'transform 0.2s',
                     position: 'relative',
