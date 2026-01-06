@@ -297,48 +297,63 @@ function Home() {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: '#F6F7FB' }}>
-      {/* Top Nav */}
-      <Paper 
-        elevation={0} 
-        sx={{ 
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-          zIndex: 1100
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', bgcolor: '#F6F7FB', position: 'relative' }}>
+      {/* Floating Status Indicator */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 12,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1200,
+          pointerEvents: 'none'
         }}
       >
-        <Box sx={{ px: 3, py: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {/* Center: Status */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {isGenerating ? (
-              <Chip 
-                icon={<CircularProgress size={16} />} 
-                label={jobStatus === 'processing' ? 'Generating...' : 'Starting...'} 
-                size="small"
-                sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}
-              />
-            ) : saveStatus === 'saved' ? (
-              <Chip 
-                icon={<CheckCircleIcon fontSize="small" />} 
-                label={lastGenerated ? `Last updated ${formatTimeAgo(lastGenerated)}` : 'Saved'} 
-                size="small"
-                color="success"
-                variant="outlined"
-              />
-            ) : (
-              <Chip 
-                label="Saving..." 
-                size="small"
-                sx={{ bgcolor: alpha(theme.palette.warning.main, 0.1) }}
-              />
-            )}
-          </Box>
-        </Box>
-      </Paper>
+        {isGenerating ? (
+          <Chip 
+            icon={<CircularProgress size={14} />} 
+            label={jobStatus === 'processing' ? 'Generating...' : 'Starting...'} 
+            size="small"
+            sx={{ 
+              bgcolor: 'background.paper',
+              boxShadow: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              pointerEvents: 'auto'
+            }}
+          />
+        ) : saveStatus === 'saved' ? (
+          <Chip 
+            icon={<CheckCircleIcon fontSize="small" />} 
+            label={lastGenerated ? `Saved ${formatTimeAgo(lastGenerated)}` : 'Saved'} 
+            size="small"
+            sx={{ 
+              bgcolor: 'background.paper',
+              boxShadow: 2,
+              border: '1px solid',
+              borderColor: 'success.main',
+              color: 'success.main',
+              pointerEvents: 'auto'
+            }}
+          />
+        ) : (
+          <Chip 
+            icon={<CircularProgress size={14} />}
+            label="Saving..." 
+            size="small"
+            sx={{ 
+              bgcolor: 'background.paper',
+              boxShadow: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              pointerEvents: 'auto'
+            }}
+          />
+        )}
+      </Box>
 
       {/* Main Body: 2-column layout */}
-      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden', pt: 0 }}>
         {/* Left Panel: Inputs (380-440px) */}
         <Paper
           elevation={0}
