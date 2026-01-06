@@ -433,7 +433,33 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
     const maxCompletionTokens = 30000;
 
     // Format employment history for the prompt
-    const formattedHistory = employmentHistory.map(job => `
+    const parseDate = (dateStr) => {
+      // Handle formats like "Oct 2022" or "2022/10"
+      if (!dateStr) return new Date(0);
+      const monthMap = { 'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6, 'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12 };
+      
+      // Try "Oct 2022" format
+      const monthYearMatch = dateStr.match(/(\w+)\s+(\d{4})/);
+      if (monthYearMatch) {
+        const month = monthMap[monthYearMatch[1]] || 1;
+        const year = parseInt(monthYearMatch[2]);
+        return new Date(year, month - 1);
+      }
+      
+      // Try "2022/10" format
+      const slashMatch = dateStr.match(/(\d{4})\/(\d{1,2})/);
+      if (slashMatch) {
+        const year = parseInt(slashMatch[1]);
+        const month = parseInt(slashMatch[2]);
+        return new Date(year, month - 1);
+      }
+      
+      return new Date(0);
+    };
+    
+    const sortedHistory = [...employmentHistory].sort((a, b) => parseDate(b.start_date) - parseDate(a.start_date));
+    
+    const formattedHistory = sortedHistory.map(job => `
       o ${job.company_name}, ${job.location}
         - ${job.position} (${job.start_date}–${job.is_current ? 'Present' : job.end_date})
         ${job.description ? `- ${job.description}` : ''}
@@ -514,7 +540,7 @@ Do not modify or placeholder these fields.
 
 Professional Summary:
 Write a concise (3-4 sentences), impactful summary in the summary field.
-
+Make the core keywords in summary bold.
 Highlight the candidate's expertise, key technical skills, leadership, collaboration, and alignment with the job description (${cleanedJobDescription}).
 
 Avoid generic phrases; tailor to the job's technical and business requirements.
@@ -525,14 +551,14 @@ Populate the experience array using ${formattedHistory} to extract company, date
 For each experience entry, include 7-8 bullets with quantifiable achievements (e.g., "Reduced API latency by 40%," "Increased user engagement by 25%").
 
 Ensure achievements are specific, measurable, and tied to real-world projects, avoiding generic or unsupported statistics.
-
+Make the technical keywords and notable project names or tools bold.
 Incorporate a wide range of technologies, tools, frameworks, programming languages, cloud platforms, APIs, and development methodologies, clearly explaining their application in projects.
 
 Highlight contributions to user experience, performance optimization, security compliance, and business outcomes.
 
 Showcase leadership, collaboration, and problem-solving skills through examples of cross-functional teamwork, mentoring, or initiative-taking.
 
-For the first company in the experience array:
+For the first two companies in the experience array:
 Create a unique, realistic, and innovative project aligned with the job description (${cleanedJobDescription}).
 
 The project should be technically detailed, impactful, and demonstrate the use of relevant technologies (e.g., specific programming languages, frameworks, or cloud platforms).
@@ -542,15 +568,22 @@ Include a measurable outcome in one of the bullets (e.g., "Developed a microserv
 Ensure the project reflects collaboration, problem-solving, and alignment with the job's technical and business goals.
 
 Skills:
-Populate the skills array with at least two objects, each containing:
-section: A category name (e.g., "Technical Skills," "Soft Skills," "Tools & Platforms").
+consider a layered classification that combines these:
+Core competencies (languages, fundamental algorithms, design patterns)
+Domain expertise (web tech, mobile, systems, etc. depending on role)
+Tooling & environment (IDE, version control, debugging)
+Infrastructure & deployment (how code gets to production)
+Soft skills (mentoring, communication, architectural thinking)
 
-list: An array of relevant skills (e.g., ["Python", "JavaScript", "AWS"] for Technical Skills).
+Populate the skills array with at least five objects applied with layered classification strategy, each containing:
+section: A category name (e.g., "Technical Skills," "Soft Skills," "Tools", "Platforms", "IDEs", "Frontend", "Backend", "Libraries", ).
+
+list: An array of relevant skills
 
 Include a balanced mix of technical skills (e.g., programming languages, frameworks, cloud platforms, tools) and soft skills (e.g., leadership, communication, problem-solving).
 
 Ensure skills align with the job description (${cleanedJobDescription}) without overloading keywords.
-
+No markdown for skills
 Avoid duplication across sections; group related skills logically.
 
 Education:
@@ -558,7 +591,8 @@ Populate the education array using ${formattedEducation}.
 Maintain consistent date formatting.
 
 Certifications:
-Return at most two certifications, and only include certifications that are explicitly available in the provided context (user data or job description). Certifications must be relevant to the job description (${cleanedJobDescription}). Do not invent or guess certifications. If none exist, return an ordinary one. For each certification include a name and, when available, an issued date in "MM/YYYY" format.
+Populate the certifications array with older or more traditional certifications if available (e.g., "Oracle Certified Professional, Java SE 6 Programmer", "ITIL Foundation").
+Include issue date in "MM/YYYY" format.
 
 Additional Guidelines:
 - Use safe, general, and less technical phrasing.
@@ -581,25 +615,28 @@ If ${user.github_url} is empty or not applicable, include it as an empty string 
 
 console.log(selectedModel, maxCompletionTokens)
 
-    const openaiResponse = await openai.chat.completions.create({
+    const completion = await openai.chat.completions.create({
       model: selectedModel,
       messages: [
         {
-          role: 'system',
-          content: 'You are a professional resume writer with expertise in creating tailored resumes for job applications. You excel at crafting authentic, detailed, and impactful resumes that highlight the candidate\'s unique strengths and experiences. Always respond with valid JSON.'
+          role: "system",
+          content: "You are a professional resume writer with expertise in creating tailored resumes for job applications. You excel at crafting authentic, detailed, and impactful resumes that highlight the candidate's unique strengths and experiences. Always respond with valid JSON."
         },
         {
-          role: 'user',
+          role: "user",
           content: prompt
         }
       ],
-      max_completion_tokens: maxCompletionTokens,
       temperature: 0.5,
-      response_format: { type: 'json_object' }
+      max_completion_tokens: maxCompletionTokens,
+      presence_penalty: 0.3,
+      frequency_penalty: 0.2,
+      response_format: { type: "json_object" },
+      // stream: true
     });
     
-    const completionText = openaiResponse.choices[0]?.message?.content || '';
-    const generatedResume = parseJsonFromText(completionText);
+    // Extract the resume content from the API response
+    const generatedResume = JSON.parse(completion.choices[0].message.content);
     
     // Track resume generation
     await User.trackResumeGeneration(user.id);
@@ -632,20 +669,26 @@ console.log(selectedModel, maxCompletionTokens)
 
     const templateData = {
       name: resumeData.name || '',
+      phone: resumeData.contact.phonenumber || '',
+      email: resumeData.contact.email || '',
+      linkedinURL: resumeData.contact.linkedinURL || '',
+      location: resumeData.contact.location || '',
       contact: `${resumeData.contact.location} | ${resumeData.contact.email} | ${resumeData.contact.phonenumber} | ${resumeData.contact.linkedinURL}`,
-      summary: resumeData.summary || '',
+      summary: markdownToWordXml(resumeData.summary) || '',
       experience: resumeData.experience.map((exp, index) => ({
         company: clearedText(exp.company) || '',
         location: clearedText(exp.location) || '',
         position: clearedText(exp.position) || '',
         dates: clearedText(exp.dates) || '',
-        bullets: exp.bullets || []
+        bullets: (exp.bullets || []).map(bullet => {
+          return {rawXml: markdownToWordXmlWithBullet(bullet)}
+        })
       })),
       skills: resumeData.skills.map(skillSection => {
         if (skillSection && skillSection.section && skillSection.list) {
           return {
             section: skillSection.section,
-            list: skillSection.list
+            list: skillSection.list.join(', ')
           };
         }
         return null; // Filter out if section or list is undefined
@@ -672,25 +715,25 @@ console.log(selectedModel, maxCompletionTokens)
     });
 
     // Convert DOCX buffer to PDF using Cloudmersive
-    let pdfBuffer = null;
     let pdfContent = null;
     try {
-      // Convert DOCX to PDF using Cloudmersive API
-      const convertResult = await new Promise((resolve, reject) => {
-        apiInstance.convertDocumentDocxToPdf(buffer, (error, data, response) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve(data);
-          }
+      // Write buffer to a temp file
+      const tmpDocxPath = path.join(__dirname, 'tmp_input.docx');
+      fs.writeFileSync(tmpDocxPath, buffer);
+      const inputFile = fs.createReadStream(tmpDocxPath);
+      // Use promise wrapper for the callback API
+      const convertDocxToPdf = () => new Promise((resolve, reject) => {
+        apiInstance.convertDocumentDocxToPdf(inputFile, (error, data, response) => {
+          if (error) reject(error);
+          else resolve(data);
         });
       });
-      
-      pdfBuffer = Buffer.from(convertResult, 'binary');
-      pdfContent = pdfBuffer.toString('base64');
+      const pdfBuffer = await convertDocxToPdf();
+      pdfContent = Buffer.from(pdfBuffer).toString('base64');
+      // Clean up temp file
+      fs.unlinkSync(tmpDocxPath);
     } catch (err) {
       console.error('Failed to convert DOCX to PDF (Cloudmersive):', err);
-      pdfBuffer = null;
       pdfContent = null;
     }
 
@@ -953,6 +996,59 @@ const clearedText = (text) => {
   return text.replace(/^["']|["']$/g, '').replace(/[\n\r\t\f\v]/g, '').trim();
 }
 
+// Convert markdown bold (**text**) to Word XML format with bold runs
+const markdownToWordXml = (text) => {
+  if (!text) return '<w:p><w:pPr><w:pStyle w:val="Normal"/></w:pPr></w:p>';
+  
+  // Remove bullet point marker if present
+  let cleanText = text.trim();
+  cleanText = cleanText.replace(/^[\-\*]\s+/, '');
+  
+  // Split text by markdown bold markers (**)
+  const parts = cleanText.split(/(\*\*[^*]+\*\*)/);
+  
+  let xmlContent = '';
+  
+  parts.forEach((part) => {
+    if (!part) return; // Skip empty parts
+    
+    if (part.startsWith('**') && part.endsWith('**')) {
+      // Bold text - remove ** markers
+      const boldText = part.slice(2, -2);
+      xmlContent += `
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">${boldText}</w:t>
+    </w:r>`;
+    } else {
+      // Regular text - preserve spaces with xml:space="preserve"
+      xmlContent += `
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">${part}</w:t>
+    </w:r>`;
+    }
+  });
+  
+  // Return without bullet formatting
+  return `<w:p><w:pPr><w:pStyle w:val="Normal"/></w:pPr>${xmlContent}</w:p>`;
+}
+
+const markdownToWordXmlWithBullet = (text) => {
+  // First convert markdown to XML without bullet
+  const xmlResult = markdownToWordXml(text);
+  
+  // Extract the content between <w:p> tags
+  const contentMatch = xmlResult.match(/<w:p><w:pPr>.*?<\/w:pPr>(.*)<\/w:p>/s);
+  const content = contentMatch ? contentMatch[1] : '';
+  // Wrap with bullet formatting
+  return `<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>${content}</w:p>`;
+}
+
 const cleanJobDescription = (jobDescription) => {
   if (!jobDescription) return '';
   
@@ -1007,30 +1103,32 @@ app.post('/api/download/:format', async (req, res) => {
         const templateData = {
           name: resumeData.name || '',
           contact: `${resumeData.contact.email} | ${resumeData.contact.phonenumber} | ${resumeData.contact.linkedinURL} | ${resumeData.contact.github}`,
-          summary: resumeData.summary || '',
+          summary: markdownToWordXml(resumeData.summary) || '',
           experience: resumeData.experience.map((exp, index) => ({
             company: clearedText(exp.company) || '',
             location: clearedText(exp.location) || '',
             position: clearedText(exp.position) || '',
             dates: clearedText(exp.dates) || '',
-            bullets: exp.bullets || []
+            bullets: (exp.bullets || []).map(bullet => {
+              return {rawXml: markdownToWordXmlWithBullet(bullet)}
+            })
           })),
           skills: resumeData.skills.map(skillSection => {
             if (skillSection && skillSection.section && skillSection.list) {
               return {
                 section: skillSection.section,
-                list: skillSection.list
+                list: skillSection.list.join(', ')
               };
             }
             return null; // Filter out if section or list is undefined
           }).filter(Boolean),
-          education: resumeData.education.map(edu => ({
+          education: resumeData.education?.map(edu => ({
             school: clearedText(edu.school) || '',
             location: clearedText(edu.location) || '',
             program: clearedText(edu.program) || '',
             dates: clearedText(edu.dates) || ''
           })),
-          certifications: resumeData.certifications.map(cert => ({
+          certifications: resumeData.certifications?.map(cert => ({
             name: clearedText(cert.name) || '',
             issued: clearedText(cert.issued) || ''
           }))
