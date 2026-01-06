@@ -12,22 +12,38 @@ function convertPlanToJson(plan, userContact) {
     return md.replace(/\*\*(.+?)\*\*/g, '$1');
   };
 
+  const normalizeSkill = (s) => {
+    if (!s || typeof s !== 'string') return '';
+    return s
+      .replace(/\s*\(target role alignment\)\s*/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
   // Convert skills array to the expected format
   const formatSkills = (skills) => {
     if (!skills || skills.length === 0) return [];
     
     // If skills are already in section/list format
     if (typeof skills[0] === 'object' && skills[0].section) {
-      return skills.map(skill => ({
-        section: skill.section,
-        list: Array.isArray(skill.list) ? skill.list : [skill.list]
-      }));
+      return skills
+        .map(skill => {
+          const list = Array.isArray(skill.list) ? skill.list : [skill.list];
+          const cleanedList = list
+            .map(normalizeSkill)
+            .filter(Boolean);
+          return {
+            section: normalizeSkill(skill.section) || skill.section,
+            list: Array.from(new Set(cleanedList))
+          };
+        })
+        .filter(s => s.list && s.list.length > 0);
     }
     
     // If skills are flat, group them into sections
     return [{
       section: 'Technical Skills',
-      list: skills
+      list: Array.from(new Set((skills || []).map(normalizeSkill).filter(Boolean)))
     }];
   };
 
