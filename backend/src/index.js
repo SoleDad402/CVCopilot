@@ -1564,7 +1564,7 @@ app.post('/api/ask-question', auth, async (req, res) => {
 
     // Use hardcoded GPT-5.2 model for better performance
     const selectedModel = "gpt-5.2";
-    const maxCompletionTokens = 2000; // Smaller for Q&A responses
+    const maxCompletionTokens = 150; // Short answers for job application forms (1-2 sentences)
 
     // If resume is provided, summarize it for the prompt
     let resumeSummary = '';
@@ -1604,11 +1604,22 @@ app.post('/api/ask-question', auth, async (req, res) => {
     }
 
     const prompt = `
-You are a helpful assistant who answers questions in clear, simple, native American English. 
-Base your answer on the following job description:
-\n${cleanedJobDescription}\n${resumeSummary}
+You are a helpful assistant who answers questions for job application forms. Your answers must be:
+- Simple, clear, and in native American English
+- NO markdown formatting (no **bold**, no bullets, no lists, no code blocks)
+- 1-2 sentences maximum, unless the question explicitly asks for more detail
+- Suitable for pasting directly into job application form fields
+- Based on the following job description and resume:
+
+Job Description:
+${cleanedJobDescription}
+
+Resume Summary:
+${resumeSummary}
+
 Question: ${question}
-Answer (in a friendly, simple, native American English style):
+
+Answer (plain text, 1-2 sentences, no markdown):
 `;
 
     const openaiResponse = await openai.chat.completions.create({
@@ -1616,7 +1627,7 @@ Answer (in a friendly, simple, native American English style):
       messages: [
         {
           role: 'system',
-          content: 'You are a helpful assistant who answers questions in clear, simple, native American English.'
+          content: 'You are a helpful assistant who answers questions for job application forms. Provide concise, plain text answers (1-2 sentences) with no markdown formatting, suitable for pasting directly into form fields.'
         },
         {
           role: 'user',
