@@ -97,7 +97,8 @@ Writing standard (make it stand out):
     - Mention each must-have skill in context of real work (what/why/how/outcome) — no standalone keyword bullets.
     - Use skills that are supported by the role’s Matched Skills and/or Notes whenever possible; do not invent obviously unrelated tech for a role.
   - Experience bullets must contain role-relevant technical keywords a hiring manager expects to see.
-  - For each bullet, bold 1–2 concrete technical anchors using **bold** (tools, languages, systems, APIs, databases, pipelines, testing, observability, security).
+  - Per role, bold 2–4 core technical anchors total using **bold** (tools, languages, systems, APIs, databases, pipelines, testing, observability, security).
+  - Do NOT bold every bullet; only bold the most important, role-defining keywords.
   - Prefer bolding terms that appear in that job’s \"Matched Skills\" line; otherwise use terms explicitly present in that job’s Notes.
   - Do NOT add parenthetical tags like \"(target role alignment)\" anywhere.
 - Metrics:
@@ -119,8 +120,8 @@ Structure requirements:
   - Include 2-3 **bold** keywords naturally.
 - Experience: include 6+ bullets per role. Bullets should read like top-tier interview stories. Make the technical keywords and notable project names or tools bold.
 - Experience bolding rules (strict):
-  - Each bullet MUST include at least one **bold** technical keyword (ideally 2).
-  - Each role MUST contain at least 5 distinct **bold** technical keywords across its bullets (avoid repeating the same one every time).
+  - Each role MUST contain 2–4 distinct **bold** technical keywords total across all bullets.
+  - Avoid repeating the same **bold** keyword in every bullet; use bold sparingly for emphasis.
 - For the first two experience entries, include 1 bullet that reads like a standout project highlight aligned to the JD.
 ${voiceGuidance}
 
@@ -145,7 +146,7 @@ Return a JSON object with this exact structure:
       "location": "Location",
       "dateRange": "MM/YYYY - MM/YYYY or Present",
       "bullets": [
-        "Bullet with at least 1–2 **bold** technical terms (tools/systems/APIs) and, when relevant, a **bold** project name",
+        "Bullet with one **bold** technical term when it materially helps scanability (do not bold everything)",
         ...
       ],
       "bulletSources": [
