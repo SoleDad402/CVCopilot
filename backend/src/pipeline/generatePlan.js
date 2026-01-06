@@ -94,6 +94,11 @@ Writing standard (make it stand out, but stay credible):
   - \"bulletSources\" is an array of arrays, one per bullet, containing Note IDs like [1] or [1,3].
   - If a job has no Notes, keep bullets short and conservative and set bulletSources to empty arrays ([]) for each bullet.
 - Prefer real details from Notes. Do NOT invent employers, titles, dates, locations.
+- KEYWORD VISIBILITY (non-negotiable):
+  - Experience bullets must contain role-relevant technical keywords a hiring manager expects to see.
+  - For each role, bold 1–2 concrete technical anchors using **bold** (tools, languages, systems, APIs, databases, pipelines, testing, observability, security).
+  - Prefer bolding terms that appear in that job’s \"Matched Skills\" line; otherwise use terms explicitly present in that job’s Notes.
+  - Do NOT add parenthetical tags like \"(target role alignment)\" anywhere.
 - Metrics:
   - If Notes include numbers, use them.
   - If Notes do NOT include numbers, use conservative phrasing (e.g., "cut latency materially", "improved reliability", "reduced on-call pages") without fake %.
@@ -112,6 +117,9 @@ Structure requirements:
   - Do NOT add commentary/labels/qualifiers in skill strings such as "(target role alignment)", "(JD)", "(preferred)", "(nice to have)" or similar.
   - Include 2-3 **bold** keywords naturally.
 - Experience: include 6+ bullets per role. Bullets should read like top-tier interview stories. Make the technical keywords and notable project names or tools bold.
+- Experience bolding rules (strict):
+  - Each role MUST contain at least 5 distinct **bold** technical keywords across its bullets (avoid repeating the same one every time).
+  - Ideally the whole experience roles should contain all must have skills and nice to have skills in job description.
 - For the first two experience entries, include 1 bullet that reads like a standout project highlight aligned to the JD (still credible).
 ${voiceGuidance}
 
@@ -136,7 +144,7 @@ Return a JSON object with this exact structure:
       "location": "Location",
       "dateRange": "MM/YYYY - MM/YYYY or Present",
       "bullets": [
-        "Bullet with **bold** technical terms and notable project names or tools",
+        "Bullet with at least 1–2 **bold** technical terms (tools/systems/APIs) and, when relevant, a **bold** project name",
         ...
       ],
       "bulletSources": [
