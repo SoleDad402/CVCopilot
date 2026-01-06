@@ -586,14 +586,12 @@ function Home() {
           {(generatedResume || generatedCoverLetter) ? (
             <>
               {/* Preview Body */}
-              <Box sx={{ flex: 1, overflow: 'auto', p: 2, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', position: 'relative', minHeight: 0 }}>
+              <Box sx={{ flex: 1, overflow: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', position: 'relative', minHeight: 0 }}>
                 <Paper
                   elevation={3}
                   sx={{
                     width: '8.5in',
                     bgcolor: 'white',
-                    p: 3,
-                    transform: `scale(${Math.min(zoom / 100, 0.96)})`,
                     transformOrigin: 'top center',
                     transition: 'transform 0.2s',
                     position: 'relative',
