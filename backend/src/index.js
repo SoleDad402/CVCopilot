@@ -665,6 +665,7 @@ console.log(selectedModel, maxCompletionTokens)
       linebreaks: true,
     });
 
+    console.log(resumeData.experience)
     const templateData = {
       name: resumeData.name || '',
       phone: resumeData.contact.phonenumber || '',
