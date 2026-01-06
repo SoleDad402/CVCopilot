@@ -16,18 +16,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Switch,
-  FormControlLabel,
-  Slider,
-  RadioGroup,
-  Radio,
   Divider,
-  Collapse,
-  Tooltip,
-  Avatar,
-  Menu,
-  Breadcrumbs,
-  Link,
   Tabs,
   Tab,
   Accordion,
@@ -39,9 +28,6 @@ import {
 import {
   Description as DocIcon,
   PictureAsPdf as PdfIcon,
-  History as HistoryIcon,
-  Add as AddIcon,
-  AccountCircle as AccountIcon,
   ExpandMore as ExpandMoreIcon,
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
@@ -61,7 +47,7 @@ import {
   Info as InfoIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { resumeService, pollJobStatus, historyService } from '../services/api';
+import { resumeService, pollJobStatus } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
@@ -78,8 +64,6 @@ function Home() {
   const [companyName, setCompanyName] = useState('');
   const [role, setRole] = useState('');
   const [jobDescription, setJobDescription] = useState('');
-  const [baselineResume, setBaselineResume] = useState('');
-  const [lockBaseline, setLockBaseline] = useState(false);
   
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
@@ -96,42 +80,16 @@ function Home() {
   
   // UI state
   const [activeSection, setActiveSection] = useState('jd');
-  const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false);
   const [revisionDrawerOpen, setRevisionDrawerOpen] = useState(false);
   const [evidenceMode, setEvidenceMode] = useState(false);
   const [atsView, setAtsView] = useState(false);
-  const [highlightChanges, setHighlightChanges] = useState(false);
   const [zoom, setZoom] = useState(100);
-  const [template, setTemplate] = useState('modern');
-  const [fontSize, setFontSize] = useState('medium');
-  const [pageWidth, setPageWidth] = useState('letter');
   
-  // Targeting controls
-  const [seniority, setSeniority] = useState('senior');
-  const [roleFocus, setRoleFocus] = useState('backend');
-  const [emphasis, setEmphasis] = useState({
-    reliability: 2,
-    scalability: 2,
-    domain: 1,
-    leadership: 1,
-    delivery: 2
-  });
-  const [constraints, setConstraints] = useState({
-    noMetricsUnlessInNotes: true,
-    onlyEvidencedSkills: true,
-    avoidBannedPhrases: true
-  });
   
   // Revision state
   const [revisionRequest, setRevisionRequest] = useState('');
   const [revisionScope, setRevisionScope] = useState('full');
   
-  // History state
-  const [historyItems, setHistoryItems] = useState([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  
-  // Menu state
-  const [anchorEl, setAnchorEl] = useState(null);
   
   // Auto-save state
   const [saveStatus, setSaveStatus] = useState('saved');
@@ -162,7 +120,7 @@ function Home() {
     if (companyName || role || jobDescription) {
       setSaveStatus('saving');
       autoSaveTimer.current = setTimeout(() => {
-        const data = { companyName, role, jobDescription, baselineResume };
+        const data = { companyName, role, jobDescription };
         localStorage.setItem('resumeWorkspace', JSON.stringify(data));
         setSaveStatus('saved');
       }, 1000);
@@ -184,7 +142,6 @@ function Home() {
         if (data.companyName) setCompanyName(data.companyName);
         if (data.role) setRole(data.role);
         if (data.jobDescription) setJobDescription(data.jobDescription);
-        if (data.baselineResume) setBaselineResume(data.baselineResume);
       } catch (e) {
         console.error('Failed to load saved workspace:', e);
       }
@@ -302,25 +259,6 @@ function Home() {
     }
   };
 
-  const handleLoadHistory = async () => {
-    setHistoryLoading(true);
-    try {
-      const { data } = await historyService.getHistory();
-      const allItems = Object.values(data.history || {}).flat();
-      setHistoryItems(allItems);
-    } catch (e) {
-      console.error('Failed to load history:', e);
-    } finally {
-      setHistoryLoading(false);
-    }
-  };
-
-  const handleLoadFromHistory = (item) => {
-    setCompanyName(item.company_name || '');
-    setRole(item.role || '');
-    // Load the resume data if available
-    setHistoryDrawerOpen(false);
-  };
 
   const handleDownload = async (format) => {
     if (format === 'pdf' && pdfContent) {
@@ -370,26 +308,9 @@ function Home() {
           zIndex: 1100
         }}
       >
-        <Box sx={{ px: 3, py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {/* Left: Breadcrumb */}
-          <Breadcrumbs separator={<ChevronRightIcon fontSize="small" />} sx={{ flex: 1 }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
-              Resume Generator
-            </Typography>
-            {companyName && (
-              <Typography variant="body2" color="text.secondary">
-                {companyName}
-              </Typography>
-            )}
-            {role && (
-              <Typography variant="body2" color="text.secondary">
-                {role}
-              </Typography>
-            )}
-          </Breadcrumbs>
-
+        <Box sx={{ px: 3, py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {/* Center: Status */}
-          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {isGenerating ? (
               <Chip 
                 icon={<CircularProgress size={16} />} 
@@ -413,58 +334,6 @@ function Home() {
               />
             )}
           </Box>
-
-          {/* Right: Actions */}
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<HistoryIcon />}
-              onClick={() => {
-                handleLoadHistory();
-                setHistoryDrawerOpen(true);
-              }}
-              sx={{ textTransform: 'none' }}
-            >
-              History
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={() => {
-                setCompanyName('');
-                setRole('');
-                setJobDescription('');
-                setGeneratedResume(null);
-                setResumeData(null);
-              }}
-              sx={{ textTransform: 'none' }}
-            >
-              New
-            </Button>
-            <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-              <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
-                {user?.email?.[0]?.toUpperCase() || 'U'}
-              </Avatar>
-            </IconButton>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={() => setAnchorEl(null)}
-            >
-              <MenuItem onClick={() => { setAnchorEl(null); navigate('/profile'); }}>
-                <AccountIcon sx={{ mr: 1 }} /> Profile
-              </MenuItem>
-              <MenuItem onClick={() => { setAnchorEl(null); navigate('/history'); }}>
-                <HistoryIcon sx={{ mr: 1 }} /> History
-              </MenuItem>
-              <Divider />
-              <MenuItem onClick={() => { setAnchorEl(null); logout(); navigate('/login'); }}>
-                Logout
-              </MenuItem>
-            </Menu>
-          </Stack>
         </Box>
       </Paper>
 
@@ -485,38 +354,6 @@ function Home() {
         >
           <Box sx={{ p: 3, overflowY: 'auto', flex: 1 }}>
             <Stack spacing={3}>
-              {/* Section A: Baseline Resume */}
-              <Accordion defaultExpanded={false} elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600, textTransform: 'uppercase', fontSize: 12, letterSpacing: 0.5 }}>
-                    A. Baseline Resume
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Stack spacing={2}>
-                    <TextField
-                      value={baselineResume}
-                      onChange={(e) => setBaselineResume(e.target.value)}
-                      placeholder="Paste your current resume text here..."
-                      multiline
-                      rows={6}
-                      fullWidth
-                      size="small"
-                    />
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={lockBaseline}
-                          onChange={(e) => setLockBaseline(e.target.checked)}
-                          size="small"
-                        />
-                      }
-                      label="Lock facts to baseline (prevents invented employers/dates/tools)"
-                    />
-                  </Stack>
-                </AccordionDetails>
-              </Accordion>
-
               {/* Section B: Job Description */}
               <Accordion defaultExpanded={true} elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -582,90 +419,6 @@ function Home() {
                 </AccordionDetails>
               </Accordion>
 
-              {/* Section C: Targeting Controls */}
-              <Accordion defaultExpanded={false} elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600, textTransform: 'uppercase', fontSize: 12, letterSpacing: 0.5 }}>
-                    C. Targeting Controls
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Stack spacing={3}>
-                    <FormControl fullWidth size="small">
-                      <InputLabel>Seniority</InputLabel>
-                      <Select value={seniority} onChange={(e) => setSeniority(e.target.value)} label="Seniority">
-                        <MenuItem value="mid">Mid</MenuItem>
-                        <MenuItem value="senior">Senior</MenuItem>
-                        <MenuItem value="staff">Staff</MenuItem>
-                      </Select>
-                    </FormControl>
-
-                    <FormControl>
-                      <Typography variant="caption" sx={{ mb: 1, fontWeight: 600 }}>Role Focus</Typography>
-                      <RadioGroup value={roleFocus} onChange={(e) => setRoleFocus(e.target.value)}>
-                        <FormControlLabel value="backend" control={<Radio size="small" />} label="Backend" />
-                        <FormControlLabel value="fullstack" control={<Radio size="small" />} label="Full Stack" />
-                        <FormControlLabel value="platform" control={<Radio size="small" />} label="Platform" />
-                      </RadioGroup>
-                    </FormControl>
-
-                    <Box>
-                      <Typography variant="caption" sx={{ mb: 1, fontWeight: 600, display: 'block' }}>Emphasis (0-3)</Typography>
-                      {Object.keys(emphasis).map((key) => (
-                        <Box key={key} sx={{ mb: 2 }}>
-                          <Typography variant="caption" sx={{ textTransform: 'capitalize' }}>{key}</Typography>
-                          <Slider
-                            value={emphasis[key]}
-                            onChange={(e, val) => setEmphasis({ ...emphasis, [key]: val })}
-                            min={0}
-                            max={3}
-                            step={1}
-                            marks
-                            size="small"
-                          />
-                        </Box>
-                      ))}
-                    </Box>
-
-                    <Box>
-                      <Typography variant="caption" sx={{ mb: 1, fontWeight: 600, display: 'block' }}>Constraints</Typography>
-                      <Stack spacing={1}>
-                        <FormControlLabel
-                          control={
-                            <Switch
-                              checked={constraints.noMetricsUnlessInNotes}
-                              onChange={(e) => setConstraints({ ...constraints, noMetricsUnlessInNotes: e.target.checked })}
-                              size="small"
-                            />
-                          }
-                          label="No metrics unless in notes"
-                        />
-                        <FormControlLabel
-                          control={
-                            <Switch
-                              checked={constraints.onlyEvidencedSkills}
-                              onChange={(e) => setConstraints({ ...constraints, onlyEvidencedSkills: e.target.checked })}
-                              size="small"
-                            />
-                          }
-                          label="Only include skills evidenced in experience"
-                        />
-                        <FormControlLabel
-                          control={
-                            <Switch
-                              checked={constraints.avoidBannedPhrases}
-                              onChange={(e) => setConstraints({ ...constraints, avoidBannedPhrases: e.target.checked })}
-                              size="small"
-                            />
-                          }
-                          label="Avoid banned phrases"
-                        />
-                      </Stack>
-                    </Box>
-                  </Stack>
-                </AccordionDetails>
-              </Accordion>
-
               {/* Section D: Generate */}
               <Box>
                 <Button
@@ -701,76 +454,12 @@ function Home() {
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: '#F6F7FB' }}>
           {generatedResume ? (
             <>
-              {/* Preview Toolbar */}
-              <Paper
-                elevation={0}
-                sx={{
-                  borderBottom: '1px solid',
-                  borderColor: 'divider',
-                  p: 1.5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 2
-                }}
-              >
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <FormControl size="small" sx={{ minWidth: 120 }}>
-                    <Select value={template} onChange={(e) => setTemplate(e.target.value)} size="small">
-                      <MenuItem value="modern">Modern</MenuItem>
-                      <MenuItem value="classic">Classic</MenuItem>
-                      <MenuItem value="ats">ATS Minimal</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <FormControl size="small" sx={{ minWidth: 100 }}>
-                    <Select value={fontSize} onChange={(e) => setFontSize(e.target.value)} size="small">
-                      <MenuItem value="small">Small</MenuItem>
-                      <MenuItem value="medium">Medium</MenuItem>
-                      <MenuItem value="large">Large</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <FormControl size="small" sx={{ minWidth: 100 }}>
-                    <Select value={pageWidth} onChange={(e) => setPageWidth(e.target.value)} size="small">
-                      <MenuItem value="letter">Letter</MenuItem>
-                      <MenuItem value="a4">A4</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <Divider orientation="vertical" flexItem />
-                  <Tooltip title="Highlight changes">
-                    <IconButton size="small" onClick={() => setHighlightChanges(!highlightChanges)}>
-                      {highlightChanges ? <VisibilityIcon /> : <VisibilityOffIcon />}
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="ATS view">
-                    <IconButton size="small" onClick={() => setAtsView(!atsView)}>
-                      {atsView ? <VisibilityIcon /> : <VisibilityOffIcon />}
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Evidence mode">
-                    <IconButton size="small" onClick={() => setEvidenceMode(!evidenceMode)} color={evidenceMode ? 'primary' : 'default'}>
-                      <InfoIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Divider orientation="vertical" flexItem />
-                  <IconButton size="small" onClick={() => setZoom(Math.max(50, zoom - 10))}>
-                    <ZoomOutIcon />
-                  </IconButton>
-                  <Typography variant="body2" sx={{ minWidth: 50, textAlign: 'center' }}>{zoom}%</Typography>
-                  <IconButton size="small" onClick={() => setZoom(Math.min(200, zoom + 10))}>
-                    <ZoomInIcon />
-                  </IconButton>
-                </Stack>
-                <IconButton size="small" onClick={() => setRevisionDrawerOpen(true)}>
-                  <EditIcon />
-                </IconButton>
-              </Paper>
-
               {/* Preview Body */}
-              <Box sx={{ flex: 1, overflow: 'auto', p: 3, display: 'flex', justifyContent: 'center' }}>
+              <Box sx={{ flex: 1, overflow: 'auto', p: 3, display: 'flex', justifyContent: 'center', position: 'relative' }}>
                 <Paper
                   elevation={3}
                   sx={{
-                    width: pageWidth === 'letter' ? '8.5in' : '210mm',
+                    width: '8.5in',
                     minHeight: '11in',
                     bgcolor: 'white',
                     p: 4,
@@ -784,7 +473,7 @@ function Home() {
                     <pre style={{ 
                       fontFamily: 'monospace', 
                       whiteSpace: 'pre-wrap',
-                      fontSize: fontSize === 'small' ? '12px' : fontSize === 'large' ? '16px' : '14px',
+                      fontSize: '14px',
                       margin: 0
                     }}>
                       {generatedResume.replace(/\*\*/g, '')}
@@ -795,7 +484,7 @@ function Home() {
                     <pre style={{ 
                       fontFamily: 'inherit', 
                       whiteSpace: 'pre-wrap',
-                      fontSize: fontSize === 'small' ? '12px' : fontSize === 'large' ? '16px' : '14px',
+                      fontSize: '14px',
                       margin: 0
                     }}>
                       {generatedResume}
@@ -882,6 +571,15 @@ function Home() {
                   >
                     PDF
                   </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<EditIcon />}
+                    onClick={() => setRevisionDrawerOpen(true)}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    Revise
+                  </Button>
                 </Stack>
               </Paper>
             </>
@@ -899,52 +597,6 @@ function Home() {
           )}
         </Box>
       </Box>
-
-      {/* History Drawer */}
-      <Drawer
-        anchor="right"
-        open={historyDrawerOpen}
-        onClose={() => setHistoryDrawerOpen(false)}
-        PaperProps={{ sx: { width: { xs: '100%', sm: 480 } } }}
-      >
-        <Box sx={{ p: 3 }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-            <Typography variant="h6">Resume History</Typography>
-            <IconButton onClick={() => setHistoryDrawerOpen(false)}>
-              <CloseIcon />
-            </IconButton>
-          </Stack>
-          {historyLoading ? (
-            <CircularProgress />
-          ) : (
-            <Stack spacing={1}>
-              {historyItems.map((item) => (
-                <Paper
-                  key={item.id}
-                  sx={{
-                    p: 2,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    cursor: 'pointer',
-                    '&:hover': { bgcolor: 'action.hover' }
-                  }}
-                  onClick={() => handleLoadFromHistory(item)}
-                >
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                    {item.company_name || 'Company'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {item.role || 'Role'}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {item.created_at ? new Date(item.created_at).toLocaleDateString() : ''}
-                  </Typography>
-                </Paper>
-              ))}
-            </Stack>
-          )}
-        </Box>
-      </Drawer>
 
       {/* Revision Drawer */}
       <Drawer
