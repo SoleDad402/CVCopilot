@@ -85,15 +85,19 @@ ${historyText}
 
 ${educationText ? `\nEducation:\n${educationText}` : ''}
 
-Writing standard (make it stand out, but stay credible):
+Writing standard (make it stand out):
 - Write like a strong senior candidate who ships, owns outcomes, and communicates clearly. No hype.
 - Every bullet must be specific: what you did + why it mattered + how you did it + outcome.
 - Prefer real details from Notes. Do NOT invent employers, titles, dates, locations.
+- IMPORTANT: Never output meta-commentary like "NOTE GAP", "missing notes", "unable to claim", or warnings. Output only resume content.
 - KEYWORD VISIBILITY (non-negotiable):
-  - Recent 1-2 roles must has got all must have skills in job description.
-  - Experience roles should contain 80%+ of must have skills and nice to have skills in job description.
+  - Coverage requirement (strict, but keep it natural):
+    - Across the first 1–2 experience entries, the bullets MUST collectively include at least 80% of the job description’s must-have skills.
+    - Spread the must-have skills across multiple bullets; do NOT cram many skills into one bullet.
+    - Mention each must-have skill in context of real work (what/why/how/outcome) — no standalone keyword bullets.
+    - Use skills that are supported by the role’s Matched Skills and/or Notes whenever possible; do not invent obviously unrelated tech for a role.
   - Experience bullets must contain role-relevant technical keywords a hiring manager expects to see.
-  - For each role, bold 1–2 concrete technical anchors using **bold** (tools, languages, systems, APIs, databases, pipelines, testing, observability, security).
+  - For each bullet, bold 1–2 concrete technical anchors using **bold** (tools, languages, systems, APIs, databases, pipelines, testing, observability, security).
   - Prefer bolding terms that appear in that job’s \"Matched Skills\" line; otherwise use terms explicitly present in that job’s Notes.
   - Do NOT add parenthetical tags like \"(target role alignment)\" anywhere.
 - Metrics:
@@ -115,9 +119,9 @@ Structure requirements:
   - Include 2-3 **bold** keywords naturally.
 - Experience: include 6+ bullets per role. Bullets should read like top-tier interview stories. Make the technical keywords and notable project names or tools bold.
 - Experience bolding rules (strict):
+  - Each bullet MUST include at least one **bold** technical keyword (ideally 2).
   - Each role MUST contain at least 5 distinct **bold** technical keywords across its bullets (avoid repeating the same one every time).
-- Ideally the whole experience roles should contain all must have skills and nice to have skills in job description.
-- For the first two experience entries, include 1 bullet that reads like a standout project highlight aligned to the JD (still credible).
+- For the first two experience entries, include 1 bullet that reads like a standout project highlight aligned to the JD.
 ${voiceGuidance}
 
 Return a JSON object with this exact structure:

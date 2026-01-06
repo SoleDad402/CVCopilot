@@ -477,7 +477,10 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
       location: job.location,
       startDate: job.start_date,
       endDate: job.is_current ? 'Present' : job.end_date,
-      notes: job.description ? [job.description] : []
+      notes: (job.description || '')
+        .split(/\r?\n|•|\u2022/)
+        .map(s => s.trim())
+        .filter(Boolean)
     }));
 
     // Convert education to pipeline format
