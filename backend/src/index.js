@@ -431,9 +431,9 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
     const employmentHistory = await User.getEmploymentHistory(user.id);
     const education = await User.getEducation(user.id);
 
-    // Use user's saved OpenAI settings or fallback to defaults
-    const selectedModel = user.openai_model || "gpt-4.1-2025-04-14";
-    const maxTokens = user.max_tokens || 30000;
+    // Use hardcoded GPT-5.2 model for better performance
+    const selectedModel = "gpt-5.2";
+    const maxCompletionTokens = 30000;
 
     // Format employment history for the prompt
     const formattedHistory = employmentHistory.map(job => `
@@ -582,11 +582,10 @@ If ${user.github_url} is empty or not applicable, include it as an empty string 
 
 `;
 
-console.log(selectedModel, maxTokens)
+console.log(selectedModel, maxCompletionTokens)
 
-    const modelId = selectedModel || 'gpt-4o';
     const openaiResponse = await openai.chat.completions.create({
-      model: modelId,
+      model: selectedModel,
       messages: [
         {
           role: 'system',
@@ -597,7 +596,7 @@ console.log(selectedModel, maxTokens)
           content: prompt
         }
       ],
-      max_tokens: maxTokens,
+      max_completion_tokens: maxCompletionTokens,
       temperature: 0.5,
       response_format: { type: 'json_object' }
     });
@@ -1283,9 +1282,9 @@ app.post('/api/ask-question', auth, async (req, res) => {
     // Clean the job description to remove emoticons and special characters
     const cleanedJobDescription = cleanJobDescription(jobDescription);
 
-    const user = await User.findByEmail(req.user.email);
-    const selectedModel = user.openai_model || "gpt-4.1-2025-04-14";
-    const maxTokens = user.max_tokens || 512; // Default max_tokens for Q&A can be smaller
+    // Use hardcoded GPT-5.2 model for better performance
+    const selectedModel = "gpt-5.2";
+    const maxCompletionTokens = 2000; // Smaller for Q&A responses
 
     // If resume is provided, summarize it for the prompt
     let resumeSummary = '';
@@ -1332,9 +1331,8 @@ Question: ${question}
 Answer (in a friendly, simple, native American English style):
 `;
 
-    const modelId = user.openai_model || 'gpt-4o';
     const openaiResponse = await openai.chat.completions.create({
-      model: modelId,
+      model: selectedModel,
       messages: [
         {
           role: 'system',
@@ -1345,7 +1343,7 @@ Answer (in a friendly, simple, native American English style):
           content: prompt
         }
       ],
-      max_tokens: maxTokens,
+      max_completion_tokens: maxCompletionTokens,
       temperature: 0.7
     });
     
