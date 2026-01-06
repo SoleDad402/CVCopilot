@@ -18,12 +18,16 @@ async function generatePlan({ jdAnalysis, scoredHistory, voiceSamples, options, 
   const historyText = scoredHistory
     .slice(0, 10) // Limit to top 10 matches
     .map(({ job, matchScore, matchedSkills }) => {
-      const notes = (job.notes || []).join('\n  - ');
+      const notesArr = Array.isArray(job.notes) ? job.notes : [];
+      const notes = notesArr.length
+        ? notesArr.map((n, idx) => `[N${idx + 1}] ${n}`).join('\n  - ')
+        : '';
       const matched = (matchedSkills || []).slice(0, 12).join(', ');
       return `- ${job.title} at ${job.company}, ${job.location}
   Dates: ${job.startDate} - ${job.endDate}
   Match Score: ${(matchScore * 100).toFixed(0)}%
   Matched Skills: ${matched || 'N/A'}
+  Note IDs available for this job: ${notesArr.length ? `N1..N${notesArr.length}` : 'None'}
   Notes:
   - ${notes || 'No additional notes'}`;
     })
@@ -84,6 +88,11 @@ ${educationText ? `\nEducation:\n${educationText}` : ''}
 Writing standard (make it stand out, but stay credible):
 - Write like a strong senior candidate who ships, owns outcomes, and communicates clearly. No hype.
 - Every bullet must be specific: what you did + why it mattered + how you did it + outcome.
+- TRACEABILITY (non-negotiable):
+  - Every experience bullet MUST be grounded in the Notes for the SAME job.
+  - You must provide a parallel \"bulletSources\" array for each experience entry.
+  - \"bulletSources\" is an array of arrays, one per bullet, containing Note IDs like [1] or [1,3].
+  - If a job has no Notes, keep bullets short and conservative and set bulletSources to empty arrays ([]) for each bullet.
 - Prefer real details from Notes. Do NOT invent employers, titles, dates, locations.
 - Metrics:
   - If Notes include numbers, use them.
@@ -125,6 +134,11 @@ Return a JSON object with this exact structure:
       "bullets": [
         "Bullet with **bold** technical terms",
         ...
+      ],
+      "bulletSources": [
+        [1, 2],
+        [2],
+        ...
       ]
     }
   ],
@@ -145,24 +159,60 @@ Return a JSON object with this exact structure:
 }`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-5.2",
-      messages: [
-        {
-          role: "system",
-          content: "You are a senior technical resume writer and former hiring manager. Create standout, credible resumes: specific, outcome-focused, and easy to scan. Avoid clichés and buzzword salad. Never invent employers, titles, dates, or locations. Always return valid JSON matching the provided schema exactly."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      temperature: 0.5,
-      max_completion_tokens: 30000,
-      response_format: { type: "json_object" }
-    });
+    const callModel = async () => {
+      return openai.chat.completions.create({
+        model: "gpt-5.2",
+        messages: [
+          {
+            role: "system",
+            content: "You are a senior technical resume writer and former hiring manager. Create standout, credible resumes: specific, outcome-focused, and easy to scan. Avoid clichés and buzzword salad. Never invent employers, titles, dates, or locations. TRACEABILITY IS REQUIRED: every bullet must map to provided Note IDs. Always return valid JSON matching the provided schema exactly."
+          },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.5,
+        max_completion_tokens: 30000,
+        response_format: { type: "json_object" }
+      });
+    };
 
-    const plan = JSON.parse(completion.choices[0].message.content);
+    const validatePlan = (planObj) => {
+      if (!planObj || typeof planObj !== 'object') return false;
+      if (!Array.isArray(planObj.experience)) return false;
+
+      for (const exp of planObj.experience) {
+        if (!exp || typeof exp !== 'object') return false;
+        if (!Array.isArray(exp.bullets)) return false;
+        if (!exp.bullets.every(b => typeof b === 'string')) return false;
+        // bulletSources is required for traceability
+        if (!Array.isArray(exp.bulletSources)) return false;
+        if (exp.bulletSources.length !== exp.bullets.length) return false;
+        if (!exp.bulletSources.every(arr => Array.isArray(arr) && arr.every(n => Number.isInteger(n) && n > 0))) return false;
+      }
+      return true;
+    };
+
+    let completion = await callModel();
+    let plan = JSON.parse(completion.choices[0].message.content);
+    if (!validatePlan(plan)) {
+      // One retry with a stricter nudge
+      completion = await openai.chat.completions.create({
+        model: "gpt-5.2",
+        messages: [
+          {
+            role: "system",
+            content: "Return ONLY valid JSON. You MUST include experience[].bulletSources (array of arrays) with the same length as experience[].bullets. Every bullet must map to Note IDs."
+          },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.4,
+        max_completion_tokens: 30000,
+        response_format: { type: "json_object" }
+      });
+      plan = JSON.parse(completion.choices[0].message.content);
+      if (!validatePlan(plan)) {
+        throw new Error('Resume plan failed validation: missing or invalid bulletSources for traceability.');
+      }
+    }
     
     // Validate and normalize
     return {
