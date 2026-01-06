@@ -45,7 +45,8 @@ import {
   Save as SaveIcon,
   Edit as EditIcon,
   Info as InfoIcon,
-  QuestionAnswer as QuestionAnswerIcon
+  QuestionAnswer as QuestionAnswerIcon,
+  Clear as ClearIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { resumeService, coverLetterService, pollJobStatus } from '../services/api';
@@ -478,20 +479,38 @@ function Home() {
                       size="small"
                       helperText={`${jobDescription.length} characters`}
                     />
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={() => {
-                        // Auto-clean JD
-                        const cleaned = jobDescription
-                          .replace(/\[.*?\]/g, '')
-                          .replace(/\{.*?\}/g, '')
-                          .replace(/\n{3,}/g, '\n\n');
-                        setJobDescription(cleaned);
-                      }}
-                    >
-                      Auto-clean
-                    </Button>
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => {
+                          // Auto-clean JD
+                          const cleaned = jobDescription
+                            .replace(/\[.*?\]/g, '')
+                            .replace(/\{.*?\}/g, '')
+                            .replace(/\n{3,}/g, '\n\n');
+                          setJobDescription(cleaned);
+                        }}
+                        sx={{ flex: 1 }}
+                      >
+                        Auto-clean
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        startIcon={<ClearIcon />}
+                        onClick={() => {
+                          setJobDescription('');
+                          setCompanyName('');
+                          setRole('');
+                        }}
+                        disabled={!jobDescription.trim() && !companyName.trim() && !role.trim()}
+                        sx={{ flex: 1 }}
+                      >
+                        Clear All
+                      </Button>
+                    </Stack>
                     <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
                       {companyName && (
                         <Chip label={`Company: ${companyName}`} size="small" onDelete={() => setCompanyName('')} />
