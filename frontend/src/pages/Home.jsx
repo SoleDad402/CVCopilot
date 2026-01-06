@@ -131,7 +131,7 @@ function Home() {
         clearTimeout(autoSaveTimer.current);
       }
     };
-  }, [companyName, role, jobDescription, baselineResume]);
+  }, [companyName, role, jobDescription]);
 
   // Load saved workspace
   useEffect(() => {
