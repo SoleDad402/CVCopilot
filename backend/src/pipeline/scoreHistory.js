@@ -39,31 +39,54 @@ async function scoreHistory(employmentHistory, jdAnalysis) {
     return found;
   };
 
+  // Find JD skills explicitly mentioned in job text (notes/title/company)
+  const matchJdSkillsInText = (text, skills) => {
+    if (!text || !skills || !Array.isArray(skills)) return [];
+    const haystack = ` ${text.toLowerCase()} `;
+    const matches = [];
+    for (const s of skills) {
+      if (!s || typeof s !== 'string') continue;
+      const needle = s.toLowerCase().trim();
+      if (!needle) continue;
+      // Simple boundary-ish match to reduce substring false positives
+      const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, 'i');
+      if (re.test(haystack)) matches.push(s);
+    }
+    return matches;
+  };
+
   // Score a job against JD requirements
   const scoreJob = (job, jdAnalysis) => {
-    const jobSkills = extractSkillsFromNotes(job.notes || []);
-    const allRequiredSkills = [...jdAnalysis.mustHaveSkills, ...jdAnalysis.niceToHaveSkills];
+    const allRequiredSkills = [...jdAnalysis.mustHaveSkills, ...jdAnalysis.niceToHaveSkills].filter(Boolean);
+    const jobText = `${job.title || ''} ${job.company || ''} ${(job.notes || []).join(' ')}`;
+
+    // Skills explicitly present in notes/title/company
+    const explicitJdMatches = matchJdSkillsInText(jobText, allRequiredSkills);
+
+    // Also capture common tech terms from notes for extra signal
+    const keywordSkills = extractSkillsFromNotes(job.notes || []);
     
     // Calculate match score
-    let matchedSkills = [];
-    let matchCount = 0;
-    
-    jobSkills.forEach(skill => {
-      const normalizedSkill = skill.toLowerCase();
-      const matches = allRequiredSkills.filter(reqSkill => 
-        reqSkill.toLowerCase().includes(normalizedSkill) || 
-        normalizedSkill.includes(reqSkill.toLowerCase())
-      );
-      if (matches.length > 0) {
-        matchedSkills.push(...matches);
-        matchCount++;
-      }
-    });
+    const matchedSkills = [...new Set(explicitJdMatches)];
+    let matchCount = matchedSkills.length;
+
+    // Small bonus when keywordSkills indicate relevant environment even if JD wording differs
+    if (keywordSkills.length > 0 && allRequiredSkills.length > 0) {
+      // e.g., if JD says "Node" but notes say "Node.js" or similar – keep lightweight
+      const normalizedReq = allRequiredSkills.map(s => s.toLowerCase());
+      keywordSkills.forEach(k => {
+        const kk = k.toLowerCase();
+        if (normalizedReq.some(r => r.includes(kk) || kk.includes(r))) {
+          matchCount += 0.25;
+        }
+      });
+    }
 
     // Also check job title and company for domain keywords
-    const jobText = `${job.title} ${job.company} ${(job.notes || []).join(' ')}`.toLowerCase();
+    const jobTextLower = jobText.toLowerCase();
     jdAnalysis.domainKeywords.forEach(keyword => {
-      if (jobText.includes(keyword.toLowerCase())) {
+      if (keyword && jobTextLower.includes(String(keyword).toLowerCase())) {
         matchCount += 0.5;
       }
     });
@@ -74,7 +97,7 @@ async function scoreHistory(employmentHistory, jdAnalysis) {
 
     return {
       matchScore,
-      matchedSkills: [...new Set(matchedSkills)] // Remove duplicates
+      matchedSkills // already deduped
     };
   };
 
