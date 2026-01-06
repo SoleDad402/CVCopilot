@@ -205,16 +205,37 @@ Return a JSON object with this exact structure:
       return true;
     };
 
+    const mustHaveCoverageOk = (planObj) => {
+      const must = (jdAnalysis.mustHaveSkills || []).filter(s => typeof s === 'string' && s.trim());
+      if (must.length === 0) return true;
+      const exp = Array.isArray(planObj?.experience) ? planObj.experience : [];
+      const firstN = exp.slice(0, 2);
+      const text = firstN
+        .map(e => Array.isArray(e?.bullets) ? e.bullets.join(' ') : '')
+        .join(' ')
+        .toLowerCase();
+
+      const mentioned = must.filter((skill) => {
+        const needle = skill.toLowerCase().trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // boundary-ish match
+        const re = new RegExp(`(^|[^a-z0-9])${needle}([^a-z0-9]|$)`, 'i');
+        return re.test(text);
+      });
+
+      const ratio = mentioned.length / must.length;
+      return ratio >= 0.8;
+    };
+
     let completion = await callModel();
     let plan = JSON.parse(completion.choices[0].message.content);
-    if (!validatePlan(plan)) {
+    if (!validatePlan(plan) || !mustHaveCoverageOk(plan)) {
       // One retry with a stricter nudge
       completion = await openai.chat.completions.create({
         model: "gpt-5.2",
         messages: [
           {
             role: "system",
-            content: "Return ONLY valid JSON. You MUST include experience[].bulletSources (array of arrays) with the same length as experience[].bullets. Every bullet must map to Note IDs."
+            content: "Return ONLY valid JSON. You MUST include experience[].bulletSources (array of arrays) with the same length as experience[].bullets. Every bullet must map to Note IDs. Across the first 1–2 experience entries, ensure at least 80% of JD must-have skills are mentioned naturally within bullets (no stuffing)."
           },
           { role: "user", content: prompt }
         ],
@@ -225,6 +246,9 @@ Return a JSON object with this exact structure:
       plan = JSON.parse(completion.choices[0].message.content);
       if (!validatePlan(plan)) {
         throw new Error('Resume plan failed validation: missing or invalid bulletSources for traceability.');
+      }
+      if (!mustHaveCoverageOk(plan)) {
+        throw new Error('Resume plan failed validation: JD must-have skills were not sufficiently reflected in the first 1–2 experience entries.');
       }
     }
     
