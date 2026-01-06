@@ -69,6 +69,94 @@ const formatDate = (dateString) => {
   }
 };
 
+// Helper function to get date range for filtering
+const getDateRange = (filterType) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  switch (filterType) {
+    case 'today':
+      return {
+        start: new Date(today),
+        end: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1)
+      };
+    case 'this-week':
+      const dayOfWeek = today.getDay();
+      const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+      const monday = new Date(today.setDate(diff));
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      sunday.setHours(23, 59, 59, 999);
+      return { start: monday, end: sunday };
+    case 'this-month':
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      lastDay.setHours(23, 59, 59, 999);
+      return { start: firstDay, end: lastDay };
+    case 'last-7-days':
+      const sevenDaysAgo = new Date(today);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      return { start: sevenDaysAgo, end: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1) };
+    case 'last-30-days':
+      const thirtyDaysAgo = new Date(today);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      return { start: thirtyDaysAgo, end: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1) };
+    default:
+      return null;
+  }
+};
+
+// Helper function to check if date is in range
+const isDateInRange = (dateString, range) => {
+  if (!range || !dateString) return true;
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return false;
+  return date >= range.start && date <= range.end;
+};
+
+// Group by month
+const groupByMonth = (groupedByDay) => {
+  const monthGroups = {};
+  const undated = [];
+  
+  Object.entries(groupedByDay).forEach(([date, items]) => {
+    if (!date || date === 'undefined' || date === 'null') {
+      undated.push(...items);
+      return;
+    }
+    
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      undated.push(...items);
+      return;
+    }
+    
+    const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+    const monthLabel = dateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    
+    if (!monthGroups[monthKey]) {
+      monthGroups[monthKey] = {
+        label: monthLabel,
+        items: [],
+        count: 0
+      };
+    }
+    
+    monthGroups[monthKey].items.push(...items);
+    monthGroups[monthKey].count += items.length;
+  });
+  
+  if (undated.length > 0) {
+    monthGroups['undated'] = {
+      label: 'Undated',
+      items: undated,
+      count: undated.length
+    };
+  }
+  
+  return monthGroups;
+};
+
 // Helper function to get week range
 const getWeekRange = (dateString) => {
   if (!dateString) return { start: 'Unknown', end: 'Unknown', key: 'undated' };
@@ -135,6 +223,10 @@ export default function History() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('date-desc'); // 'date-desc', 'date-asc', 'company-asc', 'company-desc'
   const [filterBy, setFilterBy] = useState('all'); // 'all', 'has-docx', 'has-pdf'
+  const [dateFilter, setDateFilter] = useState('all'); // 'all', 'today', 'this-week', 'this-month', 'last-7-days', 'last-30-days', 'custom'
+  const [customDateStart, setCustomDateStart] = useState('');
+  const [customDateEnd, setCustomDateEnd] = useState('');
+  const [groupBy, setGroupBy] = useState('date'); // 'date', 'week', 'month'
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [openMenuAnchor, setOpenMenuAnchor] = useState(null);
@@ -174,6 +266,35 @@ export default function History() {
   // Filter and sort items
   const processedGroups = useMemo(() => {
     let processed = { ...grouped };
+    
+    // Apply date filter
+    if (dateFilter !== 'all') {
+      let dateRange = null;
+      if (dateFilter === 'custom') {
+        if (customDateStart && customDateEnd) {
+          dateRange = {
+            start: new Date(customDateStart),
+            end: new Date(customDateEnd)
+          };
+          dateRange.end.setHours(23, 59, 59, 999);
+        }
+      } else {
+        dateRange = getDateRange(dateFilter);
+      }
+      
+      if (dateRange) {
+        processed = Object.entries(processed).reduce((acc, [date, items]) => {
+          const filtered = items.filter(item => {
+            const itemDate = item.created_at || date;
+            return isDateInRange(itemDate, dateRange);
+          });
+          if (filtered.length > 0) {
+            acc[date] = filtered;
+          }
+          return acc;
+        }, {});
+      }
+    }
     
     // Apply search filter
     if (searchQuery) {
@@ -226,9 +347,20 @@ export default function History() {
     });
     
     return processed;
-  }, [grouped, searchQuery, filterBy, sortBy]);
+  }, [grouped, searchQuery, filterBy, sortBy, dateFilter, customDateStart, customDateEnd]);
 
-  const weekGroups = viewMode === 1 ? groupByWeek(processedGroups) : null;
+  // Group data based on groupBy setting
+  const groupedData = useMemo(() => {
+    if (groupBy === 'week') {
+      return groupByWeek(processedGroups);
+    } else if (groupBy === 'month') {
+      return groupByMonth(processedGroups);
+    }
+    return processedGroups;
+  }, [processedGroups, groupBy]);
+
+  const weekGroups = viewMode === 1 ? groupedData : null;
+  const monthGroups = groupBy === 'month' ? groupedData : null;
 
   const handleKebabClick = (event, item) => {
     setAnchorEl(event.currentTarget);
@@ -467,12 +599,55 @@ export default function History() {
               sx={{ flexGrow: 1, maxWidth: { xs: '100%', md: 400 } }}
             />
 
-            {/* Filter */}
+            {/* Date Filter */}
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Date Range</InputLabel>
+              <Select
+                value={dateFilter}
+                label="Date Range"
+                onChange={(e) => setDateFilter(e.target.value)}
+              >
+                <MenuItem value="all">All Time</MenuItem>
+                <MenuItem value="today">Today</MenuItem>
+                <MenuItem value="this-week">This Week</MenuItem>
+                <MenuItem value="this-month">This Month</MenuItem>
+                <MenuItem value="last-7-days">Last 7 Days</MenuItem>
+                <MenuItem value="last-30-days">Last 30 Days</MenuItem>
+                <MenuItem value="custom">Custom Range</MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* Custom Date Range */}
+            {dateFilter === 'custom' && (
+              <Stack direction="row" spacing={1} alignItems="center">
+                <TextField
+                  size="small"
+                  type="date"
+                  label="Start Date"
+                  value={customDateStart}
+                  onChange={(e) => setCustomDateStart(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ width: 150 }}
+                />
+                <Typography variant="body2" color="text.secondary">to</Typography>
+                <TextField
+                  size="small"
+                  type="date"
+                  label="End Date"
+                  value={customDateEnd}
+                  onChange={(e) => setCustomDateEnd(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ width: 150 }}
+                />
+              </Stack>
+            )}
+
+            {/* File Type Filter */}
             <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>Filter</InputLabel>
+              <InputLabel>File Type</InputLabel>
               <Select
                 value={filterBy}
-                label="Filter"
+                label="File Type"
                 onChange={(e) => setFilterBy(e.target.value)}
                 startAdornment={<FilterIcon sx={{ mr: 1, fontSize: 18, color: 'text.secondary' }} />}
               >
@@ -498,25 +673,28 @@ export default function History() {
               </Select>
             </FormControl>
 
-            {/* View Toggle */}
-            <Stack direction="row" spacing={1}>
-              <Button
-                variant={viewMode === 0 ? 'contained' : 'outlined'}
-                size="small"
-                onClick={() => setViewMode(0)}
-                sx={{ textTransform: 'none', minWidth: 80 }}
+            {/* Group By */}
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel>Group By</InputLabel>
+              <Select
+                value={groupBy}
+                label="Group By"
+                onChange={(e) => {
+                  setGroupBy(e.target.value);
+                  if (e.target.value === 'week') {
+                    setViewMode(1);
+                  } else if (e.target.value === 'month') {
+                    setViewMode(1);
+                  } else {
+                    setViewMode(0);
+                  }
+                }}
               >
-                Day
-              </Button>
-              <Button
-                variant={viewMode === 1 ? 'contained' : 'outlined'}
-                size="small"
-                onClick={() => setViewMode(1)}
-                sx={{ textTransform: 'none', minWidth: 80 }}
-              >
-                Week
-              </Button>
-            </Stack>
+                <MenuItem value="date">By Day</MenuItem>
+                <MenuItem value="week">By Week</MenuItem>
+                <MenuItem value="month">By Month</MenuItem>
+              </Select>
+            </FormControl>
 
             {/* Grid/List Toggle */}
             <Stack direction="row" spacing={0.5} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
@@ -680,9 +858,11 @@ export default function History() {
                       <Stack direction="row" spacing={2} alignItems="center">
                         <CalendarIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
                         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                          {weekData.range.start === 'Undated'
+                          {weekData.range?.start === 'Undated' || weekData.label === 'Undated'
                             ? 'Undated'
-                            : `Week of ${weekData.range.start} - ${weekData.range.end}`}
+                            : weekData.range
+                            ? `Week of ${weekData.range.start} - ${weekData.range.end}`
+                            : weekData.label || 'Week'}
                         </Typography>
                         <Chip
                           label={weekData.count}
@@ -709,6 +889,75 @@ export default function History() {
                     ) : (
                       <Stack spacing={1}>
                         {weekData.items.map((item) => (
+                          <ResumeCard
+                            key={item.id}
+                            item={item}
+                            viewType={viewType}
+                            onKebabClick={handleKebabClick}
+                            onOpenMenuClick={handleOpenMenuClick}
+                          />
+                        ))}
+                      </Stack>
+                    )}
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+          </Stack>
+        )}
+
+        {/* Month View */}
+        {!loading && groupBy === 'month' && monthGroups && Object.keys(monthGroups).length > 0 && (
+          <Stack spacing={2}>
+            {Object.entries(monthGroups)
+              .sort((a, b) => {
+                if (a[0] === 'undated') return 1;
+                if (b[0] === 'undated') return -1;
+                return b[0].localeCompare(a[0]);
+              })
+              .map(([monthKey, monthData]) => (
+                <Accordion
+                  key={monthKey}
+                  defaultExpanded={true}
+                  sx={{
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 2,
+                    boxShadow: 'none',
+                    '&:before': { display: 'none' }
+                  }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%', pr: 2 }}>
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <CalendarIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                          {monthData.label}
+                        </Typography>
+                        <Chip
+                          label={monthData.count}
+                          size="small"
+                          sx={{ bgcolor: 'grey.100', color: 'text.primary', fontWeight: 600 }}
+                        />
+                      </Stack>
+                    </Stack>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    {viewType === 'grid' ? (
+                      <Grid container spacing={2}>
+                        {monthData.items.map((item) => (
+                          <Grid item xs={12} sm={6} md={4} key={item.id}>
+                            <ResumeCard
+                              item={item}
+                              viewType={viewType}
+                              onKebabClick={handleKebabClick}
+                              onOpenMenuClick={handleOpenMenuClick}
+                            />
+                          </Grid>
+                        ))}
+                      </Grid>
+                    ) : (
+                      <Stack spacing={1}>
+                        {monthData.items.map((item) => (
                           <ResumeCard
                             key={item.id}
                             item={item}
