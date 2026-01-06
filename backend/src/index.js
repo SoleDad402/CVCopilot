@@ -633,6 +633,7 @@ console.log(selectedModel, maxCompletionTokens)
       // stream: true
     });
     
+    console.log(completion.choices[0].message.content)
     // Extract the resume content from the API response
     const generatedResume = JSON.parse(completion.choices[0].message.content);
     
@@ -665,7 +666,6 @@ console.log(selectedModel, maxCompletionTokens)
       linebreaks: true,
     });
 
-    console.log(resumeData.experience)
     const templateData = {
       name: resumeData.name || '',
       phone: resumeData.contact.phonenumber || '',
