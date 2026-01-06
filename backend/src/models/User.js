@@ -444,12 +444,16 @@ class User {
   static async addResumeRequest(userId, requestData) {
     const { company_name, role, job_description, docx_file, pdf_file } = requestData;
     
+    // Format date for Airtable (YYYY-MM-DD format for date fields)
+    const now = new Date();
+    const dateString = now.toISOString().split('T')[0]; // Get YYYY-MM-DD format
+    
     const fields = {
       [FIELD_NAMES.userId]: [userId], // Airtable API requires array even for single records
       'Company Name': company_name || '',
       'Role': role || '',
-      'Job Description': job_description || ''
-      // Note: 'Created At' is automatically managed by Airtable
+      'Job Description': job_description || '',
+      'Created At': dateString // Explicitly set creation date in YYYY-MM-DD format
     };
 
     // Add file attachments if provided
