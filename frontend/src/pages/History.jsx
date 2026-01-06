@@ -39,13 +39,13 @@ export default function History() {
                     <Typography variant="body2" color="text.secondary">{item.role || ''}</Typography>
                   </Box>
                   <Box>
-                    {item.docx_path && (
-                      <Link href={`file:///${item.docx_path}`} underline="hover">DOCX</Link>
+                    {item.docx_url && (
+                      <Link href={item.docx_url} target="_blank" rel="noopener noreferrer" underline="hover">DOCX</Link>
                     )}
-                    {item.pdf_path && (
+                    {item.pdf_url && (
                       <>
-                        <Typography component="span" sx={{ mx: 1 }}>|</Typography>
-                        <Link href={`file:///${item.pdf_path}`} underline="hover">PDF</Link>
+                        {item.docx_url && <Typography component="span" sx={{ mx: 1 }}>|</Typography>}
+                        <Link href={item.pdf_url} target="_blank" rel="noopener noreferrer" underline="hover">PDF</Link>
                       </>
                     )}
                   </Box>

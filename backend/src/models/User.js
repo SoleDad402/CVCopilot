@@ -492,15 +492,33 @@ class User {
       });
       
       // Transform to match expected format
-      return rows.map(row => ({
-        id: row.id,
-        company_name: row['Company Name'] || row.company_name,
-        role: row['Role'] || row.role,
-        job_description: row['Job Description'] || row.job_description,
-        docx_path: row['DOCX File'] || row.docx_path, // Will be attachment array
-        pdf_path: row['PDF File'] || row.pdf_path, // Will be attachment array
-        created_at: row['Created At'] || row.created_at
-      }));
+      // Airtable attachment fields return arrays like [{ url: '...', filename: '...' }]
+      return rows.map(row => {
+        const docxFile = row['DOCX File'] || row.docx_file;
+        const pdfFile = row['PDF File'] || row.pdf_file;
+        
+        // Extract URL from attachment array (Airtable format)
+        const getAttachmentUrl = (attachment) => {
+          if (!attachment) return null;
+          if (Array.isArray(attachment) && attachment.length > 0) {
+            return attachment[0].url || null;
+          }
+          if (typeof attachment === 'object' && attachment.url) {
+            return attachment.url;
+          }
+          return null;
+        };
+        
+        return {
+          id: row.id,
+          company_name: row['Company Name'] || row.company_name,
+          role: row['Role'] || row.role,
+          job_description: row['Job Description'] || row.job_description,
+          docx_url: getAttachmentUrl(docxFile),
+          pdf_url: getAttachmentUrl(pdfFile),
+          created_at: row['Created At'] || row.created_at
+        };
+      });
     } catch (error) {
       throw new Error(`Failed to get resume requests: ${error.message}`);
     }

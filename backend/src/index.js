@@ -598,6 +598,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
 
     // Convert DOCX buffer to PDF using Cloudmersive
     let pdfContent = null;
+    let pdfBuffer = null;
     try {
       // Write buffer to a temp file
       const tmpDocxPath = path.join(__dirname, 'tmp_input.docx');
@@ -610,13 +611,15 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
           else resolve(data);
         });
       });
-      const pdfBuffer = await convertDocxToPdf();
-      pdfContent = Buffer.from(pdfBuffer).toString('base64');
+      const pdfBufferFromApi = await convertDocxToPdf();
+      pdfBuffer = Buffer.from(pdfBufferFromApi);
+      pdfContent = pdfBuffer.toString('base64');
       // Clean up temp file
       fs.unlinkSync(tmpDocxPath);
     } catch (err) {
       console.error('Failed to convert DOCX to PDF (Cloudmersive):', err);
       pdfContent = null;
+      pdfBuffer = null;
     }
 
     // Upload files to Airtable as attachments
@@ -625,24 +628,26 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
     
     try {
       // Helper function to create Airtable attachment from buffer
+      // Files are stored persistently and served via /api/files endpoint
+      // Airtable will download and store these files when we provide the URLs
       const createAttachment = async (buffer, filename, contentType) => {
-        // For Airtable attachments, we need to upload to a publicly accessible URL
-        // For now, we'll store files temporarily and create URLs
-        // In production, you might want to use a cloud storage service (S3, Cloudinary, etc.)
-        
-        // Create a unique file ID
-        const fileId = crypto.randomBytes(16).toString('hex');
-        const tempDir = path.join(__dirname, '../temp_uploads');
-        if (!fs.existsSync(tempDir)) {
-          fs.mkdirSync(tempDir, { recursive: true });
+        // Create a unique file ID with timestamp for better organization
+        const timestamp = Date.now();
+        const fileId = crypto.randomBytes(8).toString('hex');
+        const uploadsDir = path.join(__dirname, '../uploads');
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true });
         }
         
-        const tempFilePath = path.join(tempDir, `${fileId}_${filename}`);
-        fs.writeFileSync(tempFilePath, buffer);
+        // Store file with timestamp and ID for persistence
+        const storedFilename = `${timestamp}_${fileId}_${filename}`;
+        const filePath = path.join(uploadsDir, storedFilename);
+        fs.writeFileSync(filePath, buffer);
         
-        // Create a URL that will be served by our Express server
+        // Create a publicly accessible URL
+        // Airtable will download and store this file when we provide the URL
         const baseUrl = process.env.BACKEND_URL || `http://localhost:${port}`;
-        const fileUrl = `${baseUrl}/api/files/${fileId}_${filename}`;
+        const fileUrl = `${baseUrl}/api/files/${storedFilename}`;
         
         return [{
           url: fileUrl,
@@ -659,6 +664,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
       }
 
       // Record metadata in Airtable with file attachments
+      // Airtable will automatically download and store the files from the URLs
       try {
         await User.addResumeRequest(user.id, {
           company_name: jobs.get(jobId)?.companyName || null,
@@ -667,6 +673,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
           docx_file: docxAttachment,
           pdf_file: pdfAttachment
         });
+        console.log('Resume files saved to Airtable successfully');
       } catch (metaErr) {
         console.error('Failed saving resume request metadata:', metaErr);
       }
@@ -1220,10 +1227,11 @@ app.post('/api/convert-to-pdf', auth, upload.single('docx'), async (req, res) =>
 });
 
 // File serving endpoint for Airtable attachments
+// This serves files from the persistent uploads directory
 app.get('/api/files/:filename', (req, res) => {
   try {
     const filename = req.params.filename;
-    const filePath = path.join(__dirname, '../temp_uploads', filename);
+    const filePath = path.join(__dirname, '../uploads', filename);
     
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: 'File not found' });
@@ -1238,7 +1246,7 @@ app.get('/api/files/:filename', (req, res) => {
     const contentType = contentTypes[ext] || 'application/octet-stream';
     
     res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename.split('_').slice(2).join('_')}"`); // Remove timestamp and ID from filename
     res.sendFile(filePath);
   } catch (error) {
     console.error('Error serving file:', error);
