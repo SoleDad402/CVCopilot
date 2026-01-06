@@ -20,6 +20,25 @@ const TABLE_NAMES = {
   requests: process.env.AIRTABLE_REQUESTS_TABLE || 'Resume Requests'
 };
 
+// Field names (can be overridden via env vars)
+const FIELD_NAMES = {
+  userId: process.env.AIRTABLE_USER_ID_FIELD || 'User',
+  email: process.env.AIRTABLE_EMAIL_FIELD || 'Email',
+  password: process.env.AIRTABLE_PASSWORD_FIELD || 'Password',
+  fullName: process.env.AIRTABLE_FULL_NAME_FIELD || 'Full Name',
+  phone: process.env.AIRTABLE_PHONE_FIELD || 'Phone',
+  personalEmail: process.env.AIRTABLE_PERSONAL_EMAIL_FIELD || 'Personal Email',
+  linkedinUrl: process.env.AIRTABLE_LINKEDIN_URL_FIELD || 'LinkedIn URL',
+  githubUrl: process.env.AIRTABLE_GITHUB_URL_FIELD || 'GitHub URL',
+  location: process.env.AIRTABLE_LOCATION_FIELD || 'Location',
+  openaiModel: process.env.AIRTABLE_OPENAI_MODEL_FIELD || 'OpenAI Model',
+  maxTokens: process.env.AIRTABLE_MAX_TOKENS_FIELD || 'Max Tokens',
+  dailyGenerationLimit: process.env.AIRTABLE_DAILY_GENERATION_LIMIT_FIELD || 'Daily Generation Limit',
+  resetToken: process.env.AIRTABLE_RESET_TOKEN_FIELD || 'Reset Token',
+  resetTokenExpires: process.env.AIRTABLE_RESET_TOKEN_EXPIRES_FIELD || 'Reset Token Expires',
+  createdAt: process.env.AIRTABLE_CREATED_AT_FIELD || 'Created At'
+};
+
 // Helper function to check if Airtable is configured
 const checkAirtableConfig = () => {
   if (!base) {
@@ -187,7 +206,7 @@ class User {
     const { company_name, location, position, start_date, end_date, is_current, description } = employmentData;
     
     const fields = {
-      'User ID': [userId], // Link field - array of record IDs
+      [FIELD_NAMES.userId]: userId, // Link field - single record ID (not multiple)
       'Company Name': company_name,
       'Location': location || '',
       'Position': position,
@@ -213,11 +232,16 @@ class User {
         .select()
         .all();
       
-      // Filter records where userId is in the User ID linked field
+      // Filter records where userId matches the User linked field
+      // Since "Allow linking to multiple records" is OFF, the field contains a single record ID (string)
       const filteredRecords = allRecords.filter(record => {
-        const userIds = record.fields['User ID'] || [];
-        // User ID field contains an array of record IDs
-        return Array.isArray(userIds) && userIds.some(id => id === userId);
+        const userField = record.fields[FIELD_NAMES.userId];
+        if (!userField) return false;
+        // Handle both single record (string) and array formats
+        if (Array.isArray(userField)) {
+          return userField.some(id => id === userId);
+        }
+        return userField === userId;
       });
       
       const rows = recordsToArray(filteredRecords);
@@ -278,7 +302,7 @@ class User {
     } = educationData;
 
     const fields = {
-      'User ID': [userId], // Link field
+      [FIELD_NAMES.userId]: userId, // Link field - single record ID (not multiple)
       'School Name': school_name,
       'Location': location || '',
       'Degree': degree,
@@ -307,7 +331,7 @@ class User {
       
       // Filter records where userId is in the User ID linked field
       const filteredRecords = allRecords.filter(record => {
-        const userIds = record.fields['User ID'] || [];
+        const userIds = record.fields[FIELD_NAMES.userId] || [];
         return Array.isArray(userIds) && userIds.some(id => id === userId);
       });
       
@@ -388,7 +412,7 @@ class User {
       // Check if record exists for today
       const existingRecords = await base(TABLE_NAMES.generations)
         .select({
-          filterByFormula: `AND({User ID} = "${userId}", {Generation Date} = "${todayCST}")`,
+          filterByFormula: `AND({${FIELD_NAMES.userId}} = "${userId}", {Generation Date} = "${todayCST}")`,
           maxRecords: 1
         })
         .firstPage();
@@ -404,7 +428,7 @@ class User {
         // Create new record
         await base(TABLE_NAMES.generations).create([{
           fields: {
-            'User ID': [userId],
+            [FIELD_NAMES.userId]: userId, // Single record ID
             'Generation Date': todayCST,
             'Count': 1
             // Note: 'Created At' is automatically managed by Airtable
@@ -421,7 +445,7 @@ class User {
     const { company_name, role, job_description, docx_file, pdf_file } = requestData;
     
     const fields = {
-      'User ID': [userId],
+      [FIELD_NAMES.userId]: userId, // Single record ID
       'Company Name': company_name || '',
       'Role': role || '',
       'Job Description': job_description || ''
@@ -454,7 +478,7 @@ class User {
       
       // Filter records where userId is in the User ID linked field
       const filteredRecords = allRecords.filter(record => {
-        const userIds = record.fields['User ID'] || [];
+        const userIds = record.fields[FIELD_NAMES.userId] || [];
         return Array.isArray(userIds) && userIds.some(id => id === userId);
       });
       
@@ -497,7 +521,9 @@ class User {
       
       const generationCounts = {};
       generationRecords.forEach(record => {
-        const userId = record.fields['User ID']?.[0];
+        const userField = record.fields[FIELD_NAMES.userId];
+        // Handle both single record (string) and array formats
+        const userId = Array.isArray(userField) ? userField[0] : userField;
         if (userId) {
           generationCounts[userId] = (generationCounts[userId] || 0) + (record.fields['Count'] || 0);
         }
@@ -518,7 +544,7 @@ class User {
     try {
       const records = await base(TABLE_NAMES.generations)
         .select({
-          filterByFormula: `AND({User ID} = "${userId}", {Generation Date} = "${todayCST}")`,
+          filterByFormula: `AND({${FIELD_NAMES.userId}} = "${userId}", {Generation Date} = "${todayCST}")`,
           maxRecords: 1
         })
         .firstPage();
@@ -622,14 +648,18 @@ class User {
     try {
       const records = await base(TABLE_NAMES.generations)
         .select({
-          sort: [{ field: 'Generation Date', direction: 'desc' }, { field: 'User ID', direction: 'asc' }]
+          sort: [{ field: 'Generation Date', direction: 'desc' }, { field: FIELD_NAMES.userId, direction: 'asc' }]
         })
         .all();
       
       const rows = recordsToArray(records);
       
       // Get user emails for each generation
-      const userIds = [...new Set(rows.map(r => r['User ID']?.[0] || r.user_id).filter(Boolean))];
+      // Handle both single record (string) and array formats
+      const userIds = [...new Set(rows.map(r => {
+        const userField = r[FIELD_NAMES.userId];
+        return Array.isArray(userField) ? userField[0] : userField;
+      }).filter(Boolean))];
       const userMap = {};
       
       for (const userId of userIds) {
@@ -641,12 +671,16 @@ class User {
         }
       }
       
-      return rows.map(row => ({
-        user_id: row['User ID']?.[0] || row.user_id,
-        email: userMap[row['User ID']?.[0] || row.user_id] || 'Unknown',
-        generation_date: row['Generation Date'] || row.generation_date,
-        count: row['Count'] || row.count
-      }));
+      return rows.map(row => {
+        const userField = row[FIELD_NAMES.userId];
+        const userId = Array.isArray(userField) ? userField[0] : userField;
+        return {
+          user_id: userId || row.user_id,
+          email: userMap[userId || row.user_id] || 'Unknown',
+          generation_date: row['Generation Date'] || row.generation_date,
+          count: row['Count'] || row.count
+        };
+      });
     } catch (error) {
       throw new Error(`Failed to get daily generations: ${error.message}`);
     }
