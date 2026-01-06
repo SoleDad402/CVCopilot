@@ -206,7 +206,7 @@ class User {
     const { company_name, location, position, start_date, end_date, is_current, description } = employmentData;
     
     const fields = {
-      [FIELD_NAMES.userId]: userId, // Link field - single record ID (not multiple)
+      [FIELD_NAMES.userId]: [userId], // Link field - Airtable API requires array even for single records
       'Company Name': company_name,
       'Location': location || '',
       'Position': position,
@@ -302,7 +302,7 @@ class User {
     } = educationData;
 
     const fields = {
-      [FIELD_NAMES.userId]: userId, // Link field - single record ID (not multiple)
+      [FIELD_NAMES.userId]: [userId], // Link field - Airtable API requires array even for single records
       'School Name': school_name,
       'Location': location || '',
       'Degree': degree,
@@ -428,7 +428,7 @@ class User {
         // Create new record
         await base(TABLE_NAMES.generations).create([{
           fields: {
-            [FIELD_NAMES.userId]: userId, // Single record ID
+            [FIELD_NAMES.userId]: [userId], // Airtable API requires array even for single records
             'Generation Date': todayCST,
             'Count': 1
             // Note: 'Created At' is automatically managed by Airtable
@@ -445,7 +445,7 @@ class User {
     const { company_name, role, job_description, docx_file, pdf_file } = requestData;
     
     const fields = {
-      [FIELD_NAMES.userId]: userId, // Single record ID
+      [FIELD_NAMES.userId]: [userId], // Airtable API requires array even for single records
       'Company Name': company_name || '',
       'Role': role || '',
       'Job Description': job_description || ''
