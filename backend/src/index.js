@@ -673,6 +673,7 @@ console.log(selectedModel, maxCompletionTokens)
 
     // Convert DOCX buffer to PDF using Cloudmersive
     let pdfBuffer = null;
+    let pdfContent = null;
     try {
       // Convert DOCX to PDF using Cloudmersive API
       const convertResult = await new Promise((resolve, reject) => {
@@ -686,9 +687,11 @@ console.log(selectedModel, maxCompletionTokens)
       });
       
       pdfBuffer = Buffer.from(convertResult, 'binary');
+      pdfContent = pdfBuffer.toString('base64');
     } catch (err) {
       console.error('Failed to convert DOCX to PDF (Cloudmersive):', err);
       pdfBuffer = null;
+      pdfContent = null;
     }
 
     // Upload files to Airtable as attachments
