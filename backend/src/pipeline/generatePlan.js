@@ -36,7 +36,7 @@ async function generatePlan({ jdAnalysis, scoredHistory, voiceSamples, options, 
       const field = edu.field_of_study || '';
       const gpa = edu.gpa ? ` (GPA: ${edu.gpa})` : '';
       return `- ${degree}${field ? ` in ${field}` : ''} from ${edu.school_name || edu.school || ''}, ${edu.location || ''}
-  Dates: ${edu.start_date || ''} - ${edu.end_date || edu.is_current ? 'Present' : ''}${gpa}`;
+  Dates: ${edu.start_date || ''} - ${edu.end_date}${gpa}`;
     })
     .join('\n\n');
 
