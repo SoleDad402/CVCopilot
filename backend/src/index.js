@@ -466,231 +466,75 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
       description: item.description || item.Description || ''
     }));
 
-    // Use hardcoded GPT-5.2 model for better performance
-    const selectedModel = "gpt-5.2";
-    const maxCompletionTokens = 30000;
-
-    // Format employment history for the prompt
-    const parseDate = (dateStr) => {
-      // Handle formats like "Oct 2022" or "2022/10"
-      if (!dateStr) return new Date(0);
-      const monthMap = { 'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6, 'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12 };
-      
-      // Try "Oct 2022" format
-      const monthYearMatch = dateStr.match(/(\w+)\s+(\d{4})/);
-      if (monthYearMatch) {
-        const month = monthMap[monthYearMatch[1]] || 1;
-        const year = parseInt(monthYearMatch[2]);
-        return new Date(year, month - 1);
-      }
-      
-      // Try "2022/10" format
-      const slashMatch = dateStr.match(/(\d{4})\/(\d{1,2})/);
-      if (slashMatch) {
-        const year = parseInt(slashMatch[1]);
-        const month = parseInt(slashMatch[2]);
-        return new Date(year, month - 1);
-      }
-      
-      return new Date(0);
-    };
+    // Convert to pipeline format
+    const { createTailoredResume } = require('./pipeline');
+    const { convertPlanToJson } = require('./pipeline/convertToJson');
     
-    const sortedHistory = [...cleanEmploymentHistory].sort((a, b) => parseDate(b.start_date) - parseDate(a.start_date));
-    
-    const formattedHistory = sortedHistory.map(job => `
-      o ${job.company_name}, ${job.location}
-        - ${job.position} (${job.start_date}–${job.is_current ? 'Present' : job.end_date})
-        ${job.description ? `- ${job.description}` : ''}
-    `).join('\n');
+    // Convert employment history to pipeline format
+    const pipelineEmploymentHistory = cleanEmploymentHistory.map(job => ({
+      title: job.position,
+      company: job.company_name,
+      location: job.location,
+      startDate: job.start_date,
+      endDate: job.is_current ? 'Present' : job.end_date,
+      notes: job.description ? [job.description] : []
+    }));
 
-    // Format education history for the prompt
-    const formattedEducation = cleanEducation.map(edu => `
-      o ${edu.school_name}, ${edu.location}
-        - ${edu.degree} in ${edu.field_of_study} (${edu.start_date}–${edu.is_current ? 'Present' : edu.end_date})
-        ${edu.gpa ? `- GPA: ${edu.gpa}` : ''}
-        ${edu.description ? `- ${edu.description}` : ''}
-    `).join('\n');
-    console.log(formattedHistory, formattedEducation)
+    // Convert education to pipeline format
+    const pipelineEducation = cleanEducation.map(edu => ({
+      school_name: edu.school_name,
+      location: edu.location,
+      degree: edu.degree,
+      field_of_study: edu.field_of_study,
+      start_date: edu.start_date,
+      end_date: edu.is_current ? 'Present' : edu.end_date,
+      gpa: edu.gpa,
+      description: edu.description
+    }));
 
-    const prompt = `Generate a resume for ${user.full_name} as a JSON object with the following structure:
-{
-  "name": "${user.full_name}",
-  "contact": {
-    "email": "${user.personal_email}",
-    "phonenumber": "${user.phone}",
-    "linkedinURL": "${user.linkedin_url}",
-    "location": "${user.location}",
-    "github": "${user.github_url}"
-  },
-  "summary": "[professional summary]",
-  "experience": [
-    {
-      "company": "[company1]",
-      "dates": "[date]",
-      "location": "[location]",
-      "position": "[Role]",
-      "bullets": [
-        "[experience sentence]",
-        "..."
-      ]
-    },
-    ...
-  ],
-  "skills": [
-    {
-      "section": "[section name]",
-      "list": ["[skill1]", "[skill2]", "..."]
-    },
-    ...
-  ],
-  "education": [
-    {
-      "school": "[Name of School]",
-      "location": "[Location]",
-      "dates": "[date]",
-      "program": "[Program]"
-    },
-    ...
-  ],
-  "certifications": [
-    {
-      "name": "[Certification1]",
-      "issued": "[date]"
-    },
-    ...
-  ]
-}
-Requirements:
-Output Format:
-Return the resume as a JSON object with the exact fields: name, contact, summary, experience, skills, education, certifications.
-
-Ensure proper JSON syntax, including correct nesting and array structures.
-
-Use the provided variables (e.g., ${user.full_name}, ${user.personal_email}) directly in the name and contact fields, as they are guaranteed to be available.
-
-Contact Information:
-Populate the contact object with:
-email: ${user.personal_email}
-phonenumber: ${user.phone}
-linkedinURL: ${user.linkedin_url}
-location: ${user.location}
-github: ${user.github_url}
-Do not modify or placeholder these fields.
-
-Professional Summary:
-Write a concise (3-4 sentences), impactful summary in the summary field.
-Make the core keywords in summary bold.
-Highlight the candidate's expertise, key technical skills, leadership, collaboration, and alignment with the job description (${cleanedJobDescription}).
-
-Avoid generic phrases; tailor to the job's technical and business requirements.
-
-Professional Experience:
-Populate the experience array using ${formattedHistory} to extract company, dates, location, and position for each role.
-
-For each experience entry, include 7-8 bullets with quantifiable achievements (e.g., "Reduced API latency by 40%," "Increased user engagement by 25%").
-
-Ensure achievements are specific, measurable, and tied to real-world projects, avoiding generic or unsupported statistics.
-Make the technical keywords and notable project names or tools bold.
-Incorporate a wide range of technologies, tools, frameworks, programming languages, cloud platforms, APIs, and development methodologies, clearly explaining their application in projects.
-
-Highlight contributions to user experience, performance optimization, security compliance, and business outcomes.
-
-Showcase leadership, collaboration, and problem-solving skills through examples of cross-functional teamwork, mentoring, or initiative-taking.
-
-For the first two companies in the experience array:
-Create a unique, realistic, and innovative project aligned with the job description (${cleanedJobDescription}).
-
-The project should be technically detailed, impactful, and demonstrate the use of relevant technologies (e.g., specific programming languages, frameworks, or cloud platforms).
-
-Include a measurable outcome in one of the bullets (e.g., "Developed a microservices platform using Kubernetes, reducing processing time by 50%").
-
-Ensure the project reflects collaboration, problem-solving, and alignment with the job's technical and business goals.
-
-Skills:
-consider a layered classification that combines these:
-Core competencies (languages, fundamental algorithms, design patterns)
-Domain expertise (web tech, mobile, systems, etc. depending on role)
-Tooling & environment (IDE, version control, debugging)
-Infrastructure & deployment (how code gets to production)
-Soft skills (mentoring, communication, architectural thinking)
-
-Populate the skills array with at least five objects applied with layered classification strategy, each containing:
-section: A category name (e.g., "Technical Skills," "Soft Skills," "Tools", "Platforms", "IDEs", "Frontend", "Backend", "Libraries", ).
-
-list: An array of relevant skills
-
-Include a balanced mix of technical skills (e.g., programming languages, frameworks, cloud platforms, tools) and soft skills (e.g., leadership, communication, problem-solving).
-
-Ensure skills align with the job description (${cleanedJobDescription}) without overloading keywords.
-No markdown for skills
-Avoid duplication across sections; group related skills logically.
-
-Education:
-Populate the education array using ${formattedEducation}.
-Maintain consistent date formatting.
-
-Certifications:
-Populate the certifications array with older or more traditional certifications if available (e.g., "Oracle Certified Professional, Java SE 6 Programmer", "ITIL Foundation").
-Include issue date in "MM/YYYY" format.
-
-Additional Guidelines:
-- Use safe, general, and less technical phrasing.
-- Avoid excessive technical depth; keep descriptions at a high level.
-- Limit mentions of modern cloud platforms, container orchestration, or trendy frameworks.
-- Ensure the JSON is well-formed and follows the specified structure.
-- Do not include any extra text, explanations, or formatting outside of the JSON object
-- All dates must be in the format MM/YYYY - MM/YYYY or MM/YYYY - Present.
-
-Assumptions:
-All variables (${user.full_name}, ${user.location}, ${user.phone}, ${user.personal_email}, ${user.linkedin_url}, ${user.github_url}, ${formattedHistory}, ${formattedEducation}, ${cleanedJobDescription}) are available and should be used as provided.
-
-The job description (${cleanedJobDescription}) provides sufficient context to tailor the resume's content, including required technologies, skills, and responsibilities.
-
-Dates in ${formattedHistory} and ${formattedEducation} are formatted consistently (e.g., "MM/YYYY - MM/YYYY" or "YYYY").
-
-If ${user.github_url} is empty or not applicable, include it as an empty string ("") in the contact object.
-
-`;
-
-    const completion = await openai.chat.completions.create({
-      model: selectedModel,
-      messages: [
-        {
-          role: "system",
-          content: "You are a professional resume writer with expertise in creating tailored resumes for job applications. You excel at crafting authentic, detailed, and impactful resumes that highlight the candidate's unique strengths and experiences. Always respond with valid JSON."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      temperature: 0.5,
-      max_completion_tokens: maxCompletionTokens,
-      response_format: { type: "json_object" },
-      // stream: true
+    // Use the new pipeline
+    const plan = await createTailoredResume({
+      jobDescription: cleanedJobDescription,
+      employmentHistory: pipelineEmploymentHistory,
+      voiceSamples: [], // Can be added later if user provides samples
+      options: {
+        includeEducation: true,
+        includeProjects: false
+      },
+      userName: user.full_name,
+      userContact: {
+        email: user.personal_email,
+        phone: user.phone,
+        linkedin_url: user.linkedin_url,
+        github_url: user.github_url,
+        location: user.location
+      },
+      education: pipelineEducation,
+      openai: openai,
+      returnMarkdown: false // Return plan object for JSON conversion
     });
-    
-    // Extract the resume content from the API response
-    const generatedResume = JSON.parse(completion.choices[0].message.content);
+
+    // Convert plan to expected JSON format
+    const generatedResume = convertPlanToJson(plan, {
+      email: user.personal_email,
+      phone: user.phone,
+      linkedin_url: user.linkedin_url,
+      github_url: user.github_url,
+      location: user.location
+    });
     
     // Track resume generation
     await User.trackResumeGeneration(user.id);
 
     // Initialize the resume data structure
     const resumeData = {
-      name: user.full_name,
-      contact: {
-        email: user.personal_email || '',
-        phonenumber: user.phone || '',
-        linkedinURL: user.linkedin_url || '',
-        location: user.location || '',
-        github: user.github_url || ''
-      },
+      name: generatedResume.name,
+      contact: generatedResume.contact,
       summary: generatedResume.summary,
       experience: generatedResume.experience,
       skills: generatedResume.skills,
       education: generatedResume.education,
-      certifications: generatedResume.certifications
+      certifications: generatedResume.certifications || []
     };
 
     // Generate DOCX content
