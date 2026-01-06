@@ -14,10 +14,7 @@ const Docxtemplater = require('docxtemplater');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
-const { promisify } = require('util');
-const libreofficeConvert = require('libreoffice-convert');
 const { TextDecoder } = require('util');
-const convertAsync = promisify(libreofficeConvert.convert);
 const CloudmersiveConvertApiClient = require("cloudmersive-convert-api-client");
 const crypto = require('crypto');
 
@@ -674,20 +671,23 @@ console.log(selectedModel, maxCompletionTokens)
       compression: 'DEFLATE'
     });
 
-    // Convert DOCX buffer to PDF using LibreOffice
+    // Convert DOCX buffer to PDF using Cloudmersive
     let pdfBuffer = null;
     try {
-      // Write buffer to a temp file
-      const tmpDocxPath = path.join(__dirname, 'tmp_input.docx');
-      fs.writeFileSync(tmpDocxPath, buffer);
+      // Convert DOCX to PDF using Cloudmersive API
+      const convertResult = await new Promise((resolve, reject) => {
+        apiInstance.convertDocumentDocxToPdf(buffer, (error, data, response) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(data);
+          }
+        });
+      });
       
-      // Convert DOCX to PDF using libreoffice-convert
-      pdfBuffer = await convertAsync(buffer, '.pdf', undefined);
-      
-      // Clean up temp file
-      fs.unlinkSync(tmpDocxPath);
+      pdfBuffer = Buffer.from(convertResult, 'binary');
     } catch (err) {
-      console.error('Failed to convert DOCX to PDF (LibreOffice):', err);
+      console.error('Failed to convert DOCX to PDF (Cloudmersive):', err);
       pdfBuffer = null;
     }
 
@@ -1214,8 +1214,18 @@ app.post('/api/convert-to-pdf', auth, upload.single('docx'), async (req, res) =>
       return res.status(400).json({ error: 'No DOCX file provided' });
     }
 
-    // Convert DOCX to PDF using libreoffice-convert
-    const pdfBuffer = await convertAsync(req.file.buffer, '.pdf', undefined);
+    // Convert DOCX to PDF using Cloudmersive API
+    const convertResult = await new Promise((resolve, reject) => {
+      apiInstance.convertDocumentDocxToPdf(req.file.buffer, (error, data, response) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(data);
+        }
+      });
+    });
+
+    const pdfBuffer = Buffer.from(convertResult, 'binary');
 
     // Set response headers
     res.setHeader('Content-Type', 'application/pdf');
