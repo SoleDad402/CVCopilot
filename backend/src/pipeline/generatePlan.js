@@ -104,14 +104,14 @@ Writing standard (make it stand out, but stay credible):
 - Use clear, natural US English with varied sentence lengths. No exclamation points.
 
 Structure requirements:
-- Summary: 3–4 sentences. First sentence is a hook tailored to this role. Include 2–4 **bold** keywords naturally.
-- Skills: Return as an array of SECTION OBJECTS (not a flat list) using layered classification:
+- Summary: 3–4 sentences. First sentence is a hook tailored to this role. Include 2–4 **bold** keywords naturally. Do not undersell the candidate's experience.
+- Skills: Return as an array of SECTION OBJECTS (not a flat list) using layered classification: 
   [{ "section": "...", "list": [...] }, { "section": "...", "list": [...] }, { "section": "...", "list": [...] }, { "section": "...", "list": [...] }, { "section": "...", "list": [...] }]
 - Skills formatting rules (strict):
   - Each skill must be a clean, defensible skill name only (e.g., "PostgreSQL", "React", "Docker", "API Design").
   - Do NOT add commentary/labels/qualifiers in skill strings such as "(target role alignment)", "(JD)", "(preferred)", "(nice to have)" or similar.
-  - Do NOT keyword-stuff; include only skills that can be supported by the work history.
-- Experience: include 6+ bullets per role. Bullets should read like top-tier interview stories.
+  - Include 2-3 **bold** keywords naturally.
+- Experience: include 6+ bullets per role. Bullets should read like top-tier interview stories. Make the technical keywords and notable project names or tools bold.
 - For the first two experience entries, include 1 bullet that reads like a standout project highlight aligned to the JD (still credible).
 ${voiceGuidance}
 
