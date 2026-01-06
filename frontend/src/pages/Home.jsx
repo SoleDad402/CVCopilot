@@ -399,7 +399,6 @@ function Home() {
                       {role && (
                         <Chip label={`Role: ${role}`} size="small" onDelete={() => setRole('')} />
                       )}
-                      <Chip label={`Seniority: ${seniority}`} size="small" />
                     </Stack>
                     <TextField
                       label="Company Name"
