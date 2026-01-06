@@ -629,8 +629,6 @@ console.log(selectedModel, maxCompletionTokens)
       ],
       temperature: 0.5,
       max_completion_tokens: maxCompletionTokens,
-      presence_penalty: 0.3,
-      frequency_penalty: 0.2,
       response_format: { type: "json_object" },
       // stream: true
     });
