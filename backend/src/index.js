@@ -424,9 +424,47 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
     });
 
     // Get user data, employment history, and education
-    const user = await User.findByEmail(userId);
-    const employmentHistory = await User.getEmploymentHistory(user.id);
-    const education = await User.getEducation(user.id);
+    const userRaw = await User.findByEmail(userId);
+    const employmentHistory = await User.getEmploymentHistory(userRaw.id);
+    const education = await User.getEducation(userRaw.id);
+
+    // Clean user data - handle both database field names
+    const user = {
+      id: userRaw.id,
+      email: userRaw.email || userRaw.Email,
+      full_name: userRaw.full_name || userRaw['Full Name'] || '',
+      phone: userRaw.phone || userRaw.Phone || '',
+      personal_email: userRaw.personal_email || userRaw['Personal Email'] || '',
+      linkedin_url: userRaw.linkedin_url || userRaw['LinkedIn URL'] || '',
+      github_url: userRaw.github_url || userRaw['GitHub URL'] || '',
+      location: userRaw.location || userRaw.Location || ''
+    };
+
+    // Clean and format employment history - handle both database field names
+    const cleanEmploymentHistory = employmentHistory.map(item => ({
+      id: item.id,
+      company_name: item.company_name || item['Company Name'] || '',
+      location: item.location || item.Location || '',
+      position: item.position || item.Position || '',
+      start_date: item.start_date || item['Start Date'] || '',
+      end_date: item.end_date || item['End Date'] || '',
+      is_current: item.is_current !== undefined ? item.is_current : (item['Is Current'] || false),
+      description: item.description || item.Description || ''
+    }));
+
+    // Clean and format education - handle both database field names
+    const cleanEducation = education.map(item => ({
+      id: item.id,
+      school_name: item.school_name || item['School Name'] || '',
+      location: item.location || item.Location || '',
+      degree: item.degree || item.Degree || '',
+      field_of_study: item.field_of_study || item['Field of Study'] || '',
+      start_date: item.start_date || item['Start Date'] || '',
+      end_date: item.end_date || item['End Date'] || '',
+      is_current: item.is_current !== undefined ? item.is_current : (item['Is Current'] || false),
+      gpa: item.gpa || item.GPA || '',
+      description: item.description || item.Description || ''
+    }));
 
     // Use hardcoded GPT-5.2 model for better performance
     const selectedModel = "gpt-5.2";
@@ -457,7 +495,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
       return new Date(0);
     };
     
-    const sortedHistory = [...employmentHistory].sort((a, b) => parseDate(b.start_date) - parseDate(a.start_date));
+    const sortedHistory = [...cleanEmploymentHistory].sort((a, b) => parseDate(b.start_date) - parseDate(a.start_date));
     
     const formattedHistory = sortedHistory.map(job => `
       o ${job.company_name}, ${job.location}
@@ -466,7 +504,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
     `).join('\n');
 
     // Format education history for the prompt
-    const formattedEducation = education.map(edu => `
+    const formattedEducation = cleanEducation.map(edu => `
       o ${edu.school_name}, ${edu.location}
         - ${edu.degree} in ${edu.field_of_study} (${edu.start_date}–${edu.is_current ? 'Present' : edu.end_date})
         ${edu.gpa ? `- GPA: ${edu.gpa}` : ''}
