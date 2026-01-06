@@ -465,8 +465,6 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
       gpa: item.gpa || item.GPA || '',
       description: item.description || item.Description || ''
     }));
-    console.log({education})
-    console.log(cleanEducation)
 
     // Convert to pipeline format
     const { createTailoredResume } = require('./pipeline');
