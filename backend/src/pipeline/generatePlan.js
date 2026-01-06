@@ -18,16 +18,12 @@ async function generatePlan({ jdAnalysis, scoredHistory, voiceSamples, options, 
   const historyText = scoredHistory
     .slice(0, 10) // Limit to top 10 matches
     .map(({ job, matchScore, matchedSkills }) => {
-      const notesArr = Array.isArray(job.notes) ? job.notes : [];
-      const notes = notesArr.length
-        ? notesArr.map((n, idx) => `[N${idx + 1}] ${n}`).join('\n  - ')
-        : '';
+      const notes = (job.notes || []).join('\n  - ');
       const matched = (matchedSkills || []).slice(0, 12).join(', ');
       return `- ${job.title} at ${job.company}, ${job.location}
   Dates: ${job.startDate} - ${job.endDate}
   Match Score: ${(matchScore * 100).toFixed(0)}%
   Matched Skills: ${matched || 'N/A'}
-  Note IDs available for this job: ${notesArr.length ? `N1..N${notesArr.length}` : 'None'}
   Notes:
   - ${notes || 'No additional notes'}`;
     })
@@ -92,7 +88,7 @@ Writing standard (make it stand out):
 - IMPORTANT: Never output meta-commentary like "NOTE GAP", "missing notes", "unable to claim", or warnings. Output only resume content.
 - KEYWORD VISIBILITY (non-negotiable):
   - Coverage requirement (strict, but keep it natural):
-    - Across the first 1–2 experience entries, the bullets MUST collectively include at least 80% of the job description’s must-have skills.
+    - Across the first 1–2 experience entries, the bullets MUST collectively include at least 90% of the job description’s must-have skills.
     - Spread the must-have skills across multiple bullets; do NOT cram many skills into one bullet.
     - Mention each must-have skill in context of real work (what/why/how/outcome) — no standalone keyword bullets.
     - Use skills that are supported by the role’s Matched Skills and/or Notes whenever possible; do not invent obviously unrelated tech for a role.
@@ -148,11 +144,6 @@ Return a JSON object with this exact structure:
       "bullets": [
         "Bullet with one **bold** technical term when it materially helps scanability (do not bold everything)",
         ...
-      ],
-      "bulletSources": [
-        [1, 2],
-        [2],
-        ...
       ]
     }
   ],
@@ -179,7 +170,7 @@ Return a JSON object with this exact structure:
         messages: [
           {
             role: "system",
-            content: "You are a senior technical resume writer and former hiring manager. Create standout, credible resumes: specific, outcome-focused, and easy to scan. Avoid clichés and buzzword salad. Never invent employers, titles, dates, or locations. TRACEABILITY IS REQUIRED: every bullet must map to provided Note IDs. Always return valid JSON matching the provided schema exactly."
+            content: "You are a senior technical resume writer and former hiring manager. Create standout, credible resumes: specific, outcome-focused, and easy to scan. Avoid clichés and buzzword salad. Never invent employers, titles, dates, or locations. Always return valid JSON matching the provided schema exactly."
           },
           { role: "user", content: prompt }
         ],
@@ -197,10 +188,6 @@ Return a JSON object with this exact structure:
         if (!exp || typeof exp !== 'object') return false;
         if (!Array.isArray(exp.bullets)) return false;
         if (!exp.bullets.every(b => typeof b === 'string')) return false;
-        // bulletSources is required for traceability
-        if (!Array.isArray(exp.bulletSources)) return false;
-        if (exp.bulletSources.length !== exp.bullets.length) return false;
-        if (!exp.bulletSources.every(arr => Array.isArray(arr) && arr.every(n => Number.isInteger(n) && n > 0))) return false;
       }
       return true;
     };
@@ -235,7 +222,7 @@ Return a JSON object with this exact structure:
         messages: [
           {
             role: "system",
-            content: "Return ONLY valid JSON. You MUST include experience[].bulletSources (array of arrays) with the same length as experience[].bullets. Every bullet must map to Note IDs. Across the first 1–2 experience entries, ensure at least 80% of JD must-have skills are mentioned naturally within bullets (no stuffing)."
+            content: "Return ONLY valid JSON. Across the first 1–2 experience entries, ensure at least 80% of JD must-have skills are mentioned naturally within bullets (no stuffing)."
           },
           { role: "user", content: prompt }
         ],
@@ -245,7 +232,7 @@ Return a JSON object with this exact structure:
       });
       plan = JSON.parse(completion.choices[0].message.content);
       if (!validatePlan(plan)) {
-        throw new Error('Resume plan failed validation: missing or invalid bulletSources for traceability.');
+        throw new Error('Resume plan failed validation: experience bullets were missing or invalid.');
       }
       if (!mustHaveCoverageOk(plan)) {
         throw new Error('Resume plan failed validation: JD must-have skills were not sufficiently reflected in the first 1–2 experience entries.');
