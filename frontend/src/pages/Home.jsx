@@ -52,6 +52,7 @@ import { useAuth } from '../contexts/AuthContext';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import { renderAsync } from 'docx-preview';
+import SidebarQA from '../components/SidebarQA';
 
 function Home() {
   const { user, logout } = useAuth();
@@ -534,7 +535,7 @@ function Home() {
                     fullWidth
                     size="medium"
                     onClick={handleGenerateCoverLetter}
-                    disabled={isGenerating || !jobDescription.trim()}
+                    disabled={true}
                     startIcon={isGenerating ? <CircularProgress size={18} color="inherit" /> : <RefreshIcon />}
                     sx={{ py: 1.25, fontWeight: 600 }}
                   >
@@ -852,6 +853,9 @@ function Home() {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Q&A Sidebar */}
+      <SidebarQA jobDescription={jobDescription} resume={resumeData} />
     </Box>
   );
 }
