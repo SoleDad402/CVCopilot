@@ -454,19 +454,19 @@ function Home() {
           {generatedResume ? (
             <>
               {/* Preview Body */}
-              <Box sx={{ flex: 1, overflow: 'auto', p: 2, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', position: 'relative' }}>
+              <Box sx={{ flex: 1, overflow: 'auto', p: 2, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', position: 'relative', minHeight: 0 }}>
                 <Paper
                   elevation={3}
                   sx={{
                     width: '8.5in',
-                    maxHeight: 'calc(100vh - 200px)',
                     bgcolor: 'white',
                     p: 3,
-                    transform: `scale(${Math.min(zoom / 100, 0.7)})`,
+                    transform: `scale(${Math.min(zoom / 100, 0.75)})`,
                     transformOrigin: 'top center',
                     transition: 'transform 0.2s',
                     position: 'relative',
-                    overflow: 'auto'
+                    overflow: 'auto',
+                    maxHeight: '100%'
                   }}
                 >
                   {atsView ? (
@@ -534,55 +534,52 @@ function Home() {
                 sx={{
                   borderTop: '1px solid',
                   borderColor: 'divider',
-                  p: 1.5,
+                  p: 1,
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: 1
+                  justifyContent: 'flex-end',
+                  gap: 0.5,
+                  flexShrink: 0
                 }}
               >
-                <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
-                  {lastGenerated ? `Last generated: ${lastGenerated.toLocaleString()}` : 'Ready to download'}
-                </Typography>
-                <Stack direction="row" spacing={0.5} flexWrap="wrap" gap={0.5}>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<CopyIcon />}
-                    onClick={handleCopyText}
-                    sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}
-                  >
-                    Copy
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<DocIcon />}
-                    onClick={() => handleDownload('docx')}
-                    sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}
-                  >
-                    DOCX
-                  </Button>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    startIcon={<PdfIcon />}
-                    onClick={() => handleDownload('pdf')}
-                    sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}
-                  >
-                    PDF
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<EditIcon />}
-                    onClick={() => setRevisionDrawerOpen(true)}
-                    sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}
-                  >
-                    Revise
-                  </Button>
-                </Stack>
+                <IconButton
+                  size="small"
+                  onClick={handleCopyText}
+                  sx={{ border: '1px solid', borderColor: 'divider' }}
+                  title="Copy Text"
+                >
+                  <CopyIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={() => handleDownload('docx')}
+                  sx={{ border: '1px solid', borderColor: 'divider' }}
+                  title="Download DOCX"
+                >
+                  <DocIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={() => handleDownload('pdf')}
+                  sx={{ 
+                    border: '1px solid', 
+                    borderColor: 'primary.main',
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': { bgcolor: 'primary.dark' }
+                  }}
+                  title="Download PDF"
+                >
+                  <PdfIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={() => setRevisionDrawerOpen(true)}
+                  sx={{ border: '1px solid', borderColor: 'divider' }}
+                  title="Revise"
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
               </Paper>
             </>
           ) : (
