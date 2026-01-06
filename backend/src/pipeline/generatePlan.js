@@ -92,6 +92,10 @@ Writing standard (make it stand out):
     - Spread the must-have skills across multiple bullets; do NOT cram many skills into one bullet.
     - Mention each must-have skill in context of real work (what/why/how/outcome) — no standalone keyword bullets.
     - Use skills that are supported by the role’s Matched Skills and/or Notes whenever possible; do not invent obviously unrelated tech for a role.
+    - Frequency requirement for the MOST IMPORTANT must-haves:
+      - Treat the first 3–5 must-have skills listed in the job description as the "core must-haves".
+      - Across the first 1–2 experience entries, each core must-have should appear multiple times (roughly 2–4 total mentions) in different bullets, naturally, where it fits.
+      - Core must-haves should be more frequent than nice-to-have skills.
   - Experience bullets must contain role-relevant technical keywords a hiring manager expects to see.
   - Per role, bold 2–4 core technical anchors total using **bold** (tools, languages, systems, APIs, databases, pipelines, testing, observability, security).
   - Do NOT bold every bullet; only bold the most important, role-defining keywords.
@@ -210,19 +214,44 @@ Return a JSON object with this exact structure:
       });
 
       const ratio = mentioned.length / must.length;
-      return ratio >= 0.8;
+      return ratio >= 0.9;
+    };
+
+    const coreMustHaveFrequencyOk = (planObj) => {
+      const must = (jdAnalysis.mustHaveSkills || []).filter(s => typeof s === 'string' && s.trim());
+      const core = must.slice(0, 5);
+      if (core.length === 0) return true;
+
+      const exp = Array.isArray(planObj?.experience) ? planObj.experience : [];
+      const firstN = exp.slice(0, 2);
+      const text = firstN
+        .map(e => Array.isArray(e?.bullets) ? e.bullets.join(' ') : '')
+        .join(' ')
+        .toLowerCase();
+
+      const countMentions = (skill) => {
+        const needle = skill.toLowerCase().trim();
+        if (!needle) return 0;
+        const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const re = new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, 'ig');
+        const matches = text.match(re);
+        return matches ? matches.length : 0;
+      };
+
+      // Each core must-have should appear at least twice across the first 1–2 roles.
+      return core.every(s => countMentions(s) >= 2);
     };
 
     let completion = await callModel();
     let plan = JSON.parse(completion.choices[0].message.content);
-    if (!validatePlan(plan) || !mustHaveCoverageOk(plan)) {
+    if (!validatePlan(plan) || !mustHaveCoverageOk(plan) || !coreMustHaveFrequencyOk(plan)) {
       // One retry with a stricter nudge
       completion = await openai.chat.completions.create({
         model: "gpt-5.2",
         messages: [
           {
             role: "system",
-            content: "Return ONLY valid JSON. Across the first 1–2 experience entries, ensure at least 80% of JD must-have skills are mentioned naturally within bullets (no stuffing)."
+            content: "Return ONLY valid JSON. Across the first 1–2 experience entries, ensure at least 90% of JD must-have skills are mentioned naturally within bullets (no stuffing). Additionally, ensure the top 3–5 must-have skills recur (each mentioned at least twice) across the first 1–2 roles’ bullets."
           },
           { role: "user", content: prompt }
         ],
@@ -236,6 +265,9 @@ Return a JSON object with this exact structure:
       }
       if (!mustHaveCoverageOk(plan)) {
         throw new Error('Resume plan failed validation: JD must-have skills were not sufficiently reflected in the first 1–2 experience entries.');
+      }
+      if (!coreMustHaveFrequencyOk(plan)) {
+        throw new Error('Resume plan failed validation: core JD must-have skills did not recur frequently enough in the first 1–2 experience entries.');
       }
     }
     
