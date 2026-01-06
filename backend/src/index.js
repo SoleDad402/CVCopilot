@@ -487,7 +487,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
       degree: edu.degree,
       field_of_study: edu.field_of_study,
       start_date: edu.start_date,
-      end_date: edu.is_current ? 'Present' : edu.end_date,
+      end_date: edu.end_date,
       gpa: edu.gpa,
       description: edu.description
     }));
