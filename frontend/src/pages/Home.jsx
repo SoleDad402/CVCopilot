@@ -308,7 +308,7 @@ function Home() {
           zIndex: 1100
         }}
       >
-        <Box sx={{ px: 3, py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ px: 3, py: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {/* Center: Status */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {isGenerating ? (
@@ -352,8 +352,8 @@ function Home() {
             overflow: 'hidden'
           }}
         >
-          <Box sx={{ p: 3, overflowY: 'auto', flex: 1 }}>
-            <Stack spacing={3}>
+          <Box sx={{ p: 2, overflowY: 'auto', flex: 1 }}>
+            <Stack spacing={2}>
               {/* Section B: Job Description */}
               <Accordion defaultExpanded={true} elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -361,8 +361,8 @@ function Home() {
                     B. Job Description
                   </Typography>
                 </AccordionSummary>
-                <AccordionDetails>
-                  <Stack spacing={2}>
+                <AccordionDetails sx={{ px: 2, py: 1.5 }}>
+                  <Stack spacing={1.5}>
                     <Tabs value={0} size="small">
                       <Tab label="Paste" />
                       <Tab label="URL" disabled />
@@ -373,7 +373,7 @@ function Home() {
                       onChange={(e) => setJobDescription(e.target.value)}
                       placeholder="Paste the job description here..."
                       multiline
-                      rows={10}
+                      rows={6}
                       fullWidth
                       size="small"
                       helperText={`${jobDescription.length} characters`}
@@ -423,11 +423,11 @@ function Home() {
                 <Button
                   variant="contained"
                   fullWidth
-                  size="large"
+                  size="medium"
                   onClick={handleGenerateResume}
                   disabled={isGenerating || !jobDescription.trim()}
-                  startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon />}
-                  sx={{ py: 1.5, fontWeight: 600 }}
+                  startIcon={isGenerating ? <CircularProgress size={18} color="inherit" /> : <RefreshIcon />}
+                  sx={{ py: 1.25, fontWeight: 600 }}
                 >
                   {isGenerating ? 'Generating...' : 'Generate Resume'}
                 </Button>
@@ -454,18 +454,19 @@ function Home() {
           {generatedResume ? (
             <>
               {/* Preview Body */}
-              <Box sx={{ flex: 1, overflow: 'auto', p: 3, display: 'flex', justifyContent: 'center', position: 'relative' }}>
+              <Box sx={{ flex: 1, overflow: 'auto', p: 2, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', position: 'relative' }}>
                 <Paper
                   elevation={3}
                   sx={{
                     width: '8.5in',
-                    minHeight: '11in',
+                    maxHeight: 'calc(100vh - 200px)',
                     bgcolor: 'white',
-                    p: 4,
-                    transform: `scale(${zoom / 100})`,
+                    p: 3,
+                    transform: `scale(${Math.min(zoom / 100, 0.7)})`,
                     transformOrigin: 'top center',
                     transition: 'transform 0.2s',
-                    position: 'relative'
+                    position: 'relative',
+                    overflow: 'auto'
                   }}
                 >
                   {atsView ? (
@@ -533,31 +534,33 @@ function Home() {
                 sx={{
                   borderTop: '1px solid',
                   borderColor: 'divider',
-                  p: 2,
+                  p: 1.5,
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between'
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 1
                 }}
               >
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
                   {lastGenerated ? `Last generated: ${lastGenerated.toLocaleString()}` : 'Ready to download'}
                 </Typography>
-                <Stack direction="row" spacing={1}>
+                <Stack direction="row" spacing={0.5} flexWrap="wrap" gap={0.5}>
                   <Button
                     variant="outlined"
                     size="small"
                     startIcon={<CopyIcon />}
                     onClick={handleCopyText}
-                    sx={{ textTransform: 'none' }}
+                    sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}
                   >
-                    Copy Text
+                    Copy
                   </Button>
                   <Button
                     variant="outlined"
                     size="small"
                     startIcon={<DocIcon />}
                     onClick={() => handleDownload('docx')}
-                    sx={{ textTransform: 'none' }}
+                    sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}
                   >
                     DOCX
                   </Button>
@@ -566,7 +569,7 @@ function Home() {
                     size="small"
                     startIcon={<PdfIcon />}
                     onClick={() => handleDownload('pdf')}
-                    sx={{ textTransform: 'none' }}
+                    sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}
                   >
                     PDF
                   </Button>
@@ -575,7 +578,7 @@ function Home() {
                     size="small"
                     startIcon={<EditIcon />}
                     onClick={() => setRevisionDrawerOpen(true)}
-                    sx={{ textTransform: 'none' }}
+                    sx={{ textTransform: 'none', fontSize: '0.75rem', px: 1.5 }}
                   >
                     Revise
                   </Button>
