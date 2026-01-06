@@ -185,61 +185,74 @@ function ResumePreview() {
 
   return (
     <>
-      <Container maxWidth="md" sx={{
-        py: 5,
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
         height: 'calc(100vh - 64px)',
-        position: 'relative',
-        transition: 'margin 0.3s',
+        bgcolor: '#F6F7FB',
+        overflow: 'hidden'
       }}>
-      <Stack spacing={4}>
-        <Box textAlign="center">
-            <Typography
-              variant={isMobile ? 'h5' : 'h3'}
-              component="h1"
-              gutterBottom
-              sx={{ fontWeight: 700, color: '#222' }}
-            >
-            Your Generated Resume
-          </Typography>
+        <Box sx={{ 
+          flex: 1, 
+          overflow: 'auto', 
+          p: 2, 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'flex-start'
+        }}>
+          <Paper
+            elevation={3}
+            sx={{
+              width: '8.5in',
+              maxWidth: '100%',
+              bgcolor: 'white',
+              p: 3,
+              position: 'relative',
+              overflow: 'auto'
+            }}
+          >
+            <div id="docx-container" style={{ width: '100%', minHeight: '100%' }} />
+          </Paper>
         </Box>
         <Paper
-          elevation={3}
+          elevation={0}
           sx={{
-            p: 3,
-              height: 'calc(100vh - 300px)',
-            overflow: 'auto',
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              boxShadow: 2
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            p: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1,
+            flexShrink: 0
           }}
         >
-          <div id="docx-container" style={{ width: '100%', height: '100%' }} />
-        </Paper>
-        <Stack direction="row" spacing={2} justifyContent="center">
           <Button
             variant="contained"
             color="error"
+            size="small"
             startIcon={<PdfIcon />}
             onClick={handleDownloadPDF}
-              sx={{ minWidth: 160, fontWeight: 600 }}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
           >
             Download PDF
           </Button>
           <Button
-            variant="contained"
-            color="primary"
+            variant="outlined"
+            size="small"
             startIcon={<DocIcon />}
             onClick={handleDownloadDOCX}
-              sx={{ minWidth: 160, fontWeight: 600 }}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
           >
             Download DOCX
           </Button>
-        </Stack>
-      </Stack>
+        </Paper>
+      </Box>
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
         <Alert
           onClose={() => setSnackbar({ ...snackbar, open: false })}
@@ -249,7 +262,6 @@ function ResumePreview() {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Container>
       <SidebarQA jobDescription={jobDescription} resume={resume} />
     </>
   );
