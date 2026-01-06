@@ -472,6 +472,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
         ${edu.gpa ? `- GPA: ${edu.gpa}` : ''}
         ${edu.description ? `- ${edu.description}` : ''}
     `).join('\n');
+    console.log(formattedHistory, formattedEducation)
 
     const prompt = `Generate a resume for ${user.full_name} as a JSON object with the following structure:
 {
@@ -613,8 +614,6 @@ If ${user.github_url} is empty or not applicable, include it as an empty string 
 
 `;
 
-console.log(selectedModel, maxCompletionTokens)
-
     const completion = await openai.chat.completions.create({
       model: selectedModel,
       messages: [
@@ -633,7 +632,6 @@ console.log(selectedModel, maxCompletionTokens)
       // stream: true
     });
     
-    console.log(completion.choices[0].message.content)
     // Extract the resume content from the API response
     const generatedResume = JSON.parse(completion.choices[0].message.content);
     
