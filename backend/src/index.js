@@ -494,6 +494,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
       gpa: edu.gpa,
       description: edu.description
     }));
+    console.log(pipelineEducation)
 
     // Use the new pipeline
     const plan = await createTailoredResume({
