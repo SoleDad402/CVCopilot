@@ -88,7 +88,8 @@ Writing standard (make it stand out):
 - IMPORTANT: Never output meta-commentary like "NOTE GAP", "missing notes", "unable to claim", or warnings. Output only resume content.
 - KEYWORD VISIBILITY (non-negotiable):
   - Coverage requirement (strict, but keep it natural):
-    - Across the first 1–2 experience entries, the bullets MUST collectively include at least 90% of the job description's must-have skills.
+    - Across the first 1–2 experience entries, the bullets MUST collectively include at least 95% of the job description's must-have and nice-to-have skills.
+    - Across all experience entires, the bullets MUST collectively include at least 95 of the job description's all skills.
     - Spread the must-have skills across multiple bullets; do NOT cram many skills into one bullet.
     - Mention each must-have skill in context of real work (what/why/how/outcome) — no standalone keyword bullets.
     - Use skills that are supported by the role's Matched Skills and/or Notes whenever possible; do not invent obviously unrelated tech for a role.
@@ -97,7 +98,6 @@ Writing standard (make it stand out):
       - You MUST ensure each of these core must-haves appears at least 2–3 times across the first 1–2 experience entries' bullets.
       - Example: If "Java" and "Spring Boot" are core must-haves, you need to mention "Java" in 2–3 different bullets and "Spring Boot" in 2–3 different bullets across the first 1–2 roles.
       - Spread these mentions naturally across different bullets — don't repeat the same bullet structure.
-      - Core must-haves should appear MORE frequently than nice-to-have skills.
       - If a core must-have skill is mentioned in the candidate's "Matched Skills" for a role, prioritize including it in that role's bullets.
       - This frequency requirement is non-negotiable — the resume will fail validation if core must-haves don't recur enough.
   - Experience bullets must contain role-relevant technical keywords a hiring manager expects to see.
@@ -272,7 +272,7 @@ Return a JSON object with this exact structure:
       
       return metThreshold >= threshold;
     };
-
+/*
     let completion = await callModel();
     let plan = JSON.parse(completion.choices[0].message.content);
     if (!validatePlan(plan) || !mustHaveCoverageOk(plan) || !coreMustHaveFrequencyOk(plan)) {
@@ -307,6 +307,7 @@ Example: If "Java" and "Spring Boot" are core must-haves, mention "Java" in 2–
         throw new Error('Resume plan failed validation: core JD must-have skills did not recur frequently enough in the first 1–2 experience entries.');
       }
     }
+    */
     
     // Validate and normalize
     return {
