@@ -272,10 +272,12 @@ Return a JSON object with this exact structure:
       
       return metThreshold >= threshold;
     };
-/*
+
+    // Call the model to generate the plan
     let completion = await callModel();
     let plan = JSON.parse(completion.choices[0].message.content);
-    if (!validatePlan(plan) || !mustHaveCoverageOk(plan) || !coreMustHaveFrequencyOk(plan)) {
+
+    /*if (!validatePlan(plan) || !mustHaveCoverageOk(plan) || !coreMustHaveFrequencyOk(plan)) {
       // One retry with a stricter nudge
       completion = await openai.chat.completions.create({
         model: "gpt-5.2",
@@ -297,6 +299,7 @@ Example: If "Java" and "Spring Boot" are core must-haves, mention "Java" in 2–
         response_format: { type: "json_object" }
       });
       plan = JSON.parse(completion.choices[0].message.content);
+      
       if (!validatePlan(plan)) {
         throw new Error('Resume plan failed validation: experience bullets were missing or invalid.');
       }
@@ -308,7 +311,6 @@ Example: If "Java" and "Spring Boot" are core must-haves, mention "Java" in 2–
       }
     }
     */
-    
     // Validate and normalize
     return {
       header: {
