@@ -18,6 +18,7 @@ import html2canvas from 'html2canvas';
 import SidebarQA from '../components/SidebarQA';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
+import { NAVBAR_HEIGHT } from '../theme';
 
 function ResumePreview() {
   const [resume, setResume] = useState(null);
@@ -188,7 +189,7 @@ function ResumePreview() {
       <Box sx={{ 
         display: 'flex', 
         flexDirection: 'column', 
-        height: 'calc(100vh - 64px)',
+        height: `calc(100vh - ${NAVBAR_HEIGHT}px)`,
         bgcolor: '#F6F7FB',
         overflow: 'hidden'
       }}>

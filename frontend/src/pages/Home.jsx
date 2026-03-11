@@ -19,95 +19,97 @@ import {
   Divider,
   Tabs,
   Tab,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   alpha,
-  Snackbar
+  Snackbar,
+  Tooltip
 } from '@mui/material';
 import {
   Description as DocIcon,
   PictureAsPdf as PdfIcon,
-  ExpandMore as ExpandMoreIcon,
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
   Error as ErrorIcon,
-  ZoomIn as ZoomInIcon,
-  ZoomOut as ZoomOutIcon,
   Download as DownloadIcon,
   ContentCopy as CopyIcon,
   Refresh as RefreshIcon,
-  Settings as SettingsIcon,
-  Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon,
-  ChevronRight as ChevronRightIcon,
   Close as CloseIcon,
-  Save as SaveIcon,
   Edit as EditIcon,
-  Info as InfoIcon,
   QuestionAnswer as QuestionAnswerIcon,
-  Clear as ClearIcon
+  Clear as ClearIcon,
+  AutoFixHigh as AutoFixIcon,
+  Bolt as BoltIcon,
+  Article as ArticleIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { resumeService, coverLetterService, pollJobStatus } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
+import { NAVBAR_HEIGHT, colors } from '../theme';
 import { renderAsync } from 'docx-preview';
 import SidebarQA from '../components/SidebarQA';
 
+// Step labels for the generation progress
+const GENERATION_STEPS = [
+  { min: 0,  max: 20,  label: 'Reading job description…' },
+  { min: 20, max: 50,  label: 'Matching your experience…' },
+  { min: 50, max: 80,  label: 'Drafting & optimizing…' },
+  { min: 80, max: 95,  label: 'Finalizing document…' },
+  { min: 95, max: 100, label: 'Almost done…' },
+];
+
+function getStepLabel(progress) {
+  const step = GENERATION_STEPS.find(s => progress >= s.min && progress < s.max);
+  return step ? step.label : 'Generating…';
+}
+
 function Home() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
-  
+
   // Core state
   const [companyName, setCompanyName] = useState('');
   const [role, setRole] = useState('');
   const [jobDescription, setJobDescription] = useState('');
-  
+
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
   const [jobStatus, setJobStatus] = useState(null);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const [lastGenerated, setLastGenerated] = useState(null);
-  
+
   // Generated resume state
   const [generatedResume, setGeneratedResume] = useState(null);
   const [resumeData, setResumeData] = useState(null);
   const [docxContent, setDocxContent] = useState(null);
   const [pdfContent, setPdfContent] = useState(null);
-  
+
   // Generated cover letter state
   const [generatedCoverLetter, setGeneratedCoverLetter] = useState(null);
   const [coverLetterDocxContent, setCoverLetterDocxContent] = useState(null);
   const [coverLetterPdfContent, setCoverLetterPdfContent] = useState(null);
-  const [documentType, setDocumentType] = useState('resume'); // 'resume' or 'cover-letter'
-  
+  const [documentType, setDocumentType] = useState('resume');
+
   // UI state
-  const [activeSection, setActiveSection] = useState('jd');
   const [revisionDrawerOpen, setRevisionDrawerOpen] = useState(false);
   const [qaDrawerOpen, setQaDrawerOpen] = useState(false);
-  const [evidenceMode, setEvidenceMode] = useState(false);
   const [atsView, setAtsView] = useState(false);
-  const [zoom, setZoom] = useState(100);
-  
-  
+
   // Revision state
   const [revisionRequest, setRevisionRequest] = useState('');
   const [revisionScope, setRevisionScope] = useState('full');
-  
-  
+
   // Auto-save state
   const [saveStatus, setSaveStatus] = useState('saved');
   const autoSaveTimer = useRef(null);
-  
+
   // Snackbar state
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  
+
   // Preview container ref
   const previewContainerRef = useRef(null);
 
@@ -123,24 +125,15 @@ function Home() {
 
   // Auto-save functionality
   useEffect(() => {
-    if (autoSaveTimer.current) {
-      clearTimeout(autoSaveTimer.current);
-    }
-    
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     if (companyName || role || jobDescription) {
       setSaveStatus('saving');
       autoSaveTimer.current = setTimeout(() => {
-        const data = { companyName, role, jobDescription };
-        localStorage.setItem('resumeWorkspace', JSON.stringify(data));
+        localStorage.setItem('resumeWorkspace', JSON.stringify({ companyName, role, jobDescription }));
         setSaveStatus('saved');
       }, 1000);
     }
-    
-    return () => {
-      if (autoSaveTimer.current) {
-        clearTimeout(autoSaveTimer.current);
-      }
-    };
+    return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
   }, [companyName, role, jobDescription]);
 
   // Load saved workspace
@@ -152,9 +145,7 @@ function Home() {
         if (data.companyName) setCompanyName(data.companyName);
         if (data.role) setRole(data.role);
         if (data.jobDescription) setJobDescription(data.jobDescription);
-      } catch (e) {
-        console.error('Failed to load saved workspace:', e);
-      }
+      } catch (e) {}
     }
   }, []);
 
@@ -171,9 +162,7 @@ function Home() {
         if (data.companyName) setCompanyName(data.companyName);
         if (data.role) setRole(data.role);
         if (data.jobDescription) setJobDescription(data.jobDescription);
-      } catch (e) {
-        console.error('Failed to load saved resume:', e);
-      }
+      } catch (e) {}
     }
   }, []);
 
@@ -182,20 +171,13 @@ function Home() {
     const contentToRender = documentType === 'cover-letter' ? coverLetterDocxContent : docxContent;
     if (contentToRender && previewContainerRef.current && !atsView) {
       const container = previewContainerRef.current;
-      container.innerHTML = ''; // Clear previous content
-      
+      container.innerHTML = '';
       try {
         const byteString = atob(contentToRender);
-        const mimeString = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
         const ab = new ArrayBuffer(byteString.length);
         const ia = new Uint8Array(ab);
-        
-        for (let i = 0; i < byteString.length; i++) {
-          ia[i] = byteString.charCodeAt(i);
-        }
-        
-        const blob = new Blob([ab], { type: mimeString });
-        
+        for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+        const blob = new Blob([ab], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
         renderAsync(blob, container, container, {
           className: 'docx-wrapper',
           inWrapper: true,
@@ -204,55 +186,36 @@ function Home() {
           ignoreFonts: false,
           breakPages: true,
           useBase64URL: true,
-        }).catch(error => {
-          console.error('Error rendering docx:', error);
-        });
-      } catch (error) {
-        console.error('Error processing docx:', error);
-      }
+        }).catch(console.error);
+      } catch (e) { console.error(e); }
     }
   }, [docxContent, coverLetterDocxContent, atsView, documentType]);
 
   const handleGenerateResume = async () => {
     if (!jobDescription.trim()) {
-      setError('Please enter a job description');
+      setError('Please paste a job description first');
       return;
     }
-
     setIsGenerating(true);
     setError('');
     setJobStatus('starting');
     setProgress(0);
     setDocumentType('resume');
-
     try {
-      const { data: jobData } = await resumeService.generateResume({ 
-        jobDescription, 
-        companyName, 
-        role 
-      });
+      const { data: jobData } = await resumeService.generateResume({ jobDescription, companyName, role });
       const { jobId } = jobData;
-      
       setJobStatus('processing');
-      
-      const result = await pollJobStatus(
-        jobId,
-        (progressData) => {
-          setJobStatus(progressData.status);
-          setProgress(progressData.progress || 0);
-          if (progressData.error) {
-            setError(progressData.error);
-          }
-        }
-      );
-
+      const result = await pollJobStatus(jobId, (progressData) => {
+        setJobStatus(progressData.status);
+        setProgress(progressData.progress || 0);
+        if (progressData.error) setError(progressData.error);
+      });
       if (result) {
         setResumeData(result.resume);
         setGeneratedResume(result.generatedResume);
         setDocxContent(result.docxContent);
         setPdfContent(result.pdfContent);
         setLastGenerated(new Date());
-        
         localStorage.setItem('generatedResume', JSON.stringify({
           resume: result.resume,
           generatedResume: result.generatedResume,
@@ -273,44 +236,28 @@ function Home() {
 
   const handleGenerateCoverLetter = async () => {
     if (!jobDescription.trim()) {
-      setError('Please enter a job description');
+      setError('Please paste a job description first');
       return;
     }
-
     setIsGenerating(true);
     setError('');
     setJobStatus('starting');
     setProgress(0);
     setDocumentType('cover-letter');
-
     try {
-      const { data: jobData } = await coverLetterService.generateCoverLetter({ 
-        jobDescription, 
-        companyName, 
-        role,
-        resume: resumeData // Pass existing resume data if available
-      });
+      const { data: jobData } = await coverLetterService.generateCoverLetter({ jobDescription, companyName, role, resume: resumeData });
       const { jobId } = jobData;
-      
       setJobStatus('processing');
-      
-      const result = await pollJobStatus(
-        jobId,
-        (progressData) => {
-          setJobStatus(progressData.status);
-          setProgress(progressData.progress || 0);
-          if (progressData.error) {
-            setError(progressData.error);
-          }
-        }
-      );
-
+      const result = await pollJobStatus(jobId, (progressData) => {
+        setJobStatus(progressData.status);
+        setProgress(progressData.progress || 0);
+        if (progressData.error) setError(progressData.error);
+      });
       if (result) {
         setGeneratedCoverLetter(result.coverLetter);
         setCoverLetterDocxContent(result.docxContent);
         setCoverLetterPdfContent(result.pdfContent);
         setLastGenerated(new Date());
-        
         localStorage.setItem('generatedCoverLetter', JSON.stringify({
           coverLetter: result.coverLetter,
           docxContent: result.docxContent,
@@ -328,466 +275,446 @@ function Home() {
     }
   };
 
-
-  const handleDownload = async (format) => {
+  const handleDownload = (format) => {
     if (documentType === 'cover-letter') {
-      if (format === 'pdf' && coverLetterPdfContent) {
-        const link = document.createElement('a');
-        link.href = `data:application/pdf;base64,${coverLetterPdfContent}`;
-        link.download = `cover-letter-${companyName || 'cover-letter'}.pdf`;
-        link.click();
-      } else if (format === 'docx' && coverLetterDocxContent) {
-        const link = document.createElement('a');
-        link.href = `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${coverLetterDocxContent}`;
-        link.download = `cover-letter-${companyName || 'cover-letter'}.docx`;
-        link.click();
-      }
+      const content = format === 'pdf' ? coverLetterPdfContent : coverLetterDocxContent;
+      if (!content) return;
+      const link = document.createElement('a');
+      link.href = format === 'pdf'
+        ? `data:application/pdf;base64,${content}`
+        : `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${content}`;
+      link.download = `cover-letter-${companyName || 'cover-letter'}.${format}`;
+      link.click();
     } else {
-      if (format === 'pdf' && pdfContent) {
-        const link = document.createElement('a');
-        link.href = `data:application/pdf;base64,${pdfContent}`;
-        link.download = `resume-${companyName || 'resume'}.pdf`;
-        link.click();
-      } else if (format === 'docx' && docxContent) {
-        const link = document.createElement('a');
-        link.href = `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${docxContent}`;
-        link.download = `resume-${companyName || 'resume'}.docx`;
-        link.click();
-      }
+      const content = format === 'pdf' ? pdfContent : docxContent;
+      if (!content) return;
+      const link = document.createElement('a');
+      link.href = format === 'pdf'
+        ? `data:application/pdf;base64,${content}`
+        : `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${content}`;
+      link.download = `resume-${companyName || 'resume'}.${format}`;
+      link.click();
     }
   };
 
   const handleCopyText = async () => {
     try {
-      if (documentType === 'cover-letter' && generatedCoverLetter) {
-        await navigator.clipboard.writeText(generatedCoverLetter);
-        setSnackbar({ open: true, message: 'Cover letter text copied to clipboard', severity: 'success' });
-      } else if (generatedResume) {
-        await navigator.clipboard.writeText(generatedResume);
-        setSnackbar({ open: true, message: 'Resume text copied to clipboard', severity: 'success' });
+      const text = documentType === 'cover-letter' ? generatedCoverLetter : generatedResume;
+      if (text) {
+        await navigator.clipboard.writeText(text);
+        setSnackbar({ open: true, message: 'Copied to clipboard', severity: 'success' });
       }
-    } catch (e) {
-      setSnackbar({ open: true, message: 'Failed to copy text', severity: 'error' });
+    } catch {
+      setSnackbar({ open: true, message: 'Failed to copy', severity: 'error' });
     }
   };
 
-  const formatTimeAgo = (date) => {
-    if (!date) return '';
-    const seconds = Math.floor((new Date() - date) / 1000);
-    if (seconds < 60) return `${seconds}s ago`;
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return date.toLocaleDateString();
+  const handleAutoclean = () => {
+    const cleaned = jobDescription
+      .replace(/\[.*?\]/g, '')
+      .replace(/\{.*?\}/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    setJobDescription(cleaned);
+  };
+
+  const hasContent = generatedResume || generatedCoverLetter;
+
+  // Cmd/Ctrl+Enter shortcut on the JD textarea
+  const handleJdKeyDown = (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      if (!isGenerating && jobDescription.trim()) handleGenerateResume();
+    }
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', bgcolor: '#F6F7FB', position: 'relative' }}>
-      {/* Floating Status Indicator */}
+    <Box sx={{ display: 'flex', height: `calc(100vh - ${NAVBAR_HEIGHT}px)`, bgcolor: colors.bg, overflow: 'hidden' }}>
+
+      {/* ── Left Panel ── */}
       <Box
         sx={{
-          position: 'absolute',
-          top: 12,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 1200,
-          pointerEvents: 'none'
+          width: { xs: '100%', lg: 400 },
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          bgcolor: '#ffffff',
+          borderRight: '1px solid #f1f5f9',
+          overflow: 'hidden',
         }}
       >
-        {isGenerating ? (
-          <Chip 
-            icon={<CircularProgress size={14} />} 
-            label={jobStatus === 'processing' ? 'Generating...' : 'Starting...'} 
-            size="small"
-            sx={{ 
-              bgcolor: 'background.paper',
-              boxShadow: 2,
-              border: '1px solid',
-              borderColor: 'divider',
-              pointerEvents: 'auto'
-            }}
-          />
-        ) : saveStatus === 'saved' ? (
-          <Chip 
-            icon={<CheckCircleIcon fontSize="small" />} 
-            label={lastGenerated ? `Saved ${formatTimeAgo(lastGenerated)}` : 'Saved'} 
-            size="small"
-            sx={{ 
-              bgcolor: 'background.paper',
-              boxShadow: 2,
-              border: '1px solid',
-              borderColor: 'success.main',
-              color: 'success.main',
-              pointerEvents: 'auto'
-            }}
-          />
-        ) : (
-          <Chip 
-            icon={<CircularProgress size={14} />}
-            label="Saving..." 
-            size="small"
-            sx={{ 
-              bgcolor: 'background.paper',
-              boxShadow: 2,
-              border: '1px solid',
-              borderColor: 'divider',
-              pointerEvents: 'auto'
-            }}
-          />
-        )}
-      </Box>
+        {/* Panel body — no header, no scroll needed */}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', px: 2.5, pt: 2.5, pb: 2, gap: 1.5, overflow: 'hidden' }}>
 
-      {/* Main Body: 2-column layout */}
-      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden', pt: 0 }}>
-        {/* Left Panel: Inputs (380-440px) */}
-        <Paper
-          elevation={0}
-          sx={{
-            width: { xs: '100%', lg: 420 },
-            borderRight: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden'
-          }}
-        >
-          <Box sx={{ p: 2, overflowY: 'auto', flex: 1 }}>
-            <Stack spacing={2}>
-              {/* Section B: Job Description */}
-              <Accordion defaultExpanded={true} elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600, textTransform: 'uppercase', fontSize: 12, letterSpacing: 0.5 }}>
-                    B. Job Description
+          {/* ① JD — hero input, fills remaining vertical space */}
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.75 }}>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.6875rem', letterSpacing: '0.06em' }}>
+                Job Description
+              </Typography>
+              <Stack direction="row" spacing={0.25} alignItems="center">
+                {jobDescription && (
+                  <Typography variant="caption" sx={{ color: 'text.disabled', mr: 0.5 }}>
+                    {jobDescription.length.toLocaleString()} chars
                   </Typography>
-                </AccordionSummary>
-                <AccordionDetails sx={{ px: 2, py: 1.5 }}>
-                  <Stack spacing={1.5}>
-                    <Tabs value={0} size="small">
-                      <Tab label="Paste" />
-                      <Tab label="URL" disabled />
-                      <Tab label="Upload PDF" disabled />
-                    </Tabs>
-                    <TextField
-                      value={jobDescription}
-                      onChange={(e) => setJobDescription(e.target.value)}
-                      placeholder="Paste the job description here..."
-                      multiline
-                      rows={6}
-                      fullWidth
-                      size="small"
-                      helperText={`${jobDescription.length} characters`}
-                    />
-                    <Stack direction="row" spacing={1}>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => {
-                          // Auto-clean JD
-                          const cleaned = jobDescription
-                            .replace(/\[.*?\]/g, '')
-                            .replace(/\{.*?\}/g, '')
-                            .replace(/\n{3,}/g, '\n\n');
-                          setJobDescription(cleaned);
-                        }}
-                        sx={{ flex: 1 }}
-                      >
-                        Auto-clean
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="error"
-                        startIcon={<ClearIcon />}
-                        onClick={() => {
-                          setJobDescription('');
-                          setCompanyName('');
-                          setRole('');
-                        }}
-                        disabled={!jobDescription.trim() && !companyName.trim() && !role.trim()}
-                        sx={{ flex: 1 }}
-                      >
-                        Clear All
-                      </Button>
-                    </Stack>
-                    <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
-                      {companyName && (
-                        <Chip label={`Company: ${companyName}`} size="small" onDelete={() => setCompanyName('')} />
-                      )}
-                      {role && (
-                        <Chip label={`Role: ${role}`} size="small" onDelete={() => setRole('')} />
-                      )}
-                    </Stack>
-                    <TextField
-                      label="Company Name"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      fullWidth
-                      size="small"
-                    />
-                    <TextField
-                      label="Role"
-                      value={role}
-                      onChange={(e) => setRole(e.target.value)}
-                      fullWidth
-                      size="small"
-                    />
-                  </Stack>
-                </AccordionDetails>
-              </Accordion>
-
-              {/* Section D: Generate */}
-              <Box>
-                <Stack spacing={1.5}>
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    size="medium"
-                    onClick={handleGenerateResume}
-                    disabled={isGenerating || !jobDescription.trim()}
-                    startIcon={isGenerating ? <CircularProgress size={18} color="inherit" /> : <RefreshIcon />}
-                    sx={{ py: 1.25, fontWeight: 600 }}
-                  >
-                    {isGenerating ? 'Generating...' : 'Generate Resume'}
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    size="medium"
-                    onClick={handleGenerateCoverLetter}
-                    disabled={true}
-                    startIcon={isGenerating ? <CircularProgress size={18} color="inherit" /> : <RefreshIcon />}
-                    sx={{ py: 1.25, fontWeight: 600 }}
-                  >
-                    {isGenerating ? 'Generating...' : 'Generate Cover Letter'}
-                  </Button>
-                </Stack>
-                {isGenerating && (
-                  <Box sx={{ mt: 2 }}>
-                    <LinearProgress variant="determinate" value={progress} />
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                      {jobStatus === 'processing' ? 'Analyzing JD → Drafting → Validating → Rendering' : 'Starting...'}
-                    </Typography>
-                  </Box>
                 )}
-                {error && (
-                  <Alert severity="error" sx={{ mt: 2 }} onClose={() => setError('')}>
-                    {error}
-                  </Alert>
-                )}
-              </Box>
+                <Tooltip title="Auto-clean formatting" arrow>
+                  <span>
+                    <IconButton size="small" onClick={handleAutoclean} disabled={!jobDescription.trim()} sx={{ width: 22, height: 22 }}>
+                      <AutoFixIcon sx={{ fontSize: 13 }} />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title="Clear all" arrow>
+                  <span>
+                    <IconButton
+                      size="small"
+                      onClick={() => { setJobDescription(''); setCompanyName(''); setRole(''); }}
+                      disabled={!jobDescription.trim() && !companyName.trim() && !role.trim()}
+                      sx={{ width: 22, height: 22, color: 'error.main', '&:hover': { bgcolor: alpha('#ef4444', 0.08) } }}
+                    >
+                      <ClearIcon sx={{ fontSize: 13 }} />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              </Stack>
             </Stack>
+            <TextField
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
+              onKeyDown={handleJdKeyDown}
+              placeholder="Paste the full job description here…"
+              multiline
+              autoFocus
+              fullWidth
+              size="small"
+              sx={{
+                flex: 1,
+                '& .MuiOutlinedInput-root': {
+                  fontSize: '0.8125rem',
+                  lineHeight: 1.65,
+                  height: '100%',
+                  alignItems: 'flex-start',
+                  '& textarea': { height: '100% !important', overflow: 'auto !important' },
+                },
+              }}
+            />
           </Box>
-        </Paper>
 
-        {/* Right Panel: Preview (flex) */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: '#F6F7FB' }}>
-          {(generatedResume || generatedCoverLetter) ? (
-            <>
-              {/* Preview Body */}
-              <Box sx={{ flex: 1, overflow: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', position: 'relative', minHeight: 0 }}>
-                <Paper
-                  elevation={3}
-                  sx={{
-                    width: '8.5in',
-                    bgcolor: 'white',
-                    transformOrigin: 'top center',
-                    transition: 'transform 0.2s',
-                    position: 'relative',
-                    overflow: 'auto',
-                    maxHeight: '100%'
-                  }}
-                >
-                  {documentType === 'cover-letter' ? (
-                    atsView ? (
-                      <pre style={{ 
-                        fontFamily: 'monospace', 
-                        whiteSpace: 'pre-wrap',
-                        fontSize: '14px',
-                        margin: 0
-                      }}>
-                        {generatedCoverLetter}
-                      </pre>
-                    ) : coverLetterDocxContent ? (
-                      <Box ref={previewContainerRef} sx={{ width: '100%', minHeight: '100%' }} />
-                    ) : (
-                      <pre style={{ 
-                        fontFamily: 'inherit', 
-                        whiteSpace: 'pre-wrap',
-                        fontSize: '14px',
-                        margin: 0
-                      }}>
-                        {generatedCoverLetter}
-                      </pre>
-                    )
-                  ) : (
-                    atsView ? (
-                      <pre style={{ 
-                        fontFamily: 'monospace', 
-                        whiteSpace: 'pre-wrap',
-                        fontSize: '14px',
-                        margin: 0
-                      }}>
-                        {generatedResume?.replace(/\*\*/g, '') || ''}
-                      </pre>
-                    ) : docxContent ? (
-                      <Box ref={previewContainerRef} sx={{ width: '100%', minHeight: '100%' }} />
-                    ) : (
-                      <pre style={{ 
-                        fontFamily: 'inherit', 
-                        whiteSpace: 'pre-wrap',
-                        fontSize: '14px',
-                        margin: 0
-                      }}>
-                        {generatedResume}
-                      </pre>
-                    )
-                  )}
-                  
-                  {/* Evidence Mode Overlay */}
-                  {evidenceMode && resumeData && (
-                    <Box sx={{ 
-                      position: 'absolute', 
-                      top: 8, 
-                      right: 8,
-                      bgcolor: 'background.paper',
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      borderRadius: 1,
-                      p: 1
-                    }}>
-                      <Stack spacing={0.5}>
-                        <Chip 
-                          icon={<CheckCircleIcon sx={{ color: 'success.main' }} />} 
-                          label="Supported" 
-                          size="small" 
-                          sx={{ fontSize: 10 }}
-                        />
-                        <Chip 
-                          icon={<WarningIcon sx={{ color: 'warning.main' }} />} 
-                          label="Inferred" 
-                          size="small" 
-                          sx={{ fontSize: 10 }}
-                        />
-                        <Chip 
-                          icon={<ErrorIcon sx={{ color: 'error.main' }} />} 
-                          label="Needs Review" 
-                          size="small" 
-                          sx={{ fontSize: 10 }}
-                        />
-                      </Stack>
-                    </Box>
-                  )}
-                </Paper>
-              </Box>
+          {/* ② Company + Role — compact 2-column row */}
+          <Stack direction="row" spacing={1.25}>
+            <TextField
+              label="Company"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              size="small"
+              placeholder="e.g. Stripe"
+              sx={{ flex: 1 }}
+            />
+            <TextField
+              label="Role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              size="small"
+              placeholder="e.g. Backend Engineer"
+              sx={{ flex: 1.4 }}
+            />
+          </Stack>
 
-              {/* Bottom Action Bar */}
-              <Paper
-                elevation={0}
-                sx={{
-                  borderTop: '1px solid',
-                  borderColor: 'divider',
-                  p: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-end',
-                  gap: 0.5,
-                  flexShrink: 0
-                }}
-              >
-                <IconButton
-                  size="small"
-                  onClick={handleCopyText}
-                  sx={{ border: '1px solid', borderColor: 'divider' }}
-                  title="Copy Text"
-                >
-                  <CopyIcon fontSize="small" />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  onClick={() => handleDownload('docx')}
-                  sx={{ border: '1px solid', borderColor: 'divider' }}
-                  title="Download DOCX"
-                >
-                  <DocIcon fontSize="small" />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  onClick={() => handleDownload('pdf')}
-                  sx={{ 
-                    border: '1px solid', 
-                    borderColor: 'primary.main',
-                    bgcolor: 'primary.main',
-                    color: 'white',
-                    '&:hover': { bgcolor: 'primary.dark' }
-                  }}
-                  title="Download PDF"
-                >
-                  <PdfIcon fontSize="small" />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  onClick={() => setRevisionDrawerOpen(true)}
-                  sx={{ border: '1px solid', borderColor: 'divider' }}
-                  title="Revise"
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => setQaDrawerOpen(true)}
-                  startIcon={<QuestionAnswerIcon fontSize="small" />}
-                  sx={{ 
-                    border: '1px solid', 
-                    borderColor: 'divider',
-                    textTransform: 'none',
-                    px: 1.5,
-                    py: 0.5
-                  }}
-                >
-                  Q&A
-                </Button>
-              </Paper>
-            </>
-          ) : (
-            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4 }}>
-              <Stack spacing={2} alignItems="center" sx={{ maxWidth: 400, textAlign: 'center' }}>
-                <Typography variant="h6" color="text.secondary">
-                  No resume generated yet
+          {/* ③ Generate button — always visible, no scrolling */}
+          <Box>
+            <Button
+              variant="contained"
+              fullWidth
+              size="large"
+              onClick={handleGenerateResume}
+              disabled={isGenerating || !jobDescription.trim()}
+              startIcon={isGenerating && documentType === 'resume'
+                ? <CircularProgress size={16} color="inherit" />
+                : <BoltIcon />
+              }
+              sx={{ py: 1.5, fontSize: '0.9375rem', letterSpacing: '-0.01em' }}
+            >
+              {isGenerating && documentType === 'resume' ? 'Generating…' : 'Generate Resume'}
+            </Button>
+            {!isGenerating && !jobDescription.trim() && (
+              <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block', textAlign: 'center', mt: 0.75 }}>
+                Paste a job description above to start
+              </Typography>
+            )}
+            {!isGenerating && jobDescription.trim() && (
+              <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block', textAlign: 'center', mt: 0.75 }}>
+                or press{' '}
+                <Box component="kbd" sx={{ bgcolor: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '4px', px: 0.5, py: 0.1, fontFamily: 'monospace', fontSize: '0.6875rem' }}>
+                  ⌘ Enter
+                </Box>
+              </Typography>
+            )}
+          </Box>
+
+          {/* ④ Progress — inline, no extra scroll */}
+          {isGenerating && (
+            <Box
+              sx={{
+                bgcolor: alpha('#6366f1', 0.05),
+                border: '1px solid',
+                borderColor: alpha('#6366f1', 0.15),
+                borderRadius: 2,
+                px: 2,
+                py: 1.5,
+              }}
+              className="animate-fade-in"
+            >
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.75 }}>
+                <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                  {getStepLabel(progress)}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Fill in the job description and click "Generate Resume" to see a preview here
+                <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 700 }}>
+                  {Math.round(progress)}%
                 </Typography>
               </Stack>
+              <LinearProgress variant="determinate" value={progress} />
             </Box>
+          )}
+
+          {/* ⑤ Error */}
+          {error && (
+            <Alert severity="error" onClose={() => setError('')} sx={{ fontSize: '0.8125rem' }}>
+              {error}
+            </Alert>
           )}
         </Box>
       </Box>
 
-      {/* Revision Drawer */}
+      {/* ── Right Panel: Preview ── */}
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: '#f1f5f9' }}>
+        {hasContent ? (
+          <>
+            {/* Document type switcher + toolbar */}
+            <Box
+              sx={{
+                px: 2.5,
+                py: 1.25,
+                bgcolor: '#fff',
+                borderBottom: '1px solid #f1f5f9',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 2,
+                flexShrink: 0,
+              }}
+            >
+              <Stack direction="row" spacing={1} alignItems="center">
+                {generatedResume && (
+                  <Chip
+                    label="Resume"
+                    size="small"
+                    onClick={() => setDocumentType('resume')}
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: '0.8125rem',
+                      bgcolor: documentType === 'resume' ? alpha('#6366f1', 0.1) : 'transparent',
+                      color: documentType === 'resume' ? 'primary.main' : 'text.secondary',
+                      border: '1px solid',
+                      borderColor: documentType === 'resume' ? alpha('#6366f1', 0.3) : 'divider',
+                      cursor: 'pointer',
+                    }}
+                  />
+                )}
+                {generatedCoverLetter && (
+                  <Chip
+                    label="Cover Letter"
+                    size="small"
+                    onClick={() => setDocumentType('cover-letter')}
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: '0.8125rem',
+                      bgcolor: documentType === 'cover-letter' ? alpha('#6366f1', 0.1) : 'transparent',
+                      color: documentType === 'cover-letter' ? 'primary.main' : 'text.secondary',
+                      border: '1px solid',
+                      borderColor: documentType === 'cover-letter' ? alpha('#6366f1', 0.3) : 'divider',
+                      cursor: 'pointer',
+                    }}
+                  />
+                )}
+                {lastGenerated && (
+                  <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                    Generated {lastGenerated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Typography>
+                )}
+              </Stack>
+
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <Tooltip title="Copy text" arrow>
+                  <IconButton size="small" onClick={handleCopyText} sx={{ border: '1px solid #e2e8f0' }}>
+                    <CopyIcon sx={{ fontSize: 15 }} />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Download DOCX" arrow>
+                  <IconButton size="small" onClick={() => handleDownload('docx')} sx={{ border: '1px solid #e2e8f0' }}>
+                    <DocIcon sx={{ fontSize: 15 }} />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Download PDF" arrow>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    startIcon={<PdfIcon sx={{ fontSize: 14 }} />}
+                    onClick={() => handleDownload('pdf')}
+                    sx={{ height: 32, px: 1.5, fontSize: '0.8125rem' }}
+                  >
+                    PDF
+                  </Button>
+                </Tooltip>
+                <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+                <Tooltip title="Revision requests" arrow>
+                  <IconButton size="small" onClick={() => setRevisionDrawerOpen(true)} sx={{ border: '1px solid #e2e8f0' }}>
+                    <EditIcon sx={{ fontSize: 15 }} />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Ask about the job" arrow>
+                  <IconButton size="small" onClick={() => setQaDrawerOpen(true)} sx={{ border: '1px solid #e2e8f0' }}>
+                    <QuestionAnswerIcon sx={{ fontSize: 15 }} />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+            </Box>
+
+            {/* Preview area */}
+            <Box
+              sx={{
+                flex: 1,
+                overflow: 'auto',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'flex-start',
+                p: 3,
+              }}
+            >
+              <Paper
+                elevation={3}
+                sx={{
+                  width: '8.5in',
+                  maxWidth: '100%',
+                  bgcolor: 'white',
+                  minHeight: '11in',
+                  overflow: 'hidden',
+                  borderRadius: 2,
+                }}
+                className="animate-scale-in"
+              >
+                {atsView ? (
+                  <Box sx={{ p: 4 }}>
+                    <pre style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '13px', margin: 0, lineHeight: 1.6 }}>
+                      {documentType === 'cover-letter'
+                        ? generatedCoverLetter
+                        : (generatedResume?.replace(/\*\*/g, '') || '')}
+                    </pre>
+                  </Box>
+                ) : (
+                  <Box ref={previewContainerRef} sx={{ width: '100%', minHeight: '100%' }} />
+                )}
+              </Paper>
+            </Box>
+          </>
+        ) : (
+          /* Empty state */
+          <Box
+            sx={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              p: 4,
+            }}
+          >
+            <Box
+              sx={{
+                width: 72,
+                height: 72,
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mb: 3,
+                boxShadow: '0 8px 24px rgba(99,102,241,0.3)',
+              }}
+            >
+              <BoltIcon sx={{ fontSize: 36, color: '#fff' }} />
+            </Box>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 700, letterSpacing: '-0.02em', color: 'text.primary', mb: 1, textAlign: 'center' }}
+            >
+              Your resume will appear here
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ color: 'text.secondary', maxWidth: 320, textAlign: 'center', lineHeight: 1.7 }}
+            >
+              Paste a job description on the left and click{' '}
+              <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>Generate Resume</Box>{' '}
+              to get a perfectly tailored document in seconds.
+            </Typography>
+
+            <Stack direction="row" spacing={1.5} sx={{ mt: 4 }}>
+              {[
+                { label: 'ATS-optimized', color: '#6366f1' },
+                { label: 'AI-tailored', color: '#ec4899' },
+                { label: 'Instant DOCX & PDF', color: '#10b981' },
+              ].map(({ label, color }) => (
+                <Chip
+                  key={label}
+                  label={label}
+                  size="small"
+                  sx={{
+                    bgcolor: alpha(color, 0.08),
+                    color: color,
+                    border: `1px solid ${alpha(color, 0.2)}`,
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                  }}
+                />
+              ))}
+            </Stack>
+          </Box>
+        )}
+      </Box>
+
+      {/* ── Revision Drawer ── */}
       <Drawer
         anchor="right"
         open={revisionDrawerOpen}
         onClose={() => setRevisionDrawerOpen(false)}
-        PaperProps={{ sx: { width: { xs: '100%', sm: 400 } } }}
+        PaperProps={{ sx: { width: { xs: '100%', sm: 400 }, bgcolor: '#fff' } }}
       >
         <Box sx={{ p: 3 }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-            <Typography variant="h6">Quick Revisions</Typography>
-            <IconButton onClick={() => setRevisionDrawerOpen(false)}>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>Quick Revisions</Typography>
+            <IconButton onClick={() => setRevisionDrawerOpen(false)} size="small">
               <CloseIcon />
             </IconButton>
           </Stack>
+
           <Stack spacing={2}>
-            <Typography variant="caption" sx={{ fontWeight: 600, textTransform: 'uppercase' }}>Quick Tweaks</Typography>
+            <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary' }}>
+              Quick tweaks
+            </Typography>
             <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
-              <Chip label="More backend-heavy" size="small" onClick={() => setRevisionRequest('Make it more backend-heavy')} />
-              <Chip label="Tighten bullets" size="small" onClick={() => setRevisionRequest('Tighten the bullet points')} />
-              <Chip label="Add ops language" size="small" onClick={() => setRevisionRequest('Add more operations language')} />
-              <Chip label="Reduce buzzwords" size="small" onClick={() => setRevisionRequest('Reduce buzzwords')} />
+              {['More backend-heavy', 'Tighten bullets', 'Add ops language', 'Reduce buzzwords'].map(label => (
+                <Chip
+                  key={label}
+                  label={label}
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setRevisionRequest(label)}
+                  sx={{ cursor: 'pointer', '&:hover': { bgcolor: alpha('#6366f1', 0.06) } }}
+                />
+              ))}
             </Stack>
+
             <TextField
               label="Change request"
               value={revisionRequest}
@@ -795,9 +722,10 @@ function Home() {
               multiline
               rows={4}
               fullWidth
-              placeholder="Describe what you'd like to change..."
+              placeholder="Describe what you'd like to change…"
             />
-            <FormControl fullWidth>
+
+            <FormControl fullWidth size="small">
               <InputLabel>Apply to</InputLabel>
               <Select value={revisionScope} onChange={(e) => setRevisionScope(e.target.value)} label="Apply to">
                 <MenuItem value="full">Full Resume</MenuItem>
@@ -805,13 +733,12 @@ function Home() {
                 <MenuItem value="skills">Skills Only</MenuItem>
               </Select>
             </FormControl>
+
             <Button
               variant="contained"
               fullWidth
-              onClick={() => {
-                // Handle regeneration with revision
-                setRevisionDrawerOpen(false);
-              }}
+              size="large"
+              onClick={() => setRevisionDrawerOpen(false)}
             >
               Regenerate
             </Button>
@@ -819,64 +746,7 @@ function Home() {
         </Box>
       </Drawer>
 
-      {/* Evidence Mode Panel */}
-      {evidenceMode && resumeData && (
-        <Paper
-          elevation={0}
-          sx={{
-            position: 'absolute',
-            bottom: 80,
-            right: 24,
-            width: 320,
-            maxHeight: 400,
-            overflow: 'auto',
-            border: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-            p: 2
-          }}
-        >
-          <Stack spacing={2}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Evidence Mode</Typography>
-              <IconButton size="small" onClick={() => setEvidenceMode(false)}>
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            </Stack>
-            <Divider />
-            <Typography variant="caption" color="text.secondary">
-              Each bullet is color-coded based on traceability to your baseline resume:
-            </Typography>
-            <Stack spacing={1}>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <CheckCircleIcon sx={{ color: 'success.main', fontSize: 16 }} />
-                <Typography variant="caption">Supported by baseline notes</Typography>
-              </Stack>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <WarningIcon sx={{ color: 'warning.main', fontSize: 16 }} />
-                <Typography variant="caption">Inferred phrasing (still safe)</Typography>
-              </Stack>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <ErrorIcon sx={{ color: 'error.main', fontSize: 16 }} />
-                <Typography variant="caption">Needs review (tool claimed but not in experience)</Typography>
-              </Stack>
-            </Stack>
-            <Button
-              variant="outlined"
-              size="small"
-              fullWidth
-              onClick={() => {
-                // Open checklist for fixing flagged claims
-                setSnackbar({ open: true, message: 'Evidence review feature coming soon', severity: 'info' });
-              }}
-            >
-              Fix Flagged Claims
-            </Button>
-          </Stack>
-        </Paper>
-      )}
-
-      {/* Snackbar */}
+      {/* ── Snackbar ── */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
@@ -888,10 +758,10 @@ function Home() {
         </Alert>
       </Snackbar>
 
-      {/* Q&A Sidebar */}
-      <SidebarQA 
-        jobDescription={jobDescription} 
-        resume={resumeData} 
+      {/* ── Q&A Sidebar ── */}
+      <SidebarQA
+        jobDescription={jobDescription}
+        resume={resumeData}
         open={qaDrawerOpen}
         onClose={() => setQaDrawerOpen(false)}
       />

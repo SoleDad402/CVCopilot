@@ -203,8 +203,8 @@ class User {
   }
 
   static async addEmploymentHistory(userId, employmentData) {
-    const { company_name, location, position, start_date, end_date, is_current, description } = employmentData;
-    
+    const { company_name, location, position, start_date, end_date, is_current } = employmentData;
+
     const fields = {
       [FIELD_NAMES.userId]: [userId], // Link field - Airtable API requires array even for single records
       'Company Name': company_name,
@@ -212,8 +212,7 @@ class User {
       'Position': position,
       'Start Date': start_date,
       'End Date': end_date || '',
-      'Is Current': is_current || false,
-      'Description': description || ''
+      'Is Current': is_current || false
     };
 
     try {
@@ -260,8 +259,8 @@ class User {
   }
 
   static async updateEmploymentHistory(employmentId, employmentData) {
-    const { company_name, location, position, start_date, end_date, is_current, description } = employmentData;
-    
+    const { company_name, location, position, start_date, end_date, is_current } = employmentData;
+
     const fields = {};
     if (company_name !== undefined) fields['Company Name'] = company_name;
     if (location !== undefined) fields['Location'] = location;
@@ -269,7 +268,6 @@ class User {
     if (start_date !== undefined) fields['Start Date'] = start_date;
     if (end_date !== undefined) fields['End Date'] = end_date;
     if (is_current !== undefined) fields['Is Current'] = is_current;
-    if (description !== undefined) fields['Description'] = description;
 
     try {
       await base(TABLE_NAMES.employment).update([{ id: employmentId, fields }]);
@@ -289,16 +287,15 @@ class User {
   }
 
   static async addEducation(userId, educationData) {
-    const { 
-      school_name, 
-      location, 
-      degree, 
-      field_of_study, 
-      start_date, 
-      end_date, 
-      is_current, 
-      gpa, 
-      description 
+    const {
+      school_name,
+      location,
+      degree,
+      field_of_study,
+      start_date,
+      end_date,
+      is_current,
+      gpa
     } = educationData;
 
     const fields = {
@@ -310,8 +307,7 @@ class User {
       'Start Date': start_date,
       'End Date': end_date || '',
       'Is Current': is_current || false,
-      'GPA': gpa || '',
-      'Description': description || ''
+      'GPA': gpa || ''
     };
 
     try {
@@ -351,16 +347,15 @@ class User {
   }
 
   static async updateEducation(educationId, educationData) {
-    const { 
-      school_name, 
-      location, 
-      degree, 
-      field_of_study, 
-      start_date, 
-      end_date, 
-      is_current, 
-      gpa, 
-      description 
+    const {
+      school_name,
+      location,
+      degree,
+      field_of_study,
+      start_date,
+      end_date,
+      is_current,
+      gpa
     } = educationData;
 
     const fields = {};
@@ -372,7 +367,6 @@ class User {
     if (end_date !== undefined) fields['End Date'] = end_date;
     if (is_current !== undefined) fields['Is Current'] = is_current;
     if (gpa !== undefined) fields['GPA'] = gpa;
-    if (description !== undefined) fields['Description'] = description;
 
     try {
       await base(TABLE_NAMES.education).update([{ id: educationId, fields }]);

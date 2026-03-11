@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find d:/projects/CVCopilot -type f \\\\\\(-name *.sql -o -name *schema* -o -name *migration* \\\\\\))"
+    ]
+  }
+}
