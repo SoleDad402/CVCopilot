@@ -74,7 +74,10 @@ function Home() {
   const [companyName, setCompanyName] = useState('');
   const [role, setRole] = useState('');
   const [jobDescription, setJobDescription] = useState('');
-  const [pipelineVersion, setPipelineVersion] = useState(1);
+  const [pipelineVersion, setPipelineVersion] = useState(() => {
+    const saved = localStorage.getItem('pipelineVersion');
+    return saved ? Number(saved) : 1;
+  });
 
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
@@ -434,7 +437,7 @@ function Home() {
               ].map(({ v, label, sub, disabled }) => (
                 <Box
                   key={v}
-                  onClick={() => !disabled && setPipelineVersion(v)}
+                  onClick={() => { if (!disabled) { setPipelineVersion(v); localStorage.setItem('pipelineVersion', v); } }}
                   sx={{
                     flex: 1,
                     py: 0.75,
