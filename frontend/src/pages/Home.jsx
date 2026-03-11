@@ -74,6 +74,7 @@ function Home() {
   const [companyName, setCompanyName] = useState('');
   const [role, setRole] = useState('');
   const [jobDescription, setJobDescription] = useState('');
+  const [pipelineVersion, setPipelineVersion] = useState(1);
 
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
@@ -202,7 +203,7 @@ function Home() {
     setProgress(0);
     setDocumentType('resume');
     try {
-      const { data: jobData } = await resumeService.generateResume({ jobDescription, companyName, role });
+      const { data: jobData } = await resumeService.generateResume({ jobDescription, companyName, role, version: pipelineVersion });
       const { jobId } = jobData;
       setJobStatus('processing');
       const result = await pollJobStatus(jobId, (progressData) => {
@@ -421,7 +422,58 @@ function Home() {
             />
           </Stack>
 
-          {/* ③ Generate button — always visible, no scrolling */}
+          {/* ③ Pipeline version toggle */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500, whiteSpace: 'nowrap' }}>
+              Engine
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 0.5, flex: 1 }}>
+              {[
+                { v: 1, label: 'V1', sub: 'Stable' },
+                { v: 2, label: 'V2', sub: 'Coming soon', disabled: true },
+              ].map(({ v, label, sub, disabled }) => (
+                <Box
+                  key={v}
+                  onClick={() => !disabled && setPipelineVersion(v)}
+                  sx={{
+                    flex: 1,
+                    py: 0.75,
+                    px: 1.5,
+                    borderRadius: 1.5,
+                    border: '1px solid',
+                    borderColor: pipelineVersion === v ? colors.primary : colors.border,
+                    bgcolor: pipelineVersion === v ? `${colors.primary}0A` : 'transparent',
+                    cursor: disabled ? 'default' : 'pointer',
+                    opacity: disabled ? 0.5 : 1,
+                    transition: 'all 0.15s',
+                    textAlign: 'center',
+                    ...(!disabled && pipelineVersion !== v && {
+                      '&:hover': { borderColor: colors.primaryLight, bgcolor: `${colors.primary}05` },
+                    }),
+                  }}
+                >
+                  <Typography variant="caption" sx={{
+                    fontWeight: 700,
+                    fontSize: '0.75rem',
+                    color: pipelineVersion === v ? colors.primary : 'text.primary',
+                    display: 'block',
+                    lineHeight: 1.2,
+                  }}>
+                    {label}
+                  </Typography>
+                  <Typography variant="caption" sx={{
+                    fontSize: '0.625rem',
+                    color: pipelineVersion === v ? colors.primary : 'text.disabled',
+                    lineHeight: 1,
+                  }}>
+                    {sub}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+
+          {/* ④ Generate button — always visible, no scrolling */}
           <Box>
             <Button
               variant="contained"
@@ -452,7 +504,7 @@ function Home() {
             )}
           </Box>
 
-          {/* ④ Progress — inline, no extra scroll */}
+          {/* ⑤ Progress — inline, no extra scroll */}
           {isGenerating && (
             <Box
               sx={{

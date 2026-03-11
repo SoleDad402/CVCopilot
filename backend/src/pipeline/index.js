@@ -126,5 +126,34 @@ async function createTailoredResume({
   return md;
 }
 
-module.exports = { createTailoredResume };
+// ── Version registry ────────────────────────────────────────────────────────
+const PIPELINE_VERSIONS = {
+  1: createTailoredResume,
+  // V2 is lazy-loaded to avoid pulling in deps until actually needed
+  2: (...args) => require('./v2').createTailoredResumeV2(...args),
+};
+
+const SUPPORTED_VERSIONS = Object.keys(PIPELINE_VERSIONS).map(Number);
+const DEFAULT_VERSION = 1;
+
+/**
+ * Version-aware entry point.
+ * @param {number} version - Pipeline version (1, 2, …)
+ * @param {Object} params  - Same params as createTailoredResume
+ */
+async function runPipeline(version, params) {
+  const v = Number(version) || DEFAULT_VERSION;
+  const fn = PIPELINE_VERSIONS[v];
+  if (!fn) {
+    throw new Error(`Unknown pipeline version ${v}. Supported: ${SUPPORTED_VERSIONS.join(', ')}`);
+  }
+  return fn(params);
+}
+
+module.exports = {
+  createTailoredResume,   // backwards-compat (v1 direct)
+  runPipeline,
+  SUPPORTED_VERSIONS,
+  DEFAULT_VERSION,
+};
 

@@ -642,7 +642,7 @@ Return ONLY the cover letter body text (no headers, no "Dear Hiring Manager", no
 };
 
 // Async resume generation function
-const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
+const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelineVersion = 1) => {
   try {
     // Update job status to processing
     jobs.set(jobId, {
@@ -695,9 +695,9 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
     }));
 
     // Convert to pipeline format
-    const { createTailoredResume } = require('./pipeline');
+    const { runPipeline } = require('./pipeline');
     const { convertPlanToJson } = require('./pipeline/convertToJson');
-    
+
     // Convert employment history to pipeline format
     const pipelineEmploymentHistory = cleanEmploymentHistory.map(job => ({
       title: job.position,
@@ -723,8 +723,8 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
       description: edu.description
     }));
 
-    // Use the new pipeline
-    const plan = await createTailoredResume({
+    // Use the versioned pipeline
+    const plan = await runPipeline(pipelineVersion, {
       jobDescription: cleanedJobDescription,
       employmentHistory: pipelineEmploymentHistory,
       voiceSamples: [], // Can be added later if user provides samples
@@ -959,10 +959,19 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription) => {
 // Resume generation endpoint - now returns job ID immediately
 app.post('/api/generate-resume', auth, async (req, res) => {
   try {
-    const { jobDescription, companyName, role } = req.body;
+    const { jobDescription, companyName, role, version } = req.body;
 
     if (!jobDescription) {
       return res.status(400).json({ error: 'Job description is required' });
+    }
+
+    // Validate pipeline version
+    const { SUPPORTED_VERSIONS, DEFAULT_VERSION } = require('./pipeline');
+    const pipelineVersion = Number(version) || DEFAULT_VERSION;
+    if (!SUPPORTED_VERSIONS.includes(pipelineVersion)) {
+      return res.status(400).json({
+        error: `Unsupported pipeline version ${pipelineVersion}. Supported: ${SUPPORTED_VERSIONS.join(', ')}`
+      });
     }
 
     // Clean the job description to remove emoticons and special characters
@@ -989,13 +998,14 @@ app.post('/api/generate-resume', auth, async (req, res) => {
       jobDescription: cleanedJobDescription,
       companyName: companyName || '',
       role: role || '',
+      pipelineVersion,
       status: JOB_STATUS.PENDING,
       createdAt: Date.now(),
       progress: 0
     });
 
     // Start async processing
-    generateResumeAsync(jobId, req.user.email, cleanedJobDescription);
+    generateResumeAsync(jobId, req.user.email, cleanedJobDescription, pipelineVersion);
 
     // Return job ID immediately
     res.json({ 

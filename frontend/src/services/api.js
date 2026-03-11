@@ -38,8 +38,8 @@ api.interceptors.response.use(
 
 // API endpoints
 export const resumeService = {
-  generateResume: (payload) => 
-    // payload: { jobDescription, companyName, role }
+  generateResume: (payload) =>
+    // payload: { jobDescription, companyName, role, version }
     api.post('/api/generate-resume', payload),
   
   getJobStatus: (jobId) => 
