@@ -71,6 +71,7 @@ function convertPlanToJson(plan, userContact) {
       dates: edu.dateRange,
       program: edu.degree || ''
     })) : [],
+    achievements: plan.achievements || [],
     certifications: [] // Certifications handled separately if needed
   };
 }

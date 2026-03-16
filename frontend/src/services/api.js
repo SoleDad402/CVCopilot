@@ -144,7 +144,7 @@ export const historyService = {
 };
 
 // Utility function for polling job status
-export const pollJobStatus = async (jobId, onProgress, maxAttempts = 60, interval = 2000) => {
+export const pollJobStatus = async (jobId, onProgress, maxAttempts = 40, interval = 2000) => {
   let attempts = 0;
 
   // Helper to sleep

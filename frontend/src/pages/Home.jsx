@@ -433,7 +433,7 @@ function Home() {
             <Box sx={{ display: 'flex', gap: 0.5, flex: 1 }}>
               {[
                 { v: 1, label: 'V1', sub: 'Stable' },
-                { v: 2, label: 'V2', sub: 'Coming soon', disabled: true },
+                { v: 2, label: 'V2', sub: 'Multi-pass' },
               ].map(({ v, label, sub, disabled }) => (
                 <Box
                   key={v}

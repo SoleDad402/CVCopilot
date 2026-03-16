@@ -1,0 +1,746 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex" xmlns:cx1="http://schemas.microsoft.com/office/drawing/2015/9/8/chartex" xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex" xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex" xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex" xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex" xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex" xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex" xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink" xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:oel="http://schemas.microsoft.com/office/2019/extlst" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml" xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex" xmlns:w16cid="http://schemas.microsoft.com/office/word/2016/wordml/cid" xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml" xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du" xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash" xmlns:w16sdtfl="http://schemas.microsoft.com/office/word/2024/wordml/sdtformatlock" xmlns:w16se="http://schemas.microsoft.com/office/word/2015/wordml/symex" xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape" mc:Ignorable="w14 w15 w16se w16cid w16 w16cex w16sdtdh w16sdtfl w16du wp14"><w:background w:color="FFFFFF"/><w:body><w:p w14:paraId="5F8F69A8" w14:textId="26C27830" w:rsidR="00634B29" w:rsidRPr="00C7686A" w:rsidRDefault="00634B29"><w:pPr><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr></w:pPr></w:p><w:p w14:paraId="4A801ED3" w14:textId="5EBE4E3E" w:rsidR="00BE3D5D" w:rsidRPr="00C7686A" w:rsidRDefault="00325CBB"><w:pPr><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="24272E" w:themeColor="text1"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="2B6DC0"/><w:sz w:val="64"/><w:szCs w:val="64"/></w:rPr><w:t xml:space="preserve">James Stone</w:t></w:r><w:r w:rsidR="00D32FE3" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="2B6DC0"/><w:sz w:val="64"/><w:szCs w:val="64"/></w:rPr><w:t></w:t></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="2B6DC0"/><w:sz w:val="64"/><w:szCs w:val="64"/></w:rPr><w:t></w:t></w:r><w:r w:rsidR="00BE3D5D" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="2B6DC0"/><w:sz w:val="64"/><w:szCs w:val="64"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r></w:p><w:p w14:paraId="0742169B" w14:textId="7F33440F" w:rsidR="00E51D59" w:rsidRPr="00C7686A" w:rsidRDefault="00E51D59" w:rsidP="00142EFE"><w:pPr><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><mc:AlternateContent><mc:Choice Requires="w16se"><w:rFonts w:cstheme="minorHAnsi"/></mc:Choice><mc:Fallback><w:rFonts w:ascii="Segoe UI Emoji" w:eastAsia="Segoe UI Emoji" w:hAnsi="Segoe UI Emoji" w:cs="Segoe UI Emoji"/></mc:Fallback></mc:AlternateContent><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><mc:AlternateContent><mc:Choice Requires="w16se"><w16se:symEx w16se:font="Segoe UI Emoji" w16se:char="1F4DE"/></mc:Choice><mc:Fallback><w:t>📞</w:t></mc:Fallback></mc:AlternateContent></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">(808) 256-9179</w:t></w:r><w:proofErr w:type="gramStart"/><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t></w:t></w:r><w:r w:rsidR="00142EFE" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">   </w:t></w:r><w:proofErr w:type="gramEnd"/><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><mc:AlternateContent><mc:Choice Requires="w16se"><w:rFonts w:cstheme="minorHAnsi"/></mc:Choice><mc:Fallback><w:rFonts w:ascii="Segoe UI Emoji" w:eastAsia="Segoe UI Emoji" w:hAnsi="Segoe UI Emoji" w:cs="Segoe UI Emoji"/></mc:Fallback></mc:AlternateContent><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><mc:AlternateContent><mc:Choice Requires="w16se"><w16se:symEx w16se:font="Segoe UI Emoji" w16se:char="1F3E0"/></mc:Choice><mc:Fallback><w:t>🏠</w:t></mc:Fallback></mc:AlternateContent></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">Seattle, WA</w:t></w:r><w:proofErr w:type="gramStart"/><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t></w:t></w:r><w:r w:rsidR="00142EFE" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">   </w:t></w:r><w:proofErr w:type="gramEnd"/><w:r w:rsidR="00142EFE" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:ascii="Segoe UI Emoji" w:hAnsi="Segoe UI Emoji" w:cs="Segoe UI Emoji"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t>✉️</w:t></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">allcentrist@gmail.com</w:t></w:r><w:proofErr w:type="gramStart"/><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidR="00142EFE" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">  </w:t></w:r><w:proofErr w:type="gramEnd"/><w:r w:rsidR="00142EFE" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><mc:AlternateContent><mc:Choice Requires="w16se"><w:rFonts w:cstheme="minorHAnsi"/></mc:Choice><mc:Fallback><w:rFonts w:ascii="Segoe UI Emoji" w:eastAsia="Segoe UI Emoji" w:hAnsi="Segoe UI Emoji" w:cs="Segoe UI Emoji"/></mc:Fallback></mc:AlternateContent><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><mc:AlternateContent><mc:Choice Requires="w16se"><w16se:symEx w16se:font="Segoe UI Emoji" w16se:char="1F9F7"/></mc:Choice><mc:Fallback><w:t>🧷</w:t></mc:Fallback></mc:AlternateContent></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">www.linkedin.com/in/james-stone-blue</w:t></w:r><w:proofErr w:type="spellStart"/><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t></w:t></w:r><w:proofErr w:type="spellEnd"/><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t></w:t></w:r></w:p><w:p w14:paraId="745143F7" w14:textId="3456F6AD" w:rsidR="00BE3D5D" w:rsidRPr="00C7686A" w:rsidRDefault="00BE3D5D" w:rsidP="00217EBE"><w:pPr><w:ind w:left="454"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="2B6DC0"/><w:sz w:val="12"/><w:szCs w:val="12"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="656B72" w:themeColor="text2"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">                             </w:t></w:r></w:p><w:p w14:paraId="318FC0B4" w14:textId="46D4FF41" w:rsidR="00BE3D5D" w:rsidRPr="00C7686A" w:rsidRDefault="00BE3D5D" w:rsidP="00BE3D5D"><w:pPr><w:spacing w:after="0" w:line="360" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="2B6DC0"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="2B6DC0"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t>SUMMARY</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val="Normal"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Senior software engineer and startup founder focused on scalable </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">web frontend development</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> and design systems, with deep expertise in </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">TypeScript</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> and </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Angular</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">. As Founder/CTO at Centrist, built and shipped production UI for AI-enabled workflows, including core </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">middleware</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> that connects </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">AI products</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> to frontend components. Experienced with mobile-first </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">UI development</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">software testing</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, release execution (</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">software launch</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">), and clear </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">developer documentation</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> in remote teams.</w:t>
+    </w:r></w:p><w:p w14:paraId="57B208AC" w14:textId="77777777" w:rsidR="00BE3D5D" w:rsidRPr="00C7686A" w:rsidRDefault="00BE3D5D" w:rsidP="00BE3D5D"><w:pPr><w:spacing w:after="0"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="656B72" w:themeColor="text2"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:pPr></w:p><w:p w14:paraId="4F71A86E" w14:textId="117C84CF" w:rsidR="00BE3D5D" w:rsidRPr="00C7686A" w:rsidRDefault="00BE3D5D" w:rsidP="00BE3D5D"><w:pPr><w:spacing w:after="0" w:line="360" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="2B6DC0"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="2B6DC0"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t>EDUCATION</w:t></w:r></w:p><w:p w14:paraId="7ECFD8BC" w14:textId="1E597949" w:rsidR="00B302A4" w:rsidRPr="00C7686A" w:rsidRDefault="00325CBB" w:rsidP="008D373F"><w:pPr><w:tabs><w:tab w:val="right" w:pos="10080"/></w:tabs><w:spacing w:after="0"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t/></w:r><w:proofErr w:type="gramStart"/><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t></w:t></w:r><w:r w:rsidR="00FA09CF" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t xml:space="preserve">Bachelor of Science in Computational Science</w:t></w:r><w:proofErr w:type="gramEnd"/><w:r w:rsidR="00FA09CF" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t></w:t></w:r><w:r w:rsidR="00976AF8" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:tab/></w:r><w:r w:rsidR="00FA09CF" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t xml:space="preserve">2005 - 2007</w:t></w:r></w:p><w:p w14:paraId="06BAA853" w14:textId="2BB73DB0" w:rsidR="00B302A4" w:rsidRPr="00C7686A" w:rsidRDefault="00325CBB" w:rsidP="00DE39B4"><w:pPr><w:tabs><w:tab w:val="right" w:pos="10080"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t xml:space="preserve">Penn State University</w:t></w:r><w:r w:rsidR="00B302A4" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidR="00A330EF" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:tab/></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t/></w:r></w:p><w:p w14:paraId="3AE75046" w14:textId="46BAD3DB" w:rsidR="00BE3D5D" w:rsidRPr="00C7686A" w:rsidRDefault="00325CBB" w:rsidP="00BE3D5D"><w:pPr><w:spacing w:after="0"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="656B72" w:themeColor="text2"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t/></w:r></w:p><w:p w14:paraId="1D2CCAA2" w14:textId="0566CDAB" w:rsidR="00BE3D5D" w:rsidRPr="00C7686A" w:rsidRDefault="00325CBB" w:rsidP="00BE3D5D"><w:pPr><w:spacing w:after="0" w:line="360" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="2B6DC0"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="2B6DC0"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t>PROFESSIONAL</w:t></w:r><w:r w:rsidR="008F1C2C" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="2B6DC0"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve"> EXPERIENCE</w:t></w:r></w:p><w:p w14:paraId="7E63C65A" w14:textId="12DFAAE3" w:rsidR="00B302A4" w:rsidRPr="00C7686A" w:rsidRDefault="00325CBB" w:rsidP="00163667"><w:pPr><w:tabs><w:tab w:val="right" w:pos="10080"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">01/2021 - Present</w:t></w:r><w:r w:rsidR="00B302A4" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidR="00976AF8" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:tab/></w:r><w:r w:rsidR="00B302A4" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">Founder / CTO</w:t></w:r></w:p><w:p w14:paraId="0142CC48" w14:textId="7107907F" w:rsidR="0096396F" w:rsidRPr="0096396F" w:rsidRDefault="00325CBB" w:rsidP="00A730FA"><w:pPr><w:tabs><w:tab w:val="right" w:pos="10080"/></w:tabs><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">Centrist</w:t></w:r><w:r w:rsidR="00B302A4" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidR="00A330EF" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:tab/></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">Santa Monica, CA</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Founded and led Centrist from 0→1, owning end-to-end </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">web frontend development</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> and product delivery in </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">TypeScript</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> and </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Angular</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> for AI-enabled user workflows.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Designed core </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Middleware</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> to connect </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">AI products</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> (including </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Audio models</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">) with UI components, keeping interfaces stable while enabling fast experimentation.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Shipped mobile-first </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">UI development</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> for </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Mobile web</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> experiences, focusing on responsive layouts, performance, and accessibility across devices.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Put in place pragmatic </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Software testing</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> (unit/integration) and release checks to reduce regressions during frequent updates and </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Software launch</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> cycles.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Managed a remote engineering team through design reviews, pairing, and execution planning; balanced speed with maintainable architecture and code review standards.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Built internal tooling and onboarding materials, including </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Developer documentation</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> for </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">AI Studio</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> workflows and build/release steps; leveraged </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Java</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> experience and </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Kotlin</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> familiarity to support JVM-based components.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p w14:paraId="2BBC0865" w14:textId="77777777" w:rsidR="008D373F" w:rsidRDefault="008D373F" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr></w:p><w:p w14:paraId="7E63C65A" w14:textId="12DFAAE3" w:rsidR="00B302A4" w:rsidRPr="00C7686A" w:rsidRDefault="00325CBB" w:rsidP="00163667"><w:pPr><w:tabs><w:tab w:val="right" w:pos="10080"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">01/2021 - 12/2025</w:t></w:r><w:r w:rsidR="00B302A4" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidR="00976AF8" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:tab/></w:r><w:r w:rsidR="00B302A4" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">Senior Software Engineer</w:t></w:r></w:p><w:p w14:paraId="0142CC48" w14:textId="7107907F" w:rsidR="0096396F" w:rsidRPr="0096396F" w:rsidRDefault="00325CBB" w:rsidP="00A730FA"><w:pPr><w:tabs><w:tab w:val="right" w:pos="10080"/></w:tabs><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">Caktus Group</w:t></w:r><w:r w:rsidR="00B302A4" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidR="00A330EF" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:tab/></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">Remote</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Delivered </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Web frontend development</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> features using </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">TypeScript</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> and </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Angular</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, emphasizing accessible, consistent UI patterns across client applications.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Owned </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">UI development</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> from component design through integration, partnering with product/design in a remote, iterative workflow to ship on schedule.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Created and maintained </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Developer documentation</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> for frontend conventions, component usage, and local setup to reduce onboarding time for distributed teams.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Improved release confidence with pragmatic </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Software testing</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> (unit/integration coverage, regression checks) and coordination with QA during </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Software launch</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> windows.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Partnered with backend teams on </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Middleware</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> integration and </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Mobile web</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> performance tuning to keep user-facing flows responsive and reliable.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Supported AI-related UI work for </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">AI products</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> and </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">AI Studio</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">-adjacent workflows, translating evolving requirements into shippable frontend changes; contributed where needed in </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Java</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">/</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Kotlin</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> codepaths.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p w14:paraId="2BBC0865" w14:textId="77777777" w:rsidR="008D373F" w:rsidRDefault="008D373F" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr></w:p><w:p w14:paraId="7E63C65A" w14:textId="12DFAAE3" w:rsidR="00B302A4" w:rsidRPr="00C7686A" w:rsidRDefault="00325CBB" w:rsidP="00163667"><w:pPr><w:tabs><w:tab w:val="right" w:pos="10080"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">01/2019 - 12/2021</w:t></w:r><w:r w:rsidR="00B302A4" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidR="00976AF8" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:tab/></w:r><w:r w:rsidR="00B302A4" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">Senior Software Engineer</w:t></w:r></w:p><w:p w14:paraId="0142CC48" w14:textId="7107907F" w:rsidR="0096396F" w:rsidRPr="0096396F" w:rsidRDefault="00325CBB" w:rsidP="00A730FA"><w:pPr><w:tabs><w:tab w:val="right" w:pos="10080"/></w:tabs><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">Apple</w:t></w:r><w:r w:rsidR="00B302A4" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidR="00A330EF" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:tab/></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">Santa Monica, CA</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Built and shipped complex consumer-facing </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">web frontend development</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> features in </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">TypeScript</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> (Angular), partnering with design and product on UI/UX iteration.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Collaborated with cross-functional teams on </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">AI products</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">-related UI requirements, turning changing specs into maintainable frontend interfaces and workflows.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Strengthened reliability by expanding </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Software testing</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> coverage for critical UI flows and supporting release readiness during </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Software launch</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> cycles.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Authored and maintained </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Developer documentation</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> for frontend architecture, build/run workflows, and team conventions to improve consistency and onboarding.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Worked across services and tooling, including </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Middleware</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> integration and </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Mobile web</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> optimization; operated in environments involving </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Java</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Kotlin</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, and </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Google3</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> build/deployment systems.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p w14:paraId="2BBC0865" w14:textId="77777777" w:rsidR="008D373F" w:rsidRDefault="008D373F" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr></w:p><w:p w14:paraId="7E63C65A" w14:textId="12DFAAE3" w:rsidR="00B302A4" w:rsidRPr="00C7686A" w:rsidRDefault="00325CBB" w:rsidP="00163667"><w:pPr><w:tabs><w:tab w:val="right" w:pos="10080"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">2015–2019</w:t></w:r><w:r w:rsidR="00B302A4" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidR="00976AF8" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:tab/></w:r><w:r w:rsidR="00B302A4" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">Web Developer</w:t></w:r></w:p><w:p w14:paraId="0142CC48" w14:textId="7107907F" w:rsidR="0096396F" w:rsidRPr="0096396F" w:rsidRDefault="00325CBB" w:rsidP="00A730FA"><w:pPr><w:tabs><w:tab w:val="right" w:pos="10080"/></w:tabs><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">Techaround</w:t></w:r><w:r w:rsidR="00B302A4" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidR="00A330EF" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:tab/></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">Remote</w:t></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Implemented and maintained Angular applications, contributing to </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">web frontend development</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> in </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">TypeScript</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> with reusable UI components and responsive layouts.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Supported </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">UI development</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> and bug fixing across browsers/devices, with attention to performance and basic accessibility expectations.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Added and maintained </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Software testing</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> (unit/integration where applicable) and assisted with release tasks during </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Software launch</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> periods.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:ind w:left="240" w:hanging="0"/><w:spacing w:after="0"/></w:pPr>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">•  </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Wrote and updated </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Developer documentation</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve"> for setup steps and common workflows to help teammates ramp up and reduce repeated support requests.</w:t>
+    </w:r></w:p><w:p w14:paraId="79CE2320" w14:textId="77777777" w:rsidR="0096396F" w:rsidRPr="004E181E" w:rsidRDefault="00325CBB" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr></w:pPr><w:r w:rsidRPr="004E181E"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="6"/><w:szCs w:val="6"/></w:rPr><w:t/></w:r></w:p><w:p w14:paraId="2BBC0865" w14:textId="77777777" w:rsidR="008D373F" w:rsidRDefault="008D373F" w:rsidP="006F7646"><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr></w:p><w:p w14:paraId="21FCE0AC" w14:textId="77777777" w:rsidR="008D1357" w:rsidRPr="00C7686A" w:rsidRDefault="008D1357" w:rsidP="00325CBB"><w:pPr><w:spacing w:after="100"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="656B72" w:themeColor="text2"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:pPr></w:p><w:p w14:paraId="21EA3B5A" w14:textId="7F960A53" w:rsidR="00BE3D5D" w:rsidRPr="00C7686A" w:rsidRDefault="008F1C2C" w:rsidP="008D1357"><w:pPr><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="656B72" w:themeColor="text2"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="2B6DC0"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t>KEY SKILLS</w:t></w:r></w:p><w:p w14:paraId="77CD5D9C" w14:textId="77777777" w:rsidR="000C0E45" w:rsidRPr="00C7686A" w:rsidRDefault="000C0E45" w:rsidP="00BE3D5D"><w:pPr><w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="3"/></w:numPr><w:spacing w:after="80"/><w:ind w:left="584" w:hanging="357"/><w:contextualSpacing w:val="0"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="656B72" w:themeColor="text2"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:sectPr w:rsidR="000C0E45" w:rsidRPr="00C7686A" w:rsidSect="00BA6379"><w:headerReference w:type="even" r:id="rId8"/><w:headerReference w:type="default" r:id="rId9"/><w:footerReference w:type="even" r:id="rId10"/><w:footerReference w:type="default" r:id="rId11"/><w:headerReference w:type="first" r:id="rId12"/><w:footerReference w:type="first" r:id="rId13"/><w:pgSz w:w="12240" w:h="15840" w:code="1"/><w:pgMar w:top="1440" w:right="1080" w:bottom="1440" w:left="1080" w:header="0" w:footer="0" w:gutter="0"/><w:cols w:space="708"/><w:docGrid w:linePitch="360"/></w:sectPr></w:pPr></w:p><w:p w14:paraId="7F2E5057" w14:textId="77777777" w:rsidR="00D8650A" w:rsidRPr="00C7686A" w:rsidRDefault="00D8650A" w:rsidP="00325CBB"><w:pPr><w:spacing w:after="100"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr></w:p><w:p><w:pPr><w:pStyle w:val="Normal"/></w:pPr>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Frontend & UI Development</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">: </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">TypeScript</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Angular</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Web frontend development</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">UI development</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, Developer documentation, Responsive design, Cross-browser compatibility, Accessibility (a11y), Performance optimization, State management, Progressive Web Apps, CSS3, HTML5, Webpack, Storybook, </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Mobile development</w:t>
+    </w:r></w:p><w:p w14:paraId="0A9B0C06" w14:textId="77777777" w:rsidR="00D8650A" w:rsidRPr="00C7686A" w:rsidRDefault="00D8650A" w:rsidP="00304766"><w:pPr><w:spacing w:after="100"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr></w:p><w:p w14:paraId="7F2E5057" w14:textId="77777777" w:rsidR="00D8650A" w:rsidRPr="00C7686A" w:rsidRDefault="00D8650A" w:rsidP="00325CBB"><w:pPr><w:spacing w:after="100"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr></w:p><w:p><w:pPr><w:pStyle w:val="Normal"/></w:pPr>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Software Engineering & Testing</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">: </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Software testing</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Software launch</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, Agile methodologies, Continuous Integration/Continuous Deployment (CI/CD), Version control (Git), Code review, Unit testing, Integration testing, Test automation, Debugging, Code quality tools, Remote team collaboration, Technical leadership, Founding startup experience</w:t>
+    </w:r></w:p><w:p w14:paraId="0A9B0C06" w14:textId="77777777" w:rsidR="00D8650A" w:rsidRPr="00C7686A" w:rsidRDefault="00D8650A" w:rsidP="00304766"><w:pPr><w:spacing w:after="100"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr></w:p><w:p w14:paraId="7F2E5057" w14:textId="77777777" w:rsidR="00D8650A" w:rsidRPr="00C7686A" w:rsidRDefault="00D8650A" w:rsidP="00325CBB"><w:pPr><w:spacing w:after="100"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr></w:p><w:p><w:pPr><w:pStyle w:val="Normal"/></w:pPr>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Backend, Middleware & Mobile Web</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">: </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Java</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Kotlin</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Middleware</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Mobile web</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, RESTful APIs, Microservices architecture, Database design, SQL, NoSQL, Cloud platforms (AWS, GCP, Azure), Containerization (Docker, Kubernetes), Complex build/deployment systems (</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Google3</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">), Serverless computing, Authentication & Authorization, Performance tuning</w:t>
+    </w:r></w:p><w:p w14:paraId="0A9B0C06" w14:textId="77777777" w:rsidR="00D8650A" w:rsidRPr="00C7686A" w:rsidRDefault="00D8650A" w:rsidP="00304766"><w:pPr><w:spacing w:after="100"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr></w:p><w:p w14:paraId="7F2E5057" w14:textId="77777777" w:rsidR="00D8650A" w:rsidRPr="00C7686A" w:rsidRDefault="00D8650A" w:rsidP="00325CBB"><w:pPr><w:spacing w:after="100"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr></w:p><w:p><w:pPr><w:pStyle w:val="Normal"/></w:pPr>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">AI & Advanced Technologies</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">: </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">AI products</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">AI Studio</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, </w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">Audio models</w:t>
+    </w:r>
+    <w:r>
+        <w:rPr><w:color w:val="363A45"/></w:rPr>
+        <w:t xml:space="preserve">, Machine learning fundamentals, Natural language processing, Data preprocessing, Model evaluation, TensorFlow, PyTorch, Data visualization, Experiment tracking, Ethical AI considerations</w:t>
+    </w:r></w:p><w:p w14:paraId="0A9B0C06" w14:textId="77777777" w:rsidR="00D8650A" w:rsidRPr="00C7686A" w:rsidRDefault="00D8650A" w:rsidP="00304766"><w:pPr><w:spacing w:after="100"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr></w:p><w:p w14:paraId="259F5841" w14:textId="77777777" w:rsidR="00ED2BF0" w:rsidRPr="00C7686A" w:rsidRDefault="00ED2BF0" w:rsidP="00ED2BF0"><w:pPr><w:spacing w:after="80"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="656B72" w:themeColor="text2"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:pPr></w:p><w:p w14:paraId="27633E27" w14:textId="6B2422FB" w:rsidR="00BE3D5D" w:rsidRPr="00C7686A" w:rsidRDefault="00ED2BF0" w:rsidP="00ED2BF0"><w:pPr><w:spacing w:after="80" w:line="360" w:lineRule="auto"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="2B6DC0"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="2B6DC0"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t>HOBBIES &amp; INTERESTS</w:t></w:r></w:p><w:p w14:paraId="19D79D9A" w14:textId="71E5D271" w:rsidR="00ED2BF0" w:rsidRPr="00C7686A" w:rsidRDefault="00271FE6" w:rsidP="00380E5B"><w:pPr><w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="3"/></w:numPr><w:spacing w:after="100"/><w:ind w:left="714" w:hanging="357"/><w:contextualSpacing w:val="0"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t>F1 car racing</w:t></w:r><w:r w:rsidR="008F1C2C" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t>:</w:t></w:r><w:r w:rsidR="008F1C2C" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t>Follow races closely and track team performance</w:t></w:r></w:p><w:p w14:paraId="6EC97874" w14:textId="3AFAD1D1" w:rsidR="00DD3FC5" w:rsidRPr="00C7686A" w:rsidRDefault="00271FE6" w:rsidP="00380E5B"><w:pPr><w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="3"/></w:numPr><w:spacing w:after="100"/><w:ind w:left="714" w:hanging="357"/><w:contextualSpacing w:val="0"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t>Drone</w:t></w:r><w:r w:rsidR="008F1C2C" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t>:</w:t></w:r><w:r w:rsidR="008F1C2C" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t>Fly and practice aerial shots with hobby-grade drones</w:t></w:r></w:p><w:p w14:paraId="7F23DF08" w14:textId="30EDE731" w:rsidR="00B66592" w:rsidRPr="00C7686A" w:rsidRDefault="00271FE6" w:rsidP="00380E5B"><w:pPr><w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="3"/></w:numPr><w:spacing w:after="100"/><w:ind w:left="714" w:hanging="357"/><w:contextualSpacing w:val="0"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t>eSports</w:t></w:r><w:r w:rsidR="00B66592" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t>:</w:t></w:r><w:r w:rsidR="00B66592" w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r w:rsidRPr="00C7686A"><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:t>Active local team member with competitive match experience</w:t></w:r></w:p><w:p w14:paraId="36CD0D85" w14:textId="4C209818" w:rsidR="00B66592" w:rsidRPr="00C7686A" w:rsidRDefault="00B66592" w:rsidP="00B66592"><w:pPr><w:spacing w:after="80"/><w:ind w:left="227"/><w:rPr><w:rFonts w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr><w:sectPr w:rsidR="00B66592" w:rsidRPr="00C7686A" w:rsidSect="00BA6379"><w:type w:val="continuous"/><w:pgSz w:w="12240" w:h="15840" w:code="1"/><w:pgMar w:top="1440" w:right="1080" w:bottom="1440" w:left="1080" w:header="0" w:footer="0" w:gutter="0"/><w:cols w:space="708"/><w:docGrid w:linePitch="360"/></w:sectPr></w:pPr></w:p><w:p w14:paraId="744926C8" w14:textId="77777777" w:rsidR="00DD3FC5" w:rsidRPr="00C7686A" w:rsidRDefault="00DD3FC5" w:rsidP="00DD3FC5"><w:pPr><w:pStyle w:val="NormalWeb"/><w:spacing w:before="0" w:beforeAutospacing="0" w:after="0" w:afterAutospacing="0"/><w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/></w:rPr></w:pPr></w:p><w:p w14:paraId="3561BA6C" w14:textId="77777777" w:rsidR="00DD3FC5" w:rsidRPr="00C7686A" w:rsidRDefault="00DD3FC5" w:rsidP="00DD3FC5"><w:pPr><w:pStyle w:val="NormalWeb"/><w:spacing w:before="0" w:beforeAutospacing="0" w:after="0" w:afterAutospacing="0"/><w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/><w:color w:val="363A45" w:themeColor="text1" w:themeTint="E6"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr></w:p><w:sectPr w:rsidR="00DD3FC5" w:rsidRPr="00C7686A" w:rsidSect="00BA6379"><w:type w:val="continuous"/><w:pgSz w:w="12240" w:h="15840" w:code="1"/><w:pgMar w:top="1440" w:right="1080" w:bottom="1440" w:left="1080" w:header="0" w:footer="0" w:gutter="0"/><w:cols w:space="708"/><w:docGrid w:linePitch="360"/></w:sectPr></w:body></w:document>

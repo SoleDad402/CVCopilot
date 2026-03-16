@@ -762,6 +762,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
       name: generatedResume.name,
       contact: generatedResume.contact,
       summary: generatedResume.summary,
+      achievements: generatedResume.achievements || [],
       experience: generatedResume.experience,
       skills: generatedResume.skills,
       education: generatedResume.education,
@@ -785,6 +786,12 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
       location: resumeData.contact.location || '',
       contact: `${resumeData.contact.location} | ${resumeData.contact.email} | ${resumeData.contact.phonenumber} | ${resumeData.contact.linkedinURL}`,
       summary: markdownToWordXml(resumeData.summary) || '',
+      achievements: resumeData.achievements.map(achievement => {
+        const text = typeof achievement === 'object' ? achievement.text : achievement;
+        const company = typeof achievement === 'object' ? achievement.company : null;
+        const line = company ? `${text} - at **${company}**` : text;
+        return { rawXml: markdownToWordXmlWithBullet(line) };
+      }),
       experience: resumeData.experience.map((exp, index) => ({
         company: clearedText(exp.company) || '',
         location: clearedText(exp.location) || '',
@@ -797,11 +804,10 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
       skills: resumeData.skills.map(skillSection => {
         if (skillSection && skillSection.section && skillSection.list) {
           return {
-            section: skillSection.section,
-            list: skillSection.list.join(', ')
+            list: markdownToWordXml(`**${skillSection.section}**: ${skillSection.list.join(', ')}`)
           };
         }
-        return null; // Filter out if section or list is undefined
+        return null;
       }).filter(Boolean),
       education: resumeData.education?.map(edu => ({
         school: clearedText(edu.school) || '',
@@ -1177,25 +1183,36 @@ const clearedText = (text) => {
   return text.replace(/^["']|["']$/g, '').replace(/[\n\r\t\f\v]/g, '').trim();
 }
 
+// Escape special XML characters in text content
+const escapeXml = (str) => {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+};
+
 // Convert markdown bold (**text**) to Word XML format with bold runs
 const markdownToWordXml = (text) => {
   if (!text) return '<w:p><w:pPr><w:pStyle w:val="Normal"/></w:pPr></w:p>';
-  
+
   // Remove bullet point marker if present
   let cleanText = text.trim();
   cleanText = cleanText.replace(/^[\-\*]\s+/, '');
-  
+
   // Split text by markdown bold markers (**)
   const parts = cleanText.split(/(\*\*[^*]+\*\*)/);
-  
+
   let xmlContent = '';
-  
+
   parts.forEach((part) => {
     if (!part) return; // Skip empty parts
-    
+
     if (part.startsWith('**') && part.endsWith('**')) {
       // Bold text - remove ** markers
-      const boldText = part.slice(2, -2);
+      const boldText = escapeXml(part.slice(2, -2));
       xmlContent += `
     <w:r>
         <w:rPr><w:b/><w:color w:val="363A45"/></w:rPr>
@@ -1206,7 +1223,7 @@ const markdownToWordXml = (text) => {
       xmlContent += `
     <w:r>
         <w:rPr><w:color w:val="363A45"/></w:rPr>
-        <w:t xml:space="preserve">${part}</w:t>
+        <w:t xml:space="preserve">${escapeXml(part)}</w:t>
     </w:r>`;
     }
   });
@@ -1280,11 +1297,16 @@ app.post('/api/download/:format', async (req, res) => {
         });
 
         // Prepare the data for the template
-        console.log({certifications: resumeData.certifications})
         const templateData = {
           name: resumeData.name || '',
           contact: `${resumeData.contact.email} | ${resumeData.contact.phonenumber} | ${resumeData.contact.linkedinURL} | ${resumeData.contact.github}`,
           summary: markdownToWordXml(resumeData.summary) || '',
+          achievements: (resumeData.achievements || []).map(achievement => {
+            const text = typeof achievement === 'object' ? achievement.text : achievement;
+            const company = typeof achievement === 'object' ? achievement.company : null;
+            const line = company ? `${text} - at **${company}**` : text;
+            return { rawXml: markdownToWordXmlWithBullet(line) };
+          }),
           experience: resumeData.experience.map((exp, index) => ({
             company: clearedText(exp.company) || '',
             location: clearedText(exp.location) || '',
@@ -1297,8 +1319,7 @@ app.post('/api/download/:format', async (req, res) => {
           skills: resumeData.skills.map(skillSection => {
             if (skillSection && skillSection.section && skillSection.list) {
               return {
-                section: skillSection.section,
-                list: skillSection.list.join(', ')
+                list: markdownToWordXml(`**${skillSection.section}**: ${skillSection.list.join(', ')}`)
               };
             }
             return null; // Filter out if section or list is undefined
