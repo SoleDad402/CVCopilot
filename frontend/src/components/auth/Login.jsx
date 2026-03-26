@@ -9,7 +9,6 @@ import {
   Link,
   Stack,
   Alert,
-  Snackbar,
   InputAdornment,
   IconButton,
   CircularProgress
@@ -37,18 +36,23 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const { login } = useAuth();
+  const [errorMsg, setErrorMsg] = useState('');
+  const { login, error: authError } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMsg('');
     setIsLoading(true);
     try {
       const success = await login(email, password, rememberMe);
-      if (success) navigate('/');
+      if (success) {
+        navigate('/');
+      } else {
+        setErrorMsg(authError || 'Invalid email or password. Please try again.');
+      }
     } catch (error) {
-      setSnackbar({ open: true, message: error.message, severity: 'error' });
+      setErrorMsg(error.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -148,6 +152,12 @@ const Login = () => {
             </Typography>
           </Box>
 
+          {errorMsg && (
+            <Alert severity="error" onClose={() => setErrorMsg('')} sx={{ mb: 2 }}>
+              {errorMsg}
+            </Alert>
+          )}
+
           <form onSubmit={handleSubmit}>
             <Stack spacing={2.5}>
               <TextField
@@ -208,16 +218,6 @@ const Login = () => {
         </Box>
       </Box>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };
