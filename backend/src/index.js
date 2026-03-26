@@ -770,9 +770,6 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
       location: user.location
     });
     
-    // Track resume generation
-    await User.trackResumeGeneration(user.id);
-
     // Initialize the resume data structure
     const resumeData = {
       name: generatedResume.name,
@@ -950,9 +947,6 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
         // Note: Files are now stored in Airtable, not on disk
       }
     });
-
-    // Track resume generation
-    await User.trackResumeGeneration(user.id);
 
   } catch (error) {
     console.error('Error generating resume:', error);

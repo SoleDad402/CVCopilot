@@ -16,7 +16,6 @@ const TABLE_NAMES = {
   users: process.env.AIRTABLE_USERS_TABLE || 'Users',
   employment: process.env.AIRTABLE_EMPLOYMENT_TABLE || 'Employment History',
   education: process.env.AIRTABLE_EDUCATION_TABLE || 'Education',
-  generations: process.env.AIRTABLE_GENERATIONS_TABLE || 'Resume Generations',
   requests: process.env.AIRTABLE_REQUESTS_TABLE || 'Resume Requests'
 };
 
@@ -400,42 +399,6 @@ class User {
     }
   }
 
-  static async trackResumeGeneration(userId) {
-    const todayCST = await this.getTodayCST();
-
-    try {
-      // Check if record exists for today
-      const existingRecords = await base(TABLE_NAMES.generations)
-        .select({
-          filterByFormula: `AND({${FIELD_NAMES.userId}} = "${userId}", {Generation Date} = "${todayCST}")`,
-          maxRecords: 1
-        })
-        .firstPage();
-
-      if (existingRecords.length > 0) {
-        // Update existing record
-        const currentCount = existingRecords[0].fields['Count'] || 0;
-        await base(TABLE_NAMES.generations).update([{
-          id: existingRecords[0].id,
-          fields: { 'Count': currentCount + 1 }
-        }]);
-      } else {
-        // Create new record
-        await base(TABLE_NAMES.generations).create([{
-          fields: {
-            [FIELD_NAMES.userId]: [userId], // Airtable API requires array even for single records
-            'Generation Date': todayCST,
-            'Count': 1
-            // Note: 'Created At' is automatically managed by Airtable
-          }
-        }]);
-      }
-      return true;
-    } catch (error) {
-      throw new Error(`Failed to track resume generation: ${error.message}`);
-    }
-  }
-
   static async addResumeRequest(userId, requestData) {
     const { company_name, role, job_description, docx_file, pdf_file } = requestData;
     
@@ -557,30 +520,26 @@ class User {
 
   static async getAllUsers() {
     try {
-      const userRecords = await base(TABLE_NAMES.users)
-        .select({ sort: [{ field: 'Created At', direction: 'desc' }] })
-        .all();
-      
+      const [userRecords, requestRecords] = await Promise.all([
+        base(TABLE_NAMES.users).select({ sort: [{ field: 'Created At', direction: 'desc' }] }).all(),
+        base(TABLE_NAMES.requests).select().all(),
+      ]);
+
       const users = recordsToArray(userRecords);
-      
-      // Get generation counts for each user
-      const generationRecords = await base(TABLE_NAMES.generations)
-        .select()
-        .all();
-      
-      const generationCounts = {};
-      generationRecords.forEach(record => {
+
+      // Count requests per user
+      const requestCounts = {};
+      requestRecords.forEach(record => {
         const userField = record.fields[FIELD_NAMES.userId];
-        // Handle both single record (string) and array formats
         const userId = Array.isArray(userField) ? userField[0] : userField;
         if (userId) {
-          generationCounts[userId] = (generationCounts[userId] || 0) + (record.fields['Count'] || 0);
+          requestCounts[userId] = (requestCounts[userId] || 0) + 1;
         }
       });
-      
+
       return users.map(user => ({
         ...user,
-        total_generations: generationCounts[user.id] || 0
+        total_generations: requestCounts[user.id] || 0
       }));
     } catch (error) {
       throw new Error(`Failed to get all users: ${error.message}`);
@@ -589,17 +548,20 @@ class User {
 
   static async getDailyGenerationCount(userId) {
     const todayCST = await this.getTodayCST();
-    
+
     try {
-      const records = await base(TABLE_NAMES.generations)
-        .select({
-          filterByFormula: `AND({${FIELD_NAMES.userId}} = "${userId}", {Generation Date} = "${todayCST}")`,
-          maxRecords: 1
-        })
-        .firstPage();
-      
-      if (records.length === 0) return 0;
-      return records[0].fields['Count'] || 0;
+      // Count today's requests for this user from the Resume Requests table
+      const allRecords = await base(TABLE_NAMES.requests).select().all();
+      let count = 0;
+      allRecords.forEach(record => {
+        const userField = record.fields[FIELD_NAMES.userId];
+        const uid = Array.isArray(userField) ? userField[0] : userField;
+        const createdAt = record.fields['Created At'] || '';
+        if (uid === userId && createdAt.slice(0, 10) === todayCST) {
+          count++;
+        }
+      });
+      return count;
     } catch (error) {
       throw new Error(`Failed to get daily generation count: ${error.message}`);
     }
@@ -780,55 +742,32 @@ class User {
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      // Fetch all tables in parallel
-      const [userRecords, generationRecords, requestRecords] = await Promise.all([
+      // Fetch users and requests only (no generations table)
+      const [userRecords, requestRecords] = await Promise.all([
         base(TABLE_NAMES.users).select().all(),
-        base(TABLE_NAMES.generations).select().all(),
         base(TABLE_NAMES.requests).select().all(),
       ]);
 
       const totalUsers = userRecords.length;
       const users = recordsToArray(userRecords);
 
-      // ── Generation analytics ──
-      let totalGenerations = 0;
-      let todayGenerations = 0;
-      const activeUserIds = new Set();
-      const generationsByDate = {};       // { 'YYYY-MM-DD': totalCount }
-      const generationsByUser = {};       // { userId: totalCount }
-      const modelDistribution = {};       // { model: userCount }
-
-      generationRecords.forEach(record => {
-        const count = record.fields['Count'] || 0;
-        const date = record.fields['Generation Date'] || '';
-        const userField = record.fields[FIELD_NAMES.userId];
-        const userId = Array.isArray(userField) ? userField[0] : userField;
-
-        totalGenerations += count;
-        if (date === todayCST) todayGenerations += count;
-        if (userId) {
-          activeUserIds.add(userId);
-          generationsByUser[userId] = (generationsByUser[userId] || 0) + count;
-        }
-        if (date) {
-          generationsByDate[date] = (generationsByDate[date] || 0) + count;
-        }
-      });
-
       // Model distribution from user records
+      const modelDistribution = {};
       users.forEach(u => {
         const model = u.openai_model || u['OpenAI Model'] || 'gpt-4o';
         modelDistribution[model] = (modelDistribution[model] || 0) + 1;
       });
 
-      // ── Request analytics ──
+      // ── All analytics derived from Resume Requests ──
       const totalRequests = requestRecords.length;
+      let todayRequests = 0;
       let weekRequests = 0;
       let monthRequests = 0;
-      const companyFrequency = {};        // { company: count }
-      const roleFrequency = {};           // { role: count }
-      const requestsByDate = {};          // { 'YYYY-MM-DD': count }
-      const requestsByUser = {};          // { userId: count }
+      const activeUserIds = new Set();
+      const companyFrequency = {};
+      const roleFrequency = {};
+      const requestsByDate = {};
+      const requestsByUser = {};
       let withDocx = 0;
       let withPdf = 0;
 
@@ -841,14 +780,18 @@ class User {
 
         if (createdAt) {
           const d = new Date(createdAt);
+          const dateKey = createdAt.slice(0, 10);
+          if (dateKey === todayCST) todayRequests++;
           if (d >= weekAgo) weekRequests++;
           if (d >= monthAgo) monthRequests++;
-          const dateKey = createdAt.slice(0, 10);
           requestsByDate[dateKey] = (requestsByDate[dateKey] || 0) + 1;
         }
         if (company) companyFrequency[company] = (companyFrequency[company] || 0) + 1;
         if (role) roleFrequency[role] = (roleFrequency[role] || 0) + 1;
-        if (userId) requestsByUser[userId] = (requestsByUser[userId] || 0) + 1;
+        if (userId) {
+          activeUserIds.add(userId);
+          requestsByUser[userId] = (requestsByUser[userId] || 0) + 1;
+        }
 
         const docxFile = record.fields['DOCX File'];
         const pdfFile = record.fields['PDF File'];
@@ -856,7 +799,7 @@ class User {
         if (pdfFile && (Array.isArray(pdfFile) ? pdfFile.length > 0 : true)) withPdf++;
       });
 
-      // ── Top users (by generations) ──
+      // ── Top users (by request count) ──
       const userEmailMap = {};
       const userNameMap = {};
       users.forEach(u => {
@@ -864,13 +807,13 @@ class User {
         userNameMap[u.id] = u.full_name || u['Full Name'] || '';
       });
 
-      const topUsersByGenerations = Object.entries(generationsByUser)
+      const topUsersByGenerations = Object.entries(requestsByUser)
         .map(([userId, count]) => ({
           userId,
           email: userEmailMap[userId] || 'Unknown',
           full_name: userNameMap[userId] || '',
           generations: count,
-          requests: requestsByUser[userId] || 0,
+          requests: count,
         }))
         .sort((a, b) => b.generations - a.generations)
         .slice(0, 15);
@@ -887,14 +830,14 @@ class User {
         .slice(0, 20)
         .map(([name, count]) => ({ name, count }));
 
-      // ── Generation trend (last 30 days) ──
+      // ── Request trend (last 30 days) ──
       const generationTrend = [];
       for (let i = 29; i >= 0; i--) {
         const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
         const dateStr = d.toISOString().slice(0, 10);
         generationTrend.push({
           date: dateStr,
-          generations: generationsByDate[dateStr] || 0,
+          generations: requestsByDate[dateStr] || 0,
           requests: requestsByDate[dateStr] || 0,
         });
       }
@@ -918,19 +861,19 @@ class User {
         });
       }
 
-      // ── Day-of-week distribution (from generations) ──
+      // ── Day-of-week distribution (from requests) ──
       const dayOfWeekDist = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      Object.entries(generationsByDate).forEach(([dateStr, count]) => {
+      Object.entries(requestsByDate).forEach(([dateStr, count]) => {
         const d = new Date(dateStr + 'T12:00:00');
         if (!isNaN(d.getTime())) {
           dayOfWeekDist[dayNames[d.getDay()]] += count;
         }
       });
 
-      // ── Average generations per user ──
+      // ── Average per active user ──
       const avgGenerationsPerUser = activeUserIds.size > 0
-        ? Math.round(totalGenerations / activeUserIds.size * 10) / 10
+        ? Math.round(totalRequests / activeUserIds.size * 10) / 10
         : 0;
 
       // ── File output rate ──
@@ -938,31 +881,22 @@ class User {
       const pdfRate = totalRequests > 0 ? Math.round((withPdf / totalRequests) * 100) : 0;
 
       return {
-        // Core stats
         totalUsers,
-        totalGenerations,
-        todayGenerations,
+        totalGenerations: totalRequests,
+        todayGenerations: todayRequests,
         totalRequests,
         weekRequests,
         monthRequests,
         activeUsers: activeUserIds.size,
         avgGenerationsPerUser,
-
-        // File stats
         withDocx,
         withPdf,
         docxRate,
         pdfRate,
-
-        // Distributions
         modelDistribution,
         dayOfWeekDist,
-
-        // Trends (30 days)
         generationTrend,
         registrationTrend,
-
-        // Top lists
         topUsersByGenerations,
         topCompanies,
         topRoles,
@@ -974,28 +908,14 @@ class User {
 
   static async getUserActivity(userId) {
     try {
-      // Get user info
-      const userRecord = await base(TABLE_NAMES.users).find(userId);
+      // Get user info and requests in parallel
+      const [userRecord, allReqs] = await Promise.all([
+        base(TABLE_NAMES.users).find(userId),
+        base(TABLE_NAMES.requests).select().all(),
+      ]);
       const user = recordToObject(userRecord);
 
-      // Get user's generations
-      const allGens = await base(TABLE_NAMES.generations).select().all();
-      const userGens = allGens.filter(r => {
-        const uf = r.fields[FIELD_NAMES.userId];
-        const uid = Array.isArray(uf) ? uf[0] : uf;
-        return uid === userId;
-      });
-
-      const generationHistory = userGens.map(r => ({
-        date: r.fields['Generation Date'] || '',
-        count: r.fields['Count'] || 0,
-      })).sort((a, b) => b.date.localeCompare(a.date));
-
-      let totalGenerations = 0;
-      generationHistory.forEach(g => totalGenerations += g.count);
-
-      // Get user's requests
-      const allReqs = await base(TABLE_NAMES.requests).select().all();
+      // Filter requests for this user
       const userReqs = allReqs.filter(r => {
         const uf = r.fields[FIELD_NAMES.userId] || [];
         return Array.isArray(uf) && uf.some(id => id === userId);
@@ -1019,7 +939,17 @@ class User {
         }))
         .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 
-      // Company breakdown for this user
+      // Build generation history from requests (group by date)
+      const byDate = {};
+      requests.forEach(r => {
+        const dateKey = (r.created_at || '').slice(0, 10);
+        if (dateKey) byDate[dateKey] = (byDate[dateKey] || 0) + 1;
+      });
+      const generationHistory = Object.entries(byDate)
+        .map(([date, count]) => ({ date, count }))
+        .sort((a, b) => b.date.localeCompare(a.date));
+
+      // Company breakdown
       const companies = {};
       requests.forEach(r => {
         if (r.company_name) companies[r.company_name] = (companies[r.company_name] || 0) + 1;
@@ -1037,7 +967,7 @@ class User {
           is_admin: user.is_admin || user['Is Admin'] || false,
           created_at: user.created_at || user['Created At'] || '',
         },
-        totalGenerations,
+        totalGenerations: requests.length,
         totalRequests: requests.length,
         generationHistory,
         requests,
@@ -1052,40 +982,38 @@ class User {
 
   static async getDailyGenerations() {
     try {
-      const records = await base(TABLE_NAMES.generations)
-        .select({
-          sort: [{ field: 'Generation Date', direction: 'desc' }, { field: FIELD_NAMES.userId, direction: 'asc' }]
-        })
-        .all();
-      
-      const rows = recordsToArray(records);
-      
-      // Get user emails for each generation
-      // Handle both single record (string) and array formats
-      const userIds = [...new Set(rows.map(r => {
-        const userField = r[FIELD_NAMES.userId];
-        return Array.isArray(userField) ? userField[0] : userField;
-      }).filter(Boolean))];
+      // Derive daily generation counts from Resume Requests table
+      const [requestRecords, userRecords] = await Promise.all([
+        base(TABLE_NAMES.requests).select().all(),
+        base(TABLE_NAMES.users).select().all(),
+      ]);
+
+      // Build user email map
       const userMap = {};
-      
-      for (const userId of userIds) {
-        try {
-          const userRecord = await base(TABLE_NAMES.users).find(userId);
-          userMap[userId] = userRecord.fields['Email'];
-        } catch (err) {
-          userMap[userId] = 'Unknown';
-        }
-      }
-      
-      return rows.map(row => {
-        const userField = row[FIELD_NAMES.userId];
+      userRecords.forEach(r => {
+        userMap[r.id] = r.fields['Email'] || 'Unknown';
+      });
+
+      // Group requests by user+date
+      const grouped = {};
+      requestRecords.forEach(record => {
+        const userField = record.fields[FIELD_NAMES.userId];
         const userId = Array.isArray(userField) ? userField[0] : userField;
-        return {
-          user_id: userId || row.user_id,
-          email: userMap[userId || row.user_id] || 'Unknown',
-          generation_date: row['Generation Date'] || row.generation_date,
-          count: row['Count'] || row.count
-        };
+        const createdAt = record.fields['Created At'] || '';
+        const dateKey = createdAt.slice(0, 10);
+        if (userId && dateKey) {
+          const key = `${userId}|${dateKey}`;
+          if (!grouped[key]) {
+            grouped[key] = { user_id: userId, email: userMap[userId] || 'Unknown', generation_date: dateKey, count: 0 };
+          }
+          grouped[key].count++;
+        }
+      });
+
+      return Object.values(grouped).sort((a, b) => {
+        const dateCompare = b.generation_date.localeCompare(a.generation_date);
+        if (dateCompare !== 0) return dateCompare;
+        return a.email.localeCompare(b.email);
       });
     } catch (error) {
       throw new Error(`Failed to get daily generations: ${error.message}`);
