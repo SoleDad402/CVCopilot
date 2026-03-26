@@ -144,7 +144,7 @@ export const historyService = {
 };
 
 // Utility function for polling job status
-export const pollJobStatus = async (jobId, onProgress, maxAttempts = 40, interval = 2000) => {
+export const pollJobStatus = async (jobId, onProgress, maxAttempts = 80, interval = 2000) => {
   let attempts = 0;
 
   // Helper to sleep
@@ -161,7 +161,7 @@ export const pollJobStatus = async (jobId, onProgress, maxAttempts = 40, interva
 
       if (status === 'completed') {
         console.log('Job completed, fetching results...');
-        const results = await resumeService.getJobResults(jobId, { timeout: 60000 }); // allow up to 60s for large payload
+        const results = await resumeService.getJobResults(jobId, { timeout: 120000 }); // allow up to 120s for large payload
         console.log('Results received:', results);
         return results.data;
       }
