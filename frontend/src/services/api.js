@@ -106,6 +106,21 @@ export const profileService = {
   getDailyGenerations: () =>
     api.get('/api/admin/daily-generations'),
 
+  getAdminStats: () =>
+    api.get('/api/admin/stats'),
+
+  updateUser: (userId, userData) =>
+    api.put(`/api/admin/users/${userId}`, userData),
+
+  deleteUser: (userId) =>
+    api.delete(`/api/admin/users/${userId}`),
+
+  getAllRequests: () =>
+    api.get('/api/admin/requests'),
+
+  getUserActivity: (userId) =>
+    api.get(`/api/admin/users/${userId}/activity`),
+
   getEmploymentHistory: () => 
     api.get('/api/profile/employment'),
   

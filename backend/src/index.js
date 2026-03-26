@@ -7,6 +7,7 @@ const OpenAI = require('openai');
 const jwt = require('jsonwebtoken');
 const User = require('./models/User');
 const auth = require('./middleware/auth');
+const adminAuth = require('./middleware/adminAuth');
 const sgMail = require('@sendgrid/mail');
 const PDFDocument = require('pdfkit');
 const PizZip = require('pizzip');
@@ -283,7 +284,8 @@ app.get('/api/profile', auth, async (req, res) => {
       location: user.location || user.Location || '',
       openai_model: user.openai_model || user['OpenAI Model'] || 'gpt-4o',
       max_tokens: user.max_tokens || user['Max Tokens'] || 30000,
-      daily_generation_limit: user.daily_generation_limit || user['Daily Generation Limit'] || 150
+      daily_generation_limit: user.daily_generation_limit || user['Daily Generation Limit'] || 150,
+      is_admin: user.is_admin || user['Is Admin'] || false
     };
     
     // Clean and format employment history - remove Airtable-specific fields
@@ -1715,13 +1717,25 @@ app.get('/api/settings', auth, async (req, res) => {
   }
 });
 
-// New endpoint to get all users (Admin only, for now any authenticated user can access)
-app.get('/api/admin/users', auth, async (req, res) => {
+// ── Admin endpoints (require admin role) ─────────────────────────────────────
+
+// Admin: Get dashboard stats
+app.get('/api/admin/stats', adminAuth, async (req, res) => {
+  try {
+    const stats = await User.getAdminStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching admin stats:', error);
+    res.status(500).json({ error: 'Failed to fetch stats.' });
+  }
+});
+
+// Admin: Get all users
+app.get('/api/admin/users', adminAuth, async (req, res) => {
   try {
     const users = await User.getAllUsers();
-    // Remove sensitive data before sending
     const safeUsers = users.map(user => {
-      const { password, reset_token, reset_token_expires, ...safeUser } = user;
+      const { password, Password, reset_token, reset_token_expires, ...safeUser } = user;
       return safeUser;
     });
     res.json(safeUsers);
@@ -1731,14 +1745,62 @@ app.get('/api/admin/users', auth, async (req, res) => {
   }
 });
 
-// New endpoint to get daily resume generations (Admin only)
-app.get('/api/admin/daily-generations', auth, async (req, res) => {
+// Admin: Update a user
+app.put('/api/admin/users/:userId', adminAuth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const updateData = req.body;
+    await User.updateUser(userId, updateData);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ error: 'Failed to update user.' });
+  }
+});
+
+// Admin: Delete a user
+app.delete('/api/admin/users/:userId', adminAuth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    await User.deleteUser(userId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ error: 'Failed to delete user.' });
+  }
+});
+
+// Admin: Get daily resume generations
+app.get('/api/admin/daily-generations', adminAuth, async (req, res) => {
   try {
     const dailyGenerations = await User.getDailyGenerations();
     res.json(dailyGenerations);
   } catch (error) {
     console.error('Error fetching daily resume generations:', error);
     res.status(500).json({ error: 'Failed to fetch daily resume generations.' });
+  }
+});
+
+// Admin: Get user activity detail
+app.get('/api/admin/users/:userId/activity', adminAuth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const activity = await User.getUserActivity(userId);
+    res.json(activity);
+  } catch (error) {
+    console.error('Error fetching user activity:', error);
+    res.status(500).json({ error: 'Failed to fetch user activity.' });
+  }
+});
+
+// Admin: Get all resume requests
+app.get('/api/admin/requests', adminAuth, async (req, res) => {
+  try {
+    const requests = await User.getAllResumeRequests();
+    res.json(requests);
+  } catch (error) {
+    console.error('Error fetching all requests:', error);
+    res.status(500).json({ error: 'Failed to fetch requests.' });
   }
 });
 

@@ -17,7 +17,7 @@ import Admin from './pages/Admin';
 import History from './pages/History';
 
 // Protected Route component
-const ProtectedRoute = ({ children, component: Component }) => {
+const ProtectedRoute = ({ children, component: Component, adminOnly = false }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -30,6 +30,10 @@ const ProtectedRoute = ({ children, component: Component }) => {
 
   if (!user) {
     return <Navigate to="/login" />;
+  }
+
+  if (adminOnly && !user.is_admin) {
+    return <Navigate to="/" />;
   }
 
   return Component ? <Component /> : children;
@@ -66,7 +70,7 @@ function App() {
                 </ProtectedRoute>
               } 
             />
-            <Route path="/admin" element={<ProtectedRoute component={Admin} />} />
+            <Route path="/admin" element={<ProtectedRoute adminOnly component={Admin} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>

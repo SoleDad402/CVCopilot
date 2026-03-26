@@ -30,7 +30,8 @@ import {
   AutoAwesome as AutoAwesomeIcon,
   Logout as LogoutIcon,
   Person as PersonIcon,
-  KeyboardArrowDown as ArrowDownIcon
+  KeyboardArrowDown as ArrowDownIcon,
+  AdminPanelSettings as AdminIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -199,6 +200,11 @@ const Navbar = () => {
               <NavLink to="/history" icon={<HistoryIcon sx={{ fontSize: 16 }} />}>
                 {isMobile ? '' : 'History'}
               </NavLink>
+              {user.is_admin && (
+                <NavLink to="/admin" icon={<AdminIcon sx={{ fontSize: 16 }} />}>
+                  {isMobile ? '' : 'Admin'}
+                </NavLink>
+              )}
             </Stack>
           )}
 

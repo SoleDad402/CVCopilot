@@ -68,6 +68,7 @@ const recordToObject = (record) => {
   if (obj['Reset Token Expires']) {
     obj.reset_token_expires = obj['Reset Token Expires'];
   }
+  if (obj['Is Admin']) obj.is_admin = obj['Is Admin'];
   if (obj['Created At']) {
     obj.created_at = obj['Created At'];
   }
@@ -690,6 +691,363 @@ class User {
     
     // If all else fails, return 0 (will sort to the beginning)
     return 0;
+  }
+
+  static async updateUser(userId, userData) {
+    const fields = {};
+    if (userData.full_name !== undefined) fields['Full Name'] = userData.full_name;
+    if (userData.email !== undefined) fields['Email'] = userData.email;
+    if (userData.phone !== undefined) fields['Phone'] = userData.phone;
+    if (userData.location !== undefined) fields['Location'] = userData.location;
+    if (userData.openai_model !== undefined) fields['OpenAI Model'] = userData.openai_model;
+    if (userData.max_tokens !== undefined) fields['Max Tokens'] = userData.max_tokens;
+    if (userData.daily_generation_limit !== undefined) fields['Daily Generation Limit'] = userData.daily_generation_limit;
+    if (userData.is_admin !== undefined) fields['Is Admin'] = userData.is_admin;
+
+    try {
+      await base(TABLE_NAMES.users).update([{ id: userId, fields }]);
+      return true;
+    } catch (error) {
+      throw new Error(`Failed to update user: ${error.message}`);
+    }
+  }
+
+  static async deleteUser(userId) {
+    try {
+      await base(TABLE_NAMES.users).destroy([userId]);
+      return true;
+    } catch (error) {
+      throw new Error(`Failed to delete user: ${error.message}`);
+    }
+  }
+
+  static async getAllResumeRequests() {
+    try {
+      const allRecords = await base(TABLE_NAMES.requests)
+        .select({ sort: [{ field: 'Created At', direction: 'desc' }] })
+        .all();
+
+      const rows = recordsToArray(allRecords);
+
+      // Get user emails
+      const userIds = [...new Set(rows.map(r => {
+        const userField = r['User'] || r[FIELD_NAMES.userId];
+        return Array.isArray(userField) ? userField[0] : userField;
+      }).filter(Boolean))];
+
+      const userMap = {};
+      for (const userId of userIds) {
+        try {
+          const userRecord = await base(TABLE_NAMES.users).find(userId);
+          userMap[userId] = userRecord.fields['Email'];
+        } catch (err) {
+          userMap[userId] = 'Unknown';
+        }
+      }
+
+      return rows.map(row => {
+        const userField = row['User'] || row[FIELD_NAMES.userId];
+        const userId = Array.isArray(userField) ? userField[0] : userField;
+
+        const getAttachmentUrl = (attachment) => {
+          if (!attachment) return null;
+          if (Array.isArray(attachment) && attachment.length > 0) return attachment[0].url || null;
+          if (typeof attachment === 'object' && attachment.url) return attachment.url;
+          return null;
+        };
+
+        return {
+          id: row.id,
+          user_id: userId,
+          email: userMap[userId] || 'Unknown',
+          company_name: row['Company Name'] || row.company_name || '',
+          role: row['Role'] || row.role || '',
+          job_description: row['Job Description'] || row.job_description || '',
+          docx_url: getAttachmentUrl(row['DOCX File'] || row.docx_file),
+          pdf_url: getAttachmentUrl(row['PDF File'] || row.pdf_file),
+          created_at: row['Created At'] || row.created_at || ''
+        };
+      });
+    } catch (error) {
+      throw new Error(`Failed to get all resume requests: ${error.message}`);
+    }
+  }
+
+  static async getAdminStats() {
+    try {
+      const todayCST = await this.getTodayCST();
+      const now = new Date();
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      // Fetch all tables in parallel
+      const [userRecords, generationRecords, requestRecords] = await Promise.all([
+        base(TABLE_NAMES.users).select().all(),
+        base(TABLE_NAMES.generations).select().all(),
+        base(TABLE_NAMES.requests).select().all(),
+      ]);
+
+      const totalUsers = userRecords.length;
+      const users = recordsToArray(userRecords);
+
+      // ── Generation analytics ──
+      let totalGenerations = 0;
+      let todayGenerations = 0;
+      const activeUserIds = new Set();
+      const generationsByDate = {};       // { 'YYYY-MM-DD': totalCount }
+      const generationsByUser = {};       // { userId: totalCount }
+      const modelDistribution = {};       // { model: userCount }
+
+      generationRecords.forEach(record => {
+        const count = record.fields['Count'] || 0;
+        const date = record.fields['Generation Date'] || '';
+        const userField = record.fields[FIELD_NAMES.userId];
+        const userId = Array.isArray(userField) ? userField[0] : userField;
+
+        totalGenerations += count;
+        if (date === todayCST) todayGenerations += count;
+        if (userId) {
+          activeUserIds.add(userId);
+          generationsByUser[userId] = (generationsByUser[userId] || 0) + count;
+        }
+        if (date) {
+          generationsByDate[date] = (generationsByDate[date] || 0) + count;
+        }
+      });
+
+      // Model distribution from user records
+      users.forEach(u => {
+        const model = u.openai_model || u['OpenAI Model'] || 'gpt-4o';
+        modelDistribution[model] = (modelDistribution[model] || 0) + 1;
+      });
+
+      // ── Request analytics ──
+      const totalRequests = requestRecords.length;
+      let weekRequests = 0;
+      let monthRequests = 0;
+      const companyFrequency = {};        // { company: count }
+      const roleFrequency = {};           // { role: count }
+      const requestsByDate = {};          // { 'YYYY-MM-DD': count }
+      const requestsByUser = {};          // { userId: count }
+      let withDocx = 0;
+      let withPdf = 0;
+
+      requestRecords.forEach(record => {
+        const createdAt = record.fields['Created At'];
+        const company = record.fields['Company Name'] || '';
+        const role = record.fields['Role'] || '';
+        const userField = record.fields[FIELD_NAMES.userId];
+        const userId = Array.isArray(userField) ? userField[0] : userField;
+
+        if (createdAt) {
+          const d = new Date(createdAt);
+          if (d >= weekAgo) weekRequests++;
+          if (d >= monthAgo) monthRequests++;
+          const dateKey = createdAt.slice(0, 10);
+          requestsByDate[dateKey] = (requestsByDate[dateKey] || 0) + 1;
+        }
+        if (company) companyFrequency[company] = (companyFrequency[company] || 0) + 1;
+        if (role) roleFrequency[role] = (roleFrequency[role] || 0) + 1;
+        if (userId) requestsByUser[userId] = (requestsByUser[userId] || 0) + 1;
+
+        const docxFile = record.fields['DOCX File'];
+        const pdfFile = record.fields['PDF File'];
+        if (docxFile && (Array.isArray(docxFile) ? docxFile.length > 0 : true)) withDocx++;
+        if (pdfFile && (Array.isArray(pdfFile) ? pdfFile.length > 0 : true)) withPdf++;
+      });
+
+      // ── Top users (by generations) ──
+      const userEmailMap = {};
+      const userNameMap = {};
+      users.forEach(u => {
+        userEmailMap[u.id] = u.email || u.Email || 'Unknown';
+        userNameMap[u.id] = u.full_name || u['Full Name'] || '';
+      });
+
+      const topUsersByGenerations = Object.entries(generationsByUser)
+        .map(([userId, count]) => ({
+          userId,
+          email: userEmailMap[userId] || 'Unknown',
+          full_name: userNameMap[userId] || '',
+          generations: count,
+          requests: requestsByUser[userId] || 0,
+        }))
+        .sort((a, b) => b.generations - a.generations)
+        .slice(0, 15);
+
+      // ── Top companies ──
+      const topCompanies = Object.entries(companyFrequency)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 20)
+        .map(([name, count]) => ({ name, count }));
+
+      // ── Top roles ──
+      const topRoles = Object.entries(roleFrequency)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 20)
+        .map(([name, count]) => ({ name, count }));
+
+      // ── Generation trend (last 30 days) ──
+      const generationTrend = [];
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+        const dateStr = d.toISOString().slice(0, 10);
+        generationTrend.push({
+          date: dateStr,
+          generations: generationsByDate[dateStr] || 0,
+          requests: requestsByDate[dateStr] || 0,
+        });
+      }
+
+      // ── User registration trend (last 30 days) ──
+      const registrationsByDate = {};
+      users.forEach(u => {
+        const ca = u.created_at || u['Created At'];
+        if (ca) {
+          const dateKey = ca.slice(0, 10);
+          registrationsByDate[dateKey] = (registrationsByDate[dateKey] || 0) + 1;
+        }
+      });
+      const registrationTrend = [];
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+        const dateStr = d.toISOString().slice(0, 10);
+        registrationTrend.push({
+          date: dateStr,
+          count: registrationsByDate[dateStr] || 0,
+        });
+      }
+
+      // ── Day-of-week distribution (from generations) ──
+      const dayOfWeekDist = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      Object.entries(generationsByDate).forEach(([dateStr, count]) => {
+        const d = new Date(dateStr + 'T12:00:00');
+        if (!isNaN(d.getTime())) {
+          dayOfWeekDist[dayNames[d.getDay()]] += count;
+        }
+      });
+
+      // ── Average generations per user ──
+      const avgGenerationsPerUser = activeUserIds.size > 0
+        ? Math.round(totalGenerations / activeUserIds.size * 10) / 10
+        : 0;
+
+      // ── File output rate ──
+      const docxRate = totalRequests > 0 ? Math.round((withDocx / totalRequests) * 100) : 0;
+      const pdfRate = totalRequests > 0 ? Math.round((withPdf / totalRequests) * 100) : 0;
+
+      return {
+        // Core stats
+        totalUsers,
+        totalGenerations,
+        todayGenerations,
+        totalRequests,
+        weekRequests,
+        monthRequests,
+        activeUsers: activeUserIds.size,
+        avgGenerationsPerUser,
+
+        // File stats
+        withDocx,
+        withPdf,
+        docxRate,
+        pdfRate,
+
+        // Distributions
+        modelDistribution,
+        dayOfWeekDist,
+
+        // Trends (30 days)
+        generationTrend,
+        registrationTrend,
+
+        // Top lists
+        topUsersByGenerations,
+        topCompanies,
+        topRoles,
+      };
+    } catch (error) {
+      throw new Error(`Failed to get admin stats: ${error.message}`);
+    }
+  }
+
+  static async getUserActivity(userId) {
+    try {
+      // Get user info
+      const userRecord = await base(TABLE_NAMES.users).find(userId);
+      const user = recordToObject(userRecord);
+
+      // Get user's generations
+      const allGens = await base(TABLE_NAMES.generations).select().all();
+      const userGens = allGens.filter(r => {
+        const uf = r.fields[FIELD_NAMES.userId];
+        const uid = Array.isArray(uf) ? uf[0] : uf;
+        return uid === userId;
+      });
+
+      const generationHistory = userGens.map(r => ({
+        date: r.fields['Generation Date'] || '',
+        count: r.fields['Count'] || 0,
+      })).sort((a, b) => b.date.localeCompare(a.date));
+
+      let totalGenerations = 0;
+      generationHistory.forEach(g => totalGenerations += g.count);
+
+      // Get user's requests
+      const allReqs = await base(TABLE_NAMES.requests).select().all();
+      const userReqs = allReqs.filter(r => {
+        const uf = r.fields[FIELD_NAMES.userId] || [];
+        return Array.isArray(uf) && uf.some(id => id === userId);
+      });
+
+      const getAttachmentUrl = (attachment) => {
+        if (!attachment) return null;
+        if (Array.isArray(attachment) && attachment.length > 0) return attachment[0].url || null;
+        if (typeof attachment === 'object' && attachment.url) return attachment.url;
+        return null;
+      };
+
+      const requests = recordsToArray(userReqs)
+        .map(row => ({
+          id: row.id,
+          company_name: row['Company Name'] || row.company_name || '',
+          role: row['Role'] || row.role || '',
+          created_at: row['Created At'] || row.created_at || '',
+          docx_url: getAttachmentUrl(row['DOCX File'] || row.docx_file),
+          pdf_url: getAttachmentUrl(row['PDF File'] || row.pdf_file),
+        }))
+        .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+
+      // Company breakdown for this user
+      const companies = {};
+      requests.forEach(r => {
+        if (r.company_name) companies[r.company_name] = (companies[r.company_name] || 0) + 1;
+      });
+
+      return {
+        user: {
+          id: user.id,
+          email: user.email || user.Email,
+          full_name: user.full_name || user['Full Name'] || '',
+          location: user.location || user.Location || '',
+          openai_model: user.openai_model || user['OpenAI Model'] || 'gpt-4o',
+          max_tokens: user.max_tokens || user['Max Tokens'] || 30000,
+          daily_generation_limit: user.daily_generation_limit || user['Daily Generation Limit'] || 150,
+          is_admin: user.is_admin || user['Is Admin'] || false,
+          created_at: user.created_at || user['Created At'] || '',
+        },
+        totalGenerations,
+        totalRequests: requests.length,
+        generationHistory,
+        requests,
+        companyBreakdown: Object.entries(companies)
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count),
+      };
+    } catch (error) {
+      throw new Error(`Failed to get user activity: ${error.message}`);
+    }
   }
 
   static async getDailyGenerations() {
