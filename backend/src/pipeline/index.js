@@ -130,7 +130,7 @@ async function createTailoredResume({
 const PIPELINE_VERSIONS = {
   1: createTailoredResume,
   // V2 is lazy-loaded to avoid pulling in deps until actually needed
-  2: (...args) => require('./v2').createTailoredResumeV2(...args),
+  2: (params) => require('./v2').createTailoredResumeV2(params),
 };
 
 const SUPPORTED_VERSIONS = Object.keys(PIPELINE_VERSIONS).map(Number);

@@ -38,8 +38,12 @@ async function createTailoredResumeV2({
   userContact,
   education,
   openai,
-  returnMarkdown = false
+  returnMarkdown = false,
+  onProgress
 }) {
+  const report = (progress, stepLabel) => {
+    if (onProgress) onProgress({ progress, stepLabel });
+  };
   const t0 = Date.now();
   const elapsed = () => Date.now() - t0;
   const time = (label) => console.log(`[V2] ${label} (+${elapsed()}ms)`);
@@ -53,6 +57,7 @@ async function createTailoredResumeV2({
   console.log('[V2] Pipeline starting...');
 
   // ── Pass 1 + 2 (parallel) ─────────────────────────────────────────────────
+  report(5, 'Analyzing your profile and the job description…');
   let t1 = Date.now();
   const [careerIdentity, jdAnalysis] = await Promise.all([
     analyzeProfile({ employmentHistory, education, userName, openai }),
@@ -73,6 +78,7 @@ async function createTailoredResumeV2({
   }));
 
   // ── Pass 3: Strategy ──────────────────────────────────────────────────────
+  report(20, 'Building your positioning strategy…');
   t1 = Date.now();
   const strategy = await buildStrategy({ careerIdentity, jdAnalysis, employmentHistory, openai });
   lap('Pass 3 (strategy)', t1);
@@ -96,6 +102,7 @@ async function createTailoredResumeV2({
   console.log(`[V2]   CoveragePlan final: ${strategy.coveragePlan.length} entries (${strategy.coveragePlan.filter(c => c.action === 'must_include').length} must_include, ${strategy.coveragePlan.filter(c => c.action === 'bridge').length} bridge, ${strategy.coveragePlan.filter(c => c.action === 'omit_rare').length} omit_rare)`);
 
   // ── Pass 4a + 4b (parallel) ────────────────────────────────────────────────
+  report(40, 'Crafting your experience and skills…');
   t1 = Date.now();
   const [generatedExperience, generatedSkills, achievements] = await Promise.all([
     generateExperience({ strategy, careerIdentity, jdAnalysis, employmentHistory, openai }),
@@ -118,6 +125,7 @@ async function createTailoredResumeV2({
   time(`4a+4b complete — ${generatedExperience.length} roles, ${totalBullets} bullets, ${totalSkills} skills`);
 
   // ── Pass 4c (summary) ────────────────────────────────────────────────────
+  report(65, 'Writing your professional summary…');
   t1 = Date.now();
   const summary = await generateSummary({
     strategy, careerIdentity, jdAnalysis,
@@ -153,6 +161,7 @@ async function createTailoredResumeV2({
   };
 
   // ── Pass 5: Authenticity Review ────────────────────────────────────────────
+  report(80, 'Reviewing and polishing…');
   t1 = Date.now();
   const { plan: reviewedPlan, score, flags } = await reviewResume({
     resumePlan: preReviewPlan, careerIdentity, jdAnalysis, strategy,

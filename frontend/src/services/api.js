@@ -153,10 +153,10 @@ export const pollJobStatus = async (jobId, onProgress, maxAttempts = 40, interva
   while (attempts < maxAttempts) {
     try {
       const response = await resumeService.getJobStatus(jobId);
-      const { status, progress, error } = response.data;
+      const { status, progress, error, stepLabel } = response.data;
 
       if (onProgress) {
-        onProgress({ status, progress, error });
+        onProgress({ status, progress, error, stepLabel });
       }
 
       if (status === 'completed') {

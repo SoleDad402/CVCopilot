@@ -83,6 +83,7 @@ function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [jobStatus, setJobStatus] = useState(null);
   const [progress, setProgress] = useState(0);
+  const [stepLabel, setStepLabel] = useState(null);
   const [error, setError] = useState('');
   const [lastGenerated, setLastGenerated] = useState(null);
 
@@ -204,6 +205,7 @@ function Home() {
     setError('');
     setJobStatus('starting');
     setProgress(0);
+    setStepLabel(null);
     setDocumentType('resume');
     try {
       const { data: jobData } = await resumeService.generateResume({ jobDescription, companyName, role, version: pipelineVersion });
@@ -212,6 +214,7 @@ function Home() {
       const result = await pollJobStatus(jobId, (progressData) => {
         setJobStatus(progressData.status);
         setProgress(progressData.progress || 0);
+        if (progressData.stepLabel) setStepLabel(progressData.stepLabel);
         if (progressData.error) setError(progressData.error);
       });
       if (result) {
@@ -247,6 +250,7 @@ function Home() {
     setError('');
     setJobStatus('starting');
     setProgress(0);
+    setStepLabel(null);
     setDocumentType('cover-letter');
     try {
       const { data: jobData } = await coverLetterService.generateCoverLetter({ jobDescription, companyName, role, resume: resumeData });
@@ -255,6 +259,7 @@ function Home() {
       const result = await pollJobStatus(jobId, (progressData) => {
         setJobStatus(progressData.status);
         setProgress(progressData.progress || 0);
+        if (progressData.stepLabel) setStepLabel(progressData.stepLabel);
         if (progressData.error) setError(progressData.error);
       });
       if (result) {
@@ -522,7 +527,7 @@ function Home() {
             >
               <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.75 }}>
                 <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 600 }}>
-                  {getStepLabel(progress)}
+                  {stepLabel || getStepLabel(progress)}
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 700 }}>
                   {Math.round(progress)}%

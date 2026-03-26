@@ -85,6 +85,9 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+// Share OpenAI client with route handlers
+app.set('openai', openai);
+
 // Initialize SendGrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -114,6 +117,10 @@ app.use(express.static(path.join(__dirname, '../../frontend/build')));
 
 // Add multer for handling file uploads
 const upload = multer({ storage: multer.memoryStorage() });
+
+// Mount BidCopilot integration API (no auth — internal service-to-service)
+const bidcopilotRouter = require('./routes/bidcopilot');
+app.use('/api/v1', bidcopilotRouter);
 
 // Helper function to send password reset email
 const sendPasswordResetEmail = async (email, token) => {
@@ -742,7 +749,13 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
       },
       education: pipelineEducation,
       openai: openai,
-      returnMarkdown: false // Return plan object for JSON conversion
+      returnMarkdown: false, // Return plan object for JSON conversion
+      onProgress: ({ progress, stepLabel }) => {
+        const job = jobs.get(jobId);
+        if (job) {
+          jobs.set(jobId, { ...job, progress, stepLabel });
+        }
+      }
     });
 
     // Convert plan to expected JSON format
@@ -768,6 +781,12 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
       education: generatedResume.education,
       certifications: generatedResume.certifications || []
     };
+
+    // Update progress for document generation
+    const job = jobs.get(jobId);
+    if (job) {
+      jobs.set(jobId, { ...job, progress: 90, stepLabel: 'Generating your document…' });
+    }
 
     // Generate DOCX content
     const templatePath = path.join(__dirname, 'templates', 'resume-template.docx');
@@ -1098,7 +1117,8 @@ app.get('/api/status/:jobId', auth, async (req, res) => {
       jobId: job.id,
       status: job.status,
       createdAt: job.createdAt,
-      progress: job.progress || 0
+      progress: job.progress || 0,
+      stepLabel: job.stepLabel || null
     };
 
     if (job.startedAt) {

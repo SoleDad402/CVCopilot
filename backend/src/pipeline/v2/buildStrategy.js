@@ -102,11 +102,15 @@ Rules:
         { role: 'user', content: prompt }
       ],
       temperature: 0.4,
-      max_completion_tokens: 2500,
+      max_completion_tokens: 4096,
       response_format: { type: 'json_object' }
     });
 
-    const r = JSON.parse(completion.choices[0].message.content);
+    const raw = completion.choices[0].message.content;
+    if (!raw) {
+      throw new Error(`buildStrategy: empty response from model (finish_reason: ${completion.choices[0].finish_reason})`);
+    }
+    const r = JSON.parse(raw);
 
     return {
       positioningAngle: r.positioningAngle || '',
