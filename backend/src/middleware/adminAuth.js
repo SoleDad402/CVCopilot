@@ -14,7 +14,7 @@ const adminAuth = async (req, res, next) => {
 
     // Check admin status from database
     const user = await User.findByEmail(decoded.email);
-    if (!user || !(user.is_admin || user['Is Admin'])) {
+    if (!user || !user.is_admin) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 

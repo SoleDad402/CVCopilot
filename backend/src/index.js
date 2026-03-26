@@ -272,46 +272,43 @@ app.get('/api/profile', auth, async (req, res) => {
     const employmentHistory = await User.getEmploymentHistory(user.id);
     const education = await User.getEducation(user.id);
     
-    // Clean and format user object - only include fields frontend expects
     const cleanUser = {
       id: user.id,
-      email: user.email || user.Email,
-      full_name: user.full_name || user['Full Name'],
-      phone: user.phone || user.Phone || '',
-      personal_email: user.personal_email || user['Personal Email'] || '',
-      linkedin_url: user.linkedin_url || user['LinkedIn URL'] || '',
-      github_url: user.github_url || user['GitHub URL'] || '',
-      location: user.location || user.Location || '',
-      openai_model: user.openai_model || user['OpenAI Model'] || 'gpt-4o',
-      max_tokens: user.max_tokens || user['Max Tokens'] || 30000,
-      daily_generation_limit: user.daily_generation_limit || user['Daily Generation Limit'] || 150,
-      is_admin: user.is_admin || user['Is Admin'] || false
+      email: user.email || '',
+      full_name: user.full_name || '',
+      phone: user.phone || '',
+      personal_email: user.personal_email || '',
+      linkedin_url: user.linkedin_url || '',
+      github_url: user.github_url || '',
+      location: user.location || '',
+      openai_model: user.openai_model || 'gpt-4o',
+      max_tokens: user.max_tokens || 30000,
+      daily_generation_limit: user.daily_generation_limit || 150,
+      is_admin: user.is_admin || false
     };
-    
-    // Clean and format employment history - remove Airtable-specific fields
+
     const cleanEmploymentHistory = employmentHistory.map(item => ({
       id: item.id,
-      company_name: item.company_name || item['Company Name'] || '',
-      location: item.location || item.Location || '',
-      position: item.position || item.Position || '',
-      start_date: item.start_date || item['Start Date'] || '',
-      end_date: item.end_date || item['End Date'] || '',
-      is_current: item.is_current !== undefined ? item.is_current : (item['Is Current'] || false),
-      description: item.description || item.Description || ''
+      company_name: item.company_name || '',
+      location: item.location || '',
+      position: item.position || '',
+      start_date: item.start_date || '',
+      end_date: item.end_date || '',
+      is_current: item.is_current || false,
+      description: item.description || ''
     }));
-    
-    // Clean and format education - remove Airtable-specific fields
+
     const cleanEducation = education.map(item => ({
       id: item.id,
-      school_name: item.school_name || item['School Name'] || '',
-      location: item.location || item.Location || '',
-      degree: item.degree || item.Degree || '',
-      field_of_study: item.field_of_study || item['Field of Study'] || '',
-      start_date: item.start_date || item['Start Date'] || '',
-      end_date: item.end_date || item['End Date'] || '',
-      is_current: item.is_current !== undefined ? item.is_current : (item['Is Current'] || false),
-      gpa: item.gpa || item.GPA || '',
-      description: item.description || item.Description || ''
+      school_name: item.school_name || '',
+      location: item.location || '',
+      degree: item.degree || '',
+      field_of_study: item.field_of_study || '',
+      start_date: item.start_date || '',
+      end_date: item.end_date || '',
+      is_current: item.is_current || false,
+      gpa: item.gpa || '',
+      description: item.description || ''
     }));
     
     res.json({
@@ -436,11 +433,11 @@ const generateCoverLetterAsync = async (jobId, userId, cleanedJobDescription, co
     const userRaw = await User.findByEmail(userId);
     const user = {
       id: userRaw.id,
-      email: userRaw.email || userRaw.Email,
-      full_name: userRaw.full_name || userRaw['Full Name'] || '',
-      phone: userRaw.phone || userRaw.Phone || '',
-      personal_email: userRaw.personal_email || userRaw['Personal Email'] || '',
-      location: userRaw.location || userRaw.Location || ''
+      email: userRaw.email || '',
+      full_name: userRaw.full_name || '',
+      phone: userRaw.phone || '',
+      personal_email: userRaw.personal_email || '',
+      location: userRaw.location || ''
     };
 
     // Build candidate information from resume data if available
@@ -569,7 +566,7 @@ Return ONLY the cover letter body text (no headers, no "Dear Hiring Manager", no
       pdfBuffer = null;
     }
 
-    // Upload files to Airtable as attachments
+    // Upload files and store URLs
     let docxAttachment = null;
     let pdfAttachment = null;
     
@@ -601,7 +598,7 @@ Return ONLY the cover letter body text (no headers, no "Dear Hiring Manager", no
         pdfAttachment = await createAttachment(pdfBuffer, 'cover-letter.pdf', 'application/pdf');
       }
 
-      // Store cover letter in Airtable
+      // Store cover letter in database
       try {
         await User.addCoverLetterRequest(user.id, {
           company_name: companyName || null,
@@ -610,12 +607,12 @@ Return ONLY the cover letter body text (no headers, no "Dear Hiring Manager", no
           docx_file: docxAttachment,
           pdf_file: pdfAttachment
         });
-        console.log('Cover letter files saved to Airtable successfully');
+        console.log('Cover letter files saved to database successfully');
       } catch (metaErr) {
         console.error('Failed saving cover letter metadata:', metaErr);
       }
     } catch (saveErr) {
-      console.error('Failed uploading cover letter files to Airtable:', saveErr);
+      console.error('Failed uploading cover letter files:', saveErr);
     }
 
     // Update job with completed results
@@ -668,39 +665,37 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
     // Clean user data - handle both database field names
     const user = {
       id: userRaw.id,
-      email: userRaw.email || userRaw.Email,
-      full_name: userRaw.full_name || userRaw['Full Name'] || '',
-      phone: userRaw.phone || userRaw.Phone || '',
-      personal_email: userRaw.personal_email || userRaw['Personal Email'] || '',
-      linkedin_url: userRaw.linkedin_url || userRaw['LinkedIn URL'] || '',
-      github_url: userRaw.github_url || userRaw['GitHub URL'] || '',
-      location: userRaw.location || userRaw.Location || ''
+      email: userRaw.email || '',
+      full_name: userRaw.full_name || '',
+      phone: userRaw.phone || '',
+      personal_email: userRaw.personal_email || '',
+      linkedin_url: userRaw.linkedin_url || '',
+      github_url: userRaw.github_url || '',
+      location: userRaw.location || ''
     };
 
-    // Clean and format employment history - handle both database field names
     const cleanEmploymentHistory = employmentHistory.map(item => ({
       id: item.id,
-      company_name: item.company_name || item['Company Name'] || '',
-      location: item.location || item.Location || '',
-      position: item.position || item.Position || '',
-      start_date: item.start_date || item['Start Date'] || '',
-      end_date: item.end_date || item['End Date'] || '',
-      is_current: item.is_current !== undefined ? item.is_current : (item['Is Current'] || false),
-      description: item.description || item.Description || ''
+      company_name: item.company_name || '',
+      location: item.location || '',
+      position: item.position || '',
+      start_date: item.start_date || '',
+      end_date: item.end_date || '',
+      is_current: item.is_current || false,
+      description: item.description || ''
     }));
 
-    // Clean and format education - handle both database field names
     const cleanEducation = education.map(item => ({
       id: item.id,
-      school_name: item.school_name || item['School Name'] || '',
-      location: item.location || item.Location || '',
-      degree: item.degree || item.Degree || '',
-      field_of_study: item.field_of_study || item['Field of Study'] || '',
-      start_date: item.start_date || item['Start Date'] || '',
-      end_date: item.end_date || item['End Date'] || '',
-      is_current: item.is_current !== undefined ? item.is_current : (item['Is Current'] || false),
-      gpa: item.gpa || item.GPA || '',
-      description: item.description || item.Description || ''
+      school_name: item.school_name || '',
+      location: item.location || '',
+      degree: item.degree || '',
+      field_of_study: item.field_of_study || '',
+      start_date: item.start_date || '',
+      end_date: item.end_date || '',
+      is_current: item.is_current || false,
+      gpa: item.gpa || '',
+      description: item.description || ''
     }));
 
     // Convert to pipeline format
@@ -875,37 +870,27 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
       pdfBuffer = null;
     }
 
-    // Upload files to Airtable as attachments
+    // Upload files and store URLs
     let docxAttachment = null;
     let pdfAttachment = null;
     
     try {
-      // Helper function to create Airtable attachment from buffer
-      // Files are stored persistently and served via /api/files endpoint
-      // Airtable will download and store these files when we provide the URLs
+      // Store file and return URL array (compatible with addResumeRequest)
       const createAttachment = async (buffer, filename, contentType) => {
-        // Create a unique file ID with timestamp for better organization
         const timestamp = Date.now();
         const fileId = crypto.randomBytes(8).toString('hex');
         const uploadsDir = path.join(__dirname, '../uploads');
         if (!fs.existsSync(uploadsDir)) {
           fs.mkdirSync(uploadsDir, { recursive: true });
         }
-        
-        // Store file with timestamp and ID for persistence
+
         const storedFilename = `${timestamp}_${fileId}_${filename}`;
         const filePath = path.join(uploadsDir, storedFilename);
         fs.writeFileSync(filePath, buffer);
-        
-        // Create a publicly accessible URL
-        // Airtable will download and store this file when we provide the URL
+
         const baseUrl = process.env.BACKEND_URL || `http://localhost:${port}`;
         const fileUrl = `${baseUrl}/api/files/${storedFilename}`;
-        
-        return [{
-          url: fileUrl,
-          filename: filename
-        }];
+        return [{ url: fileUrl, filename }];
       };
 
       // Upload DOCX file
@@ -916,8 +901,6 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
         pdfAttachment = await createAttachment(pdfBuffer, 'resume.pdf', 'application/pdf');
       }
 
-      // Record metadata in Airtable with file attachments
-      // Airtable will automatically download and store the files from the URLs
       try {
         await User.addResumeRequest(user.id, {
           company_name: jobs.get(jobId)?.companyName || null,
@@ -926,12 +909,12 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
           docx_file: docxAttachment,
           pdf_file: pdfAttachment
         });
-        console.log('Resume files saved to Airtable successfully');
+        console.log('Resume files saved to database successfully');
       } catch (metaErr) {
         console.error('Failed saving resume request metadata:', metaErr);
       }
     } catch (saveErr) {
-      console.error('Failed uploading files to Airtable:', saveErr);
+      console.error('Failed uploading files:', saveErr);
     }
 
     // Update job with completed results
@@ -944,7 +927,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
         generatedResume,
         docxContent: buffer.toString('base64'),
         pdfContent: pdfContent || null
-        // Note: Files are now stored in Airtable, not on disk
+        // Note: Files are stored locally and URLs saved to database
       }
     });
 
@@ -1556,7 +1539,7 @@ app.post('/api/convert-to-pdf', auth, upload.single('docx'), async (req, res) =>
   }
 });
 
-// File serving endpoint for Airtable attachments
+// File serving endpoint for uploaded attachments
 // This serves files from the persistent uploads directory
 app.get('/api/files/:filename', (req, res) => {
   try {
