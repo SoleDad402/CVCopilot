@@ -350,37 +350,36 @@ function Home() {
           overflow: 'hidden',
         }}
       >
-        {/* Panel body — no header, no scroll needed */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', px: 2.5, pt: 2.5, pb: 2, gap: 1.5, overflow: 'hidden' }}>
+        {/* Panel body */}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-          {/* ① JD — hero input, fills remaining vertical space */}
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.75 }}>
-              <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', fontSize: '0.6875rem', letterSpacing: '0.06em' }}>
-                Job Description
-              </Typography>
-              <Stack direction="row" spacing={0.25} alignItems="center">
+          {/* ── JD section: fills available space ── */}
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, px: 2.5, pt: 2 }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Box sx={{
+                  width: 24, height: 24, borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`,
+                }}>
+                  <ArticleIcon sx={{ fontSize: 13, color: '#fff' }} />
+                </Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.8125rem', color: colors.dark }}>
+                  Job Description
+                </Typography>
+              </Stack>
+              <Stack direction="row" spacing={0.5} alignItems="center">
                 {jobDescription && (
-                  <Typography variant="caption" sx={{ color: 'text.disabled', mr: 0.5 }}>
-                    {jobDescription.length.toLocaleString()} chars
-                  </Typography>
+                  <Chip
+                    label={`${jobDescription.length.toLocaleString()} chars`}
+                    size="small"
+                    sx={{ height: 20, fontSize: '0.5625rem', fontWeight: 600, bgcolor: alpha(colors.primary, 0.06), color: 'text.secondary' }}
+                  />
                 )}
                 <Tooltip title="Auto-clean formatting" arrow>
                   <span>
-                    <IconButton size="small" onClick={handleAutoclean} disabled={!jobDescription.trim()} sx={{ width: 22, height: 22 }}>
+                    <IconButton size="small" onClick={handleAutoclean} disabled={!jobDescription.trim()}
+                      sx={{ width: 26, height: 26, border: '1px solid', borderColor: 'divider', '&:hover': { borderColor: colors.primary, bgcolor: alpha(colors.primary, 0.04) } }}>
                       <AutoFixIcon sx={{ fontSize: 13 }} />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-                <Tooltip title="Clear all" arrow>
-                  <span>
-                    <IconButton
-                      size="small"
-                      onClick={() => { setJobDescription(''); setCompanyName(''); setRole(''); }}
-                      disabled={!jobDescription.trim() && !companyName.trim() && !role.trim()}
-                      sx={{ width: 22, height: 22, color: 'error.main', '&:hover': { bgcolor: alpha('#ef4444', 0.08) } }}
-                    >
-                      <ClearIcon sx={{ fontSize: 13 }} />
                     </IconButton>
                   </span>
                 </Tooltip>
@@ -390,7 +389,7 @@ function Home() {
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
               onKeyDown={handleJdKeyDown}
-              placeholder="Paste the full job description here…"
+              placeholder="Paste the full job description here..."
               multiline
               autoFocus
               fullWidth
@@ -402,34 +401,40 @@ function Home() {
                   lineHeight: 1.65,
                   height: '100%',
                   alignItems: 'flex-start',
+                  borderRadius: '10px',
+                  bgcolor: '#fafbfc',
+                  transition: 'all 0.15s ease',
+                  '&:hover': { bgcolor: '#fff' },
+                  '&.Mui-focused': { bgcolor: '#fff' },
                   '& textarea': { height: '100% !important', overflow: 'auto !important' },
                 },
               }}
             />
           </Box>
 
-          {/* ② Company + Role — compact 2-column row */}
-          <Stack direction="row" spacing={1.25}>
-            <TextField
-              label="Company"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              size="small"
-              placeholder="e.g. Stripe"
-              sx={{ flex: 1 }}
-            />
-            <TextField
-              label="Role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              size="small"
-              placeholder="e.g. Backend Engineer"
-              sx={{ flex: 1.4 }}
-            />
-          </Stack>
+          {/* ── Bottom controls: always pinned ── */}
+          <Box sx={{ px: 2.5, pt: 1.5, pb: 2, borderTop: '1px solid', borderColor: '#f1f5f9' }}>
+            {/* Company + Role row */}
+            <Stack direction="row" spacing={1.25} sx={{ mb: 1.5 }}>
+              <TextField
+                label="Company"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                size="small"
+                placeholder="e.g. Stripe"
+                sx={{ flex: 1 }}
+              />
+              <TextField
+                label="Role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                size="small"
+                placeholder="e.g. Backend Engineer"
+                sx={{ flex: 1.4 }}
+              />
+            </Stack>
 
-          {/* ③ Generate button — always visible, no scrolling */}
-          <Box>
+            {/* Generate button */}
             <Button
               variant="contained"
               fullWidth
@@ -440,56 +445,81 @@ function Home() {
                 ? <CircularProgress size={16} color="inherit" />
                 : <BoltIcon />
               }
-              sx={{ py: 1.5, fontSize: '0.9375rem', letterSpacing: '-0.01em' }}
+              sx={{ py: 1.5, fontSize: '0.9375rem', letterSpacing: '-0.01em', mb: 0.75 }}
             >
-              {isGenerating && documentType === 'resume' ? 'Generating…' : 'Generate Resume'}
+              {isGenerating && documentType === 'resume' ? 'Generating...' : 'Generate Resume'}
             </Button>
-            {!isGenerating && !jobDescription.trim() && (
-              <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block', textAlign: 'center', mt: 0.75 }}>
-                Paste a job description above to start
+
+            {/* Hint text */}
+            {!isGenerating && (
+              <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block', textAlign: 'center', mb: 1 }}>
+                {!jobDescription.trim()
+                  ? 'Paste a job description above to start'
+                  : <>or press{' '}
+                      <Box component="kbd" sx={{ bgcolor: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '4px', px: 0.5, py: 0.1, fontFamily: 'monospace', fontSize: '0.6875rem' }}>
+                        ⌘ Enter
+                      </Box>
+                    </>
+                }
               </Typography>
             )}
-            {!isGenerating && jobDescription.trim() && (
-              <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block', textAlign: 'center', mt: 0.75 }}>
-                or press{' '}
-                <Box component="kbd" sx={{ bgcolor: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '4px', px: 0.5, py: 0.1, fontFamily: 'monospace', fontSize: '0.6875rem' }}>
-                  ⌘ Enter
-                </Box>
-              </Typography>
+
+            {/* Clear All button — prominent */}
+            {(jobDescription.trim() || companyName.trim() || role.trim()) && (
+              <Button
+                variant="outlined"
+                fullWidth
+                size="medium"
+                onClick={() => { setJobDescription(''); setCompanyName(''); setRole(''); }}
+                startIcon={<ClearIcon sx={{ fontSize: 16 }} />}
+                sx={{
+                  color: colors.error,
+                  borderColor: alpha(colors.error, 0.3),
+                  fontWeight: 600,
+                  fontSize: '0.8125rem',
+                  py: 0.75,
+                  '&:hover': {
+                    borderColor: colors.error,
+                    bgcolor: alpha(colors.error, 0.04),
+                  },
+                }}
+              >
+                Clear All
+              </Button>
+            )}
+
+            {/* Progress */}
+            {isGenerating && (
+              <Box
+                sx={{
+                  bgcolor: alpha('#6366f1', 0.05),
+                  border: '1px solid',
+                  borderColor: alpha('#6366f1', 0.15),
+                  borderRadius: 2,
+                  px: 2,
+                  py: 1.5,
+                  mt: 1.5,
+                }}
+              >
+                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.75 }}>
+                  <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                    {stepLabel || getStepLabel(progress)}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 700 }}>
+                    {Math.round(progress)}%
+                  </Typography>
+                </Stack>
+                <LinearProgress variant="determinate" value={progress} />
+              </Box>
+            )}
+
+            {/* Error */}
+            {error && (
+              <Alert severity="error" onClose={() => setError('')} sx={{ fontSize: '0.8125rem', mt: 1.5 }}>
+                {error}
+              </Alert>
             )}
           </Box>
-
-          {/* ⑤ Progress — inline, no extra scroll */}
-          {isGenerating && (
-            <Box
-              sx={{
-                bgcolor: alpha('#6366f1', 0.05),
-                border: '1px solid',
-                borderColor: alpha('#6366f1', 0.15),
-                borderRadius: 2,
-                px: 2,
-                py: 1.5,
-              }}
-              className="animate-fade-in"
-            >
-              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.75 }}>
-                <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 600 }}>
-                  {stepLabel || getStepLabel(progress)}
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 700 }}>
-                  {Math.round(progress)}%
-                </Typography>
-              </Stack>
-              <LinearProgress variant="determinate" value={progress} />
-            </Box>
-          )}
-
-          {/* ⑤ Error */}
-          {error && (
-            <Alert severity="error" onClose={() => setError('')} sx={{ fontSize: '0.8125rem' }}>
-              {error}
-            </Alert>
-          )}
         </Box>
       </Box>
 
