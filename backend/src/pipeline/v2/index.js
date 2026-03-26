@@ -38,6 +38,7 @@ async function createTailoredResumeV2({
   userContact,
   education,
   openai,
+  bulletCount = 5,
   returnMarkdown = false,
   onProgress
 }) {
@@ -80,7 +81,7 @@ async function createTailoredResumeV2({
   // ── Pass 3: Strategy ──────────────────────────────────────────────────────
   report(20, 'Building your positioning strategy…');
   t1 = Date.now();
-  const strategy = await buildStrategy({ careerIdentity, jdAnalysis, employmentHistory, openai });
+  const strategy = await buildStrategy({ careerIdentity, jdAnalysis, employmentHistory, openai, bulletCount });
   lap('Pass 3 (strategy)', t1);
   console.log('[V2]   Pass 3 output:', JSON.stringify({
     angle: strategy.positioningAngle,

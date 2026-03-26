@@ -649,7 +649,7 @@ Return ONLY the cover letter body text (no headers, no "Dear Hiring Manager", no
 };
 
 // Async resume generation function
-const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelineVersion = 1) => {
+const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelineVersion = 1, userPrefs = {}) => {
   try {
     // Update job status to processing
     jobs.set(jobId, {
@@ -749,6 +749,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
       },
       education: pipelineEducation,
       openai: openai,
+      bulletCount: userPrefs.bulletCount || 5,
       returnMarkdown: false, // Return plan object for JSON conversion
       onProgress: ({ progress, stepLabel }) => {
         const job = jobs.get(jobId);
@@ -984,7 +985,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
 // Resume generation endpoint - now returns job ID immediately
 app.post('/api/generate-resume', auth, async (req, res) => {
   try {
-    const { jobDescription, companyName, role, version } = req.body;
+    const { jobDescription, companyName, role, version, bulletCount } = req.body;
 
     if (!jobDescription) {
       return res.status(400).json({ error: 'Job description is required' });
@@ -1030,7 +1031,7 @@ app.post('/api/generate-resume', auth, async (req, res) => {
     });
 
     // Start async processing
-    generateResumeAsync(jobId, req.user.email, cleanedJobDescription, pipelineVersion);
+    generateResumeAsync(jobId, req.user.email, cleanedJobDescription, pipelineVersion, { bulletCount: Number(bulletCount) || 5 });
 
     // Return job ID immediately
     res.json({ 

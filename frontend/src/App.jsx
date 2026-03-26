@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider, CssBaseline, Box, CircularProgress } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
 import Home from './pages/Home';
-import Settings from './pages/Settings';
 import Navbar from './components/Navbar';
 import LoginPage from './components/auth/Login';
 import RegisterPage from './components/auth/Register';
@@ -51,15 +50,7 @@ function App() {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/preview" element={<ResumePreview />} />
             <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
-            <Route 
-              path="/settings" 
-              element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
+            <Route
               path="/editor" 
               element={
                 <ProtectedRoute>

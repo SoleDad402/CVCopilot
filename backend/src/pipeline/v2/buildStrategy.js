@@ -9,9 +9,10 @@ const OpenAI = require('openai');
  * @param {import('./types').JdDeepAnalysis} params.jdAnalysis
  * @param {import('../types').EmploymentItem[]} params.employmentHistory
  * @param {OpenAI} params.openai
+ * @param {number} [params.bulletCount=5]
  * @returns {Promise<import('./types').ResumeStrategy>}
  */
-async function buildStrategy({ careerIdentity, jdAnalysis, employmentHistory, openai }) {
+async function buildStrategy({ careerIdentity, jdAnalysis, employmentHistory, openai, bulletCount = 5 }) {
   const employmentSummary = employmentHistory.map((job, i) => {
     const notes = (job.notes || []).filter(Boolean);
     return `[${i + 1}] ${job.title} @ ${job.company} (${job.startDate}→${job.endDate}) ${notes.length ? '| ' + notes.slice(0, 4).join('; ') : ''}`;
@@ -50,7 +51,7 @@ Return JSON:
       "emphasis": "what to spotlight — specific achievements/themes to lead with",
       "relevantJdSkills": ["JD skills mapping to this role"],
       "deEmphasis": "what to minimize or omit",
-      "bulletCount": 5,
+      "bulletCount": ${bulletCount},
       "priority": 1
     }
   ],
@@ -79,7 +80,7 @@ Return JSON:
 }
 
 Rules:
-- experienceDirectives: one per role. priority 1=spotlight (5-7 bullets), 2=supporting (3-5), 3=brief (2-3). Total ~20-30 bullets.
+- experienceDirectives: one per role. The user requested ${bulletCount} bullets per role as the default bulletCount. priority 1=spotlight (${bulletCount}+2 bullets), 2=supporting (${bulletCount} bullets), 3=brief (${Math.max(bulletCount - 2, 1)} bullets).
 - skillGapBridges: only REAL gaps with real transferable equivalents. No fabrication.
 - coveragePlan: CRITICAL. Go through EVERY table-stake AND EVERY differentiator/preferred skill and classify:
     "must_include" — MUST appear in experience bullets even if user evidence is thin. Assign to the most plausible role. ALL table stakes AND ALL differentiators/preferred skills should be must_include by default.
@@ -122,7 +123,7 @@ Rules:
             emphasis: d.emphasis || '',
             relevantJdSkills: Array.isArray(d.relevantJdSkills) ? d.relevantJdSkills : [],
             deEmphasis: d.deEmphasis || '',
-            bulletCount: Math.min(Math.max(d.bulletCount || 4, 2), 8),
+            bulletCount: Math.min(Math.max(d.bulletCount || bulletCount, 1), 10),
             priority: Math.min(Math.max(d.priority || 2, 1), 3)
           }))
         : [],

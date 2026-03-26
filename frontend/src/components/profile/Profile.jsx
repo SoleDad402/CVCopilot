@@ -25,8 +25,7 @@ import {
   Phone as PhoneIcon,
   LocationOn as LocationIcon,
   Email as EmailIcon,
-  Tune as TuneIcon,
-  Construction as ConstructionIcon
+  Tune as TuneIcon
 } from '@mui/icons-material';
 import { NAVBAR_HEIGHT, colors, gradients } from '../../theme';
 import { useAuth } from '../../contexts/AuthContext';
@@ -56,6 +55,17 @@ const Profile = () => {
   const [employmentHistory, setEmploymentHistory] = useState([]);
   const [education, setEducation] = useState([]);
 
+  // Preferences state
+  const [pipelineVersion, setPipelineVersion] = useState(() => {
+    const saved = localStorage.getItem('pipelineVersion');
+    return saved ? Number(saved) : 1;
+  });
+  const [bulletCount, setBulletCount] = useState(() => {
+    const saved = localStorage.getItem('bulletCount');
+    return saved ? Number(saved) : 5;
+  });
+  const [savingPrefs, setSavingPrefs] = useState(false);
+
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const fetchProfile = useCallback(async () => {
@@ -84,6 +94,19 @@ const Profile = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSavePreferences = async () => {
+    setSavingPrefs(true);
+    try {
+      localStorage.setItem('pipelineVersion', pipelineVersion);
+      localStorage.setItem('bulletCount', bulletCount);
+      setSnackbar({ open: true, message: 'Preferences saved', severity: 'success' });
+    } catch (error) {
+      setSnackbar({ open: true, message: 'Failed to save preferences', severity: 'error' });
+    } finally {
+      setSavingPrefs(false);
+    }
   };
 
   const handleSaveContact = async (e) => {
@@ -259,35 +282,86 @@ const Profile = () => {
             </Box>
           )}
 
-          {/* Tab 3: Preferences — placeholder */}
+          {/* Tab 3: Preferences */}
           {tab === 3 && (
             <Box className="animate-fade-in-up">
-              <Box
-                sx={{
-                  border: '1.5px dashed #e2e8f0',
-                  borderRadius: 3,
-                  py: 6,
-                  px: 4,
-                  textAlign: 'center',
-                  bgcolor: '#fff',
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 48, height: 48, borderRadius: 2.5, mx: 'auto', mb: 2,
-                    background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
-                >
-                  <ConstructionIcon sx={{ fontSize: 22, color: '#fff' }} />
-                </Box>
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.75, letterSpacing: '-0.01em' }}>
-                  Preferences coming soon
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', maxWidth: 340, mx: 'auto' }}>
-                  This section will let you customise resume generation settings, output style, and other personal preferences.
-                </Typography>
-              </Box>
+              <Grid container spacing={3}>
+                {/* Pipeline Engine */}
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5 }}>
+                    Pipeline Engine
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    {[
+                      { v: 1, label: 'V1', sub: 'Stable' },
+                      { v: 2, label: 'V2', sub: 'Multi-pass' },
+                    ].map(({ v, label, sub }) => (
+                      <Box
+                        key={v}
+                        onClick={() => setPipelineVersion(v)}
+                        sx={{
+                          flex: 1,
+                          py: 1.5,
+                          px: 2,
+                          borderRadius: 2,
+                          border: '1px solid',
+                          borderColor: pipelineVersion === v ? colors.primary : colors.border,
+                          bgcolor: pipelineVersion === v ? `${colors.primary}0A` : '#fff',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                          textAlign: 'center',
+                          ...(pipelineVersion !== v && {
+                            '&:hover': { borderColor: colors.primaryLight, bgcolor: `${colors.primary}05` },
+                          }),
+                        }}
+                      >
+                        <Typography variant="body2" sx={{
+                          fontWeight: 700,
+                          color: pipelineVersion === v ? colors.primary : 'text.primary',
+                        }}>
+                          {label}
+                        </Typography>
+                        <Typography variant="caption" sx={{
+                          color: pipelineVersion === v ? colors.primary : 'text.disabled',
+                        }}>
+                          {sub}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Grid>
+
+                {/* Bullet Count */}
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5 }}>
+                    Bullets per Role
+                  </Typography>
+                  <TextField
+                    type="number"
+                    value={bulletCount}
+                    onChange={(e) => setBulletCount(Math.min(Math.max(Number(e.target.value) || 1, 1), 10))}
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                    inputProps={{ min: 1, max: 10, step: 1 }}
+                    helperText="Number of bullet points per experience role (1–10)"
+                  />
+                </Grid>
+
+                {/* Save button */}
+                <Grid item xs={12}>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    onClick={handleSavePreferences}
+                    disabled={savingPrefs}
+                    startIcon={savingPrefs ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+                    sx={{ px: 4 }}
+                  >
+                    {savingPrefs ? 'Saving…' : 'Save Preferences'}
+                  </Button>
+                </Grid>
+              </Grid>
             </Box>
           )}
 
