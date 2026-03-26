@@ -27,8 +27,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle 401 Unauthorized errors
-    if (error.response?.status === 401) {
+    // Handle 401 Unauthorized errors — but not on auth endpoints (login/register)
+    const url = error.config?.url || '';
+    const isAuthEndpoint = url.includes('/api/auth/');
+    if (error.response?.status === 401 && !isAuthEndpoint) {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
