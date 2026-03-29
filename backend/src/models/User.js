@@ -26,7 +26,7 @@ class User {
 
   static async create(userData) {
     checkConfig();
-    const { email, password, full_name, phone, personal_email, linkedin_url, github_url, location, openai_model, max_tokens } = userData;
+    const { email, password, full_name, phone, personal_email, linkedin_url, github_url, location } = userData;
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const { data, error } = await supabase
@@ -40,9 +40,7 @@ class User {
         linkedin_url: linkedin_url || '',
         github_url: github_url || '',
         location: location || '',
-        openai_model: openai_model || 'gpt-4o',
-        max_tokens: max_tokens || 30000,
-        daily_generation_limit: 150,
+        daily_generation_limit: 10,
       })
       .select('id')
       .single();
@@ -78,9 +76,6 @@ class User {
     if (userData.linkedin_url !== undefined) fields.linkedin_url = userData.linkedin_url;
     if (userData.github_url !== undefined) fields.github_url = userData.github_url;
     if (userData.location !== undefined) fields.location = userData.location;
-    if (userData.openai_model !== undefined) fields.openai_model = userData.openai_model;
-    if (userData.max_tokens !== undefined) fields.max_tokens = userData.max_tokens;
-
     const { error } = await supabase.from('users').update(fields).eq('id', userId);
     if (error) throw new Error(`Failed to update profile: ${error.message}`);
     return true;
@@ -253,19 +248,6 @@ class User {
     return true;
   }
 
-  // ── OpenAI Settings ─────────────────────────────────────────────────────
-
-  static async updateOpenAISettings(userId, openai_model, max_tokens) {
-    checkConfig();
-    const { error } = await supabase
-      .from('users')
-      .update({ openai_model, max_tokens })
-      .eq('id', userId);
-
-    if (error) throw new Error(`Failed to update OpenAI settings: ${error.message}`);
-    return true;
-  }
-
   // ── Resume Requests ─────────────────────────────────────────────────────
 
   static async addResumeRequest(userId, requestData) {
@@ -368,8 +350,6 @@ class User {
     if (userData.email !== undefined) fields.email = userData.email;
     if (userData.phone !== undefined) fields.phone = userData.phone;
     if (userData.location !== undefined) fields.location = userData.location;
-    if (userData.openai_model !== undefined) fields.openai_model = userData.openai_model;
-    if (userData.max_tokens !== undefined) fields.max_tokens = userData.max_tokens;
     if (userData.daily_generation_limit !== undefined) fields.daily_generation_limit = userData.daily_generation_limit;
     if (userData.is_admin !== undefined) fields.is_admin = userData.is_admin;
 
@@ -426,13 +406,6 @@ class User {
     const requests = requestsRes.data || [];
     const totalUsers = users.length;
     const totalRequests = requests.length;
-
-    // Model distribution
-    const modelDistribution = {};
-    users.forEach(u => {
-      const model = u.openai_model || 'gpt-4o';
-      modelDistribution[model] = (modelDistribution[model] || 0) + 1;
-    });
 
     // Request analytics
     let todayRequests = 0, weekRequests = 0, monthRequests = 0;
@@ -503,7 +476,7 @@ class User {
       totalUsers, totalGenerations: totalRequests, todayGenerations: todayRequests,
       totalRequests, weekRequests, monthRequests, activeUsers: activeUserIds.size, avgGenerationsPerUser,
       withDocx, withPdf, docxRate, pdfRate,
-      modelDistribution, dayOfWeekDist, generationTrend, registrationTrend,
+      dayOfWeekDist, generationTrend, registrationTrend,
       topUsersByGenerations, topCompanies, topRoles,
     };
   }
@@ -543,8 +516,7 @@ class User {
     return {
       user: {
         id: user.id, email: user.email, full_name: user.full_name || '',
-        location: user.location || '', openai_model: user.openai_model || 'gpt-4o',
-        max_tokens: user.max_tokens || 30000, daily_generation_limit: user.daily_generation_limit || 150,
+        location: user.location || '', daily_generation_limit: user.daily_generation_limit || 10,
         is_admin: user.is_admin || false, created_at: user.created_at || '',
       },
       totalGenerations: requests.length,

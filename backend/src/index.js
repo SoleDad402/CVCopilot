@@ -281,9 +281,7 @@ app.get('/api/profile', auth, async (req, res) => {
       linkedin_url: user.linkedin_url || '',
       github_url: user.github_url || '',
       location: user.location || '',
-      openai_model: user.openai_model || 'gpt-4o',
-      max_tokens: user.max_tokens || 30000,
-      daily_generation_limit: user.daily_generation_limit || 150,
+      daily_generation_limit: user.daily_generation_limit || 10,
       is_admin: user.is_admin || false
     };
 
@@ -329,21 +327,6 @@ app.put('/api/profile', auth, async (req, res) => {
   } catch (error) {
     console.error('Profile update error:', error);
     res.status(500).json({ error: 'Failed to update profile' });
-  }
-});
-
-// New endpoint to update OpenAI settings
-app.put('/api/settings', auth, async (req, res) => {
-  try {
-    const { openai_model, max_tokens } = req.body;
-    if (!openai_model || !max_tokens) {
-      return res.status(400).json({ error: 'OpenAI model and max tokens are required.' });
-    }
-    await User.updateOpenAISettings(req.user.id, openai_model, max_tokens);
-    res.json({ message: 'OpenAI settings updated successfully' });
-  } catch (error) {
-    console.error('Error updating OpenAI settings:', error);
-    res.status(500).json({ error: 'Failed to update OpenAI settings.' });
   }
 });
 
@@ -1674,23 +1657,6 @@ Answer (plain text, 1-2 sentences, no markdown):
   } catch (error) {
     console.error('Error answering question:', error);
     res.status(500).json({ error: 'Failed to generate answer.' });
-  }
-});
-
-app.get('/api/settings', auth, async (req, res) => {
-  try {
-    console.log('Fetching OpenAI settings');
-    const user = await User.findByEmail(req.user.email);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    res.json({
-      openai_model: user.openai_model,
-      max_tokens: user.max_tokens
-    });
-  } catch (error) {
-    console.error('Error fetching OpenAI settings:', error);
-    res.status(500).json({ error: 'Failed to fetch OpenAI settings.' });
   }
 });
 

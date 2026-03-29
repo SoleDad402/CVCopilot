@@ -332,8 +332,7 @@ function EditUserDialog({ open, user, onClose, onSave }) {
       setFormData({
         full_name: user.full_name || '', email: user.email || '',
         phone: user.phone || '', location: user.location || '',
-        openai_model: user.openai_model || 'gpt-4o', max_tokens: user.max_tokens || 30000,
-        daily_generation_limit: user.daily_generation_limit || 150, is_admin: user.is_admin || false,
+        daily_generation_limit: user.daily_generation_limit || 10, is_admin: user.is_admin || false,
       });
     }
   }, [user]);
@@ -348,15 +347,6 @@ function EditUserDialog({ open, user, onClose, onSave }) {
           <Stack direction="row" spacing={2}>
             <TextField label="Phone" fullWidth value={formData.phone} onChange={(e) => setFormData(p => ({ ...p, phone: e.target.value }))} size="small" />
             <TextField label="Location" fullWidth value={formData.location} onChange={(e) => setFormData(p => ({ ...p, location: e.target.value }))} size="small" />
-          </Stack>
-          <Stack direction="row" spacing={2}>
-            <FormControl fullWidth size="small">
-              <InputLabel>OpenAI Model</InputLabel>
-              <Select value={formData.openai_model} onChange={(e) => setFormData(p => ({ ...p, openai_model: e.target.value }))} label="OpenAI Model">
-                {['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'].map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
-              </Select>
-            </FormControl>
-            <TextField label="Max Tokens" fullWidth type="number" value={formData.max_tokens} onChange={(e) => setFormData(p => ({ ...p, max_tokens: e.target.value }))} size="small" />
           </Stack>
           <TextField label="Daily Generation Limit" fullWidth type="number" value={formData.daily_generation_limit} onChange={(e) => setFormData(p => ({ ...p, daily_generation_limit: e.target.value }))} size="small" />
           <FormControlLabel
@@ -442,7 +432,6 @@ function UserActivityPanel({ userId, onBack }) {
         </Box>
         <Stack direction="row" spacing={0.5}>
           {user.is_admin && <Chip label="Admin" size="small" color="primary" sx={{ height: 20, fontSize: '0.5625rem', fontWeight: 700 }} />}
-          <Chip label={user.openai_model} size="small" sx={{ height: 20, fontSize: '0.5625rem', fontWeight: 600 }} />
         </Stack>
       </Stack>
 
@@ -525,8 +514,6 @@ function UserActivityPanel({ userId, onBack }) {
           <Stack direction="row" flexWrap="wrap" gap={2}>
             {[
               { label: 'Location', value: user.location },
-              { label: 'Model', value: user.openai_model },
-              { label: 'Max Tokens', value: user.max_tokens },
               { label: 'Daily Limit', value: user.daily_generation_limit },
               { label: 'Joined', value: user.created_at },
             ].map(item => (
@@ -713,7 +700,6 @@ export default function Admin() {
     { id: 'email', label: 'Email' },
     { id: 'full_name', label: 'Name' },
     { id: 'location', label: 'Location' },
-    { id: 'openai_model', label: 'Model' },
     { id: 'daily_generation_limit', numeric: true, label: 'Daily Limit' },
     { id: 'total_generations', numeric: true, label: 'Total Gens' },
     { id: 'is_admin', label: 'Admin' },
@@ -939,8 +925,7 @@ export default function Admin() {
                           </TableCell>
                           <TableCell sx={{ fontSize: '0.8125rem' }}>{row.full_name || '-'}</TableCell>
                           <TableCell sx={{ fontSize: '0.8125rem', color: 'text.secondary' }}>{row.location || '-'}</TableCell>
-                          <TableCell><Chip label={row.openai_model || 'gpt-4o'} size="small" sx={{ height: 20, fontSize: '0.5625rem', fontWeight: 600 }} /></TableCell>
-                          <TableCell align="right" sx={{ fontSize: '0.8125rem', fontWeight: 600 }}>{row.daily_generation_limit || 150}</TableCell>
+                          <TableCell align="right" sx={{ fontSize: '0.8125rem', fontWeight: 600 }}>{row.daily_generation_limit || 10}</TableCell>
                           <TableCell align="right" sx={{ fontSize: '0.8125rem', fontWeight: 700, color: colors.primary }}>{row.total_generations || 0}</TableCell>
                           <TableCell>
                             {(row.is_admin || row['Is Admin']) ? <Chip label="Admin" size="small" color="primary" sx={{ height: 20, fontSize: '0.5rem', fontWeight: 700 }} /> : <Typography variant="caption" color="text.disabled">-</Typography>}
@@ -1006,7 +991,6 @@ export default function Admin() {
                           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6875rem' }}>{u.email}</Typography>
                         </Box>
                         <Chip label={`${u.total_generations || 0} gens`} size="small" sx={{ height: 20, fontSize: '0.5625rem', fontWeight: 600, bgcolor: alpha(c, 0.08), color: c }} />
-                        <Chip label={u.openai_model || 'gpt-4o'} size="small" variant="outlined" sx={{ height: 20, fontSize: '0.5625rem' }} />
                         {(u.is_admin || u['Is Admin']) && <Chip label="Admin" size="small" color="primary" sx={{ height: 20, fontSize: '0.5rem', fontWeight: 700 }} />}
                         <ViewIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
                       </Box>
