@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
   github_url  TEXT DEFAULT '',
   location    TEXT DEFAULT '',
   daily_generation_limit INT DEFAULT 10,
+  is_active   BOOLEAN DEFAULT TRUE,
   is_admin    BOOLEAN DEFAULT FALSE,
   reset_token TEXT,
   reset_token_expires TIMESTAMPTZ,

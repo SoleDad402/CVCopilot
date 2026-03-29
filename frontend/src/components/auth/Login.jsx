@@ -21,7 +21,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { NAVBAR_HEIGHT } from '../../theme';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
 
 const FEATURES = [
   'AI-tailored resumes for every application',
@@ -39,6 +39,8 @@ const Login = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const { login, error: authError } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const deactivated = searchParams.get('deactivated');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -151,6 +153,12 @@ const Login = () => {
               </Link>
             </Typography>
           </Box>
+
+          {deactivated && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Your account has been deactivated. Please contact an administrator.
+            </Alert>
+          )}
 
           {errorMsg && (
             <Alert severity="error" onClose={() => setErrorMsg('')} sx={{ mb: 2 }}>

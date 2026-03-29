@@ -215,6 +215,11 @@ app.post('/api/auth/login', async (req, res) => {
     // Get user data
     const user = await User.findByEmail(email);
 
+    // Block deactivated users
+    if (user.is_active === false) {
+      return res.status(403).json({ error: 'Your account has been deactivated. Please contact an administrator.' });
+    }
+
     // Generate JWT token with longer expiration if rememberMe is true
     const token = jwt.sign(
       { id: user.id, email: user.email },

@@ -41,6 +41,7 @@ class User {
         github_url: github_url || '',
         location: location || '',
         daily_generation_limit: 10,
+        is_active: true,
       })
       .select('id')
       .single();
@@ -351,6 +352,7 @@ class User {
     if (userData.phone !== undefined) fields.phone = userData.phone;
     if (userData.location !== undefined) fields.location = userData.location;
     if (userData.daily_generation_limit !== undefined) fields.daily_generation_limit = userData.daily_generation_limit;
+    if (userData.is_active !== undefined) fields.is_active = userData.is_active;
     if (userData.is_admin !== undefined) fields.is_admin = userData.is_admin;
 
     const { error } = await supabase.from('users').update(fields).eq('id', userId);

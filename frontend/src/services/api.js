@@ -27,12 +27,17 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle 401 Unauthorized errors — but not on auth endpoints (login/register)
     const url = error.config?.url || '';
     const isAuthEndpoint = url.includes('/api/auth/');
+    // Handle 401 Unauthorized errors — but not on auth endpoints (login/register)
     if (error.response?.status === 401 && !isAuthEndpoint) {
       localStorage.removeItem('token');
       window.location.href = '/login';
+    }
+    // Handle 403 — account deactivated
+    if (error.response?.status === 403 && !isAuthEndpoint && error.response?.data?.error?.includes('deactivated')) {
+      localStorage.removeItem('token');
+      window.location.href = '/login?deactivated=1';
     }
     return Promise.reject(error);
   }

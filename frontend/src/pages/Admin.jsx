@@ -332,7 +332,7 @@ function EditUserDialog({ open, user, onClose, onSave }) {
       setFormData({
         full_name: user.full_name || '', email: user.email || '',
         phone: user.phone || '', location: user.location || '',
-        daily_generation_limit: user.daily_generation_limit || 10, is_admin: user.is_admin || false,
+        daily_generation_limit: user.daily_generation_limit || 10, is_active: user.is_active !== false, is_admin: user.is_admin || false,
       });
     }
   }, [user]);
@@ -349,6 +349,10 @@ function EditUserDialog({ open, user, onClose, onSave }) {
             <TextField label="Location" fullWidth value={formData.location} onChange={(e) => setFormData(p => ({ ...p, location: e.target.value }))} size="small" />
           </Stack>
           <TextField label="Daily Generation Limit" fullWidth type="number" value={formData.daily_generation_limit} onChange={(e) => setFormData(p => ({ ...p, daily_generation_limit: e.target.value }))} size="small" />
+          <FormControlLabel
+            control={<Switch checked={formData.is_active !== false} onChange={(e) => setFormData(p => ({ ...p, is_active: e.target.checked }))} color="success" />}
+            label={formData.is_active !== false ? 'Active' : 'Deactivated — user cannot log in'}
+          />
           <FormControlLabel
             control={<Switch checked={formData.is_admin || false} onChange={(e) => setFormData(p => ({ ...p, is_admin: e.target.checked }))} color="primary" />}
             label="Admin Access"
@@ -702,6 +706,7 @@ export default function Admin() {
     { id: 'location', label: 'Location' },
     { id: 'daily_generation_limit', numeric: true, label: 'Daily Limit' },
     { id: 'total_generations', numeric: true, label: 'Total Gens' },
+    { id: 'is_active', label: 'Status' },
     { id: 'is_admin', label: 'Admin' },
     { id: 'actions', label: 'Actions', sortable: false },
   ];
@@ -928,6 +933,17 @@ export default function Admin() {
                           <TableCell align="right" sx={{ fontSize: '0.8125rem', fontWeight: 600 }}>{row.daily_generation_limit || 10}</TableCell>
                           <TableCell align="right" sx={{ fontSize: '0.8125rem', fontWeight: 700, color: colors.primary }}>{row.total_generations || 0}</TableCell>
                           <TableCell>
+                            <Chip
+                              label={row.is_active === false ? 'Inactive' : 'Active'}
+                              size="small"
+                              sx={{
+                                height: 20, fontSize: '0.5rem', fontWeight: 700,
+                                bgcolor: row.is_active === false ? alpha(colors.error, 0.1) : alpha(colors.success, 0.1),
+                                color: row.is_active === false ? colors.error : colors.success,
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
                             {(row.is_admin || row['Is Admin']) ? <Chip label="Admin" size="small" color="primary" sx={{ height: 20, fontSize: '0.5rem', fontWeight: 700 }} /> : <Typography variant="caption" color="text.disabled">-</Typography>}
                           </TableCell>
                           <TableCell>
@@ -952,7 +968,7 @@ export default function Admin() {
                         </TableRow>
                       ))}
                       {visibleUsers.length === 0 && (
-                        <TableRow><TableCell colSpan={8} sx={{ textAlign: 'center', py: 4 }}><Typography variant="body2" color="text.secondary">No users found.</Typography></TableCell></TableRow>
+                        <TableRow><TableCell colSpan={9} sx={{ textAlign: 'center', py: 4 }}><Typography variant="body2" color="text.secondary">No users found.</Typography></TableCell></TableRow>
                       )}
                     </TableBody>
                   </Table>
