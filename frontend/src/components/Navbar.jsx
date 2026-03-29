@@ -20,7 +20,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField
+  TextField,
+  alpha
 } from '@mui/material';
 import {
   Description as DocIcon,
@@ -31,14 +32,31 @@ import {
   Logout as LogoutIcon,
   Person as PersonIcon,
   KeyboardArrowDown as ArrowDownIcon,
-  AdminPanelSettings as AdminIcon
+  AdminPanelSettings as AdminIcon,
+  Close as CloseIcon,
+  Bolt as BoltIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useGeneration } from '../contexts/GenerationContext';
 import { resumeService, pollJobStatus } from '../services/api';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import { NAVBAR_HEIGHT, colors } from '../theme';
+
+// Step labels for the global progress pill
+const GENERATION_STEPS = [
+  { min: 0,  max: 20,  label: 'Reading JD…' },
+  { min: 20, max: 50,  label: 'Matching…' },
+  { min: 50, max: 80,  label: 'Drafting…' },
+  { min: 80, max: 95,  label: 'Finalizing…' },
+  { min: 95, max: 100, label: 'Almost done…' },
+];
+
+function getStepLabel(progress) {
+  const step = GENERATION_STEPS.find(s => progress >= s.min && progress < s.max);
+  return step ? step.label : 'Generating…';
+}
 
 const NavLink = ({ to, icon, children, onClick }) => {
   const location = useLocation();
@@ -74,15 +92,21 @@ const Navbar = () => {
   const [isPasteDialogOpen, setIsPasteDialogOpen] = useState(false);
   const [jobDescription, setJobDescription] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
-  const [jobStatus, setJobStatus] = useState(null);
-  const [progress, setProgress] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Generation context — for global progress pill
+  const {
+    isGenerating,
+    progress,
+    stepLabel,
+    documentType,
+    cancelGeneration,
+  } = useGeneration();
 
   // Close the user menu whenever the route changes (prevents auto-open after login)
   useEffect(() => {
@@ -94,41 +118,6 @@ const Navbar = () => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const handleGenerateResume = async () => {
-    if (!jobDescription.trim()) {
-      setError('Please enter a job description');
-      return;
-    }
-    setIsGenerating(true);
-    setError('');
-    setJobStatus('starting');
-    setProgress(0);
-    try {
-      const { data: jobData } = await resumeService.generateResume(jobDescription.trim());
-      const { jobId } = jobData;
-      setJobStatus('processing');
-      const result = await pollJobStatus(jobId, (progressData) => {
-        setJobStatus(progressData.status);
-        setProgress(progressData.progress || 0);
-        if (progressData.error) setError(progressData.error);
-      });
-      localStorage.setItem('generatedResume', JSON.stringify({
-        resume: result.resume,
-        generatedResume: result.generatedResume,
-        docxContent: result.docxContent,
-        pdfContent: result.pdfContent,
-        jobDescription: jobDescription.trim()
-      }));
-      setIsPasteDialogOpen(false);
-      navigate('/preview');
-    } catch (err) {
-      setError(err.message || 'Failed to generate resume');
-      setJobStatus('error');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
   const handleLogout = async () => {
     try {
       await logout();
@@ -137,6 +126,9 @@ const Navbar = () => {
       console.error('Failed to log out:', error);
     }
   };
+
+  // Show the global progress pill when generating AND not on the home page
+  const showGlobalProgress = isGenerating && location.pathname !== '/';
 
   return (
     <>
@@ -209,6 +201,59 @@ const Navbar = () => {
           )}
 
           <Box sx={{ flex: user ? 0 : 1 }} />
+
+          {/* Global generation progress pill — shown when navigated away from home */}
+          {showGlobalProgress && (
+            <Box
+              onClick={() => navigate('/')}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                bgcolor: alpha('#6366f1', 0.2),
+                border: '1px solid',
+                borderColor: alpha('#6366f1', 0.4),
+                borderRadius: 2,
+                px: 1.5,
+                py: 0.5,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                '&:hover': { bgcolor: alpha('#6366f1', 0.3) },
+                mr: 1,
+              }}
+            >
+              <BoltIcon sx={{ fontSize: 14, color: '#818cf8', animation: 'pulse 1.5s ease-in-out infinite' }} />
+              <Typography variant="caption" sx={{ color: '#c7d2fe', fontWeight: 600, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                {stepLabel || getStepLabel(progress)}
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#fff', fontWeight: 700, fontSize: '0.75rem', minWidth: 28, textAlign: 'right' }}>
+                {Math.round(progress)}%
+              </Typography>
+              <Box sx={{ width: 48, height: 4, bgcolor: 'rgba(255,255,255,0.15)', borderRadius: 2, overflow: 'hidden' }}>
+                <Box sx={{
+                  width: `${progress}%`,
+                  height: '100%',
+                  bgcolor: '#818cf8',
+                  borderRadius: 2,
+                  transition: 'width 0.3s ease',
+                }} />
+              </Box>
+              <Tooltip title="Cancel generation" arrow>
+                <IconButton
+                  size="small"
+                  onClick={(e) => { e.stopPropagation(); cancelGeneration(); }}
+                  sx={{
+                    width: 18,
+                    height: 18,
+                    color: 'rgba(255,255,255,0.5)',
+                    '&:hover': { color: '#f87171', bgcolor: 'rgba(255,255,255,0.1)' },
+                  }}
+                >
+                  <CloseIcon sx={{ fontSize: 12 }} />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          )}
 
           {/* Auth Actions */}
           {user ? (
@@ -306,64 +351,15 @@ const Navbar = () => {
       {/* Spacer so content isn't hidden behind the fixed AppBar */}
       <Toolbar sx={{ minHeight: `${NAVBAR_HEIGHT}px !important` }} />
 
-      {/* Job Description Dialog */}
-      <Dialog
-        open={isPasteDialogOpen}
-        onClose={() => setIsPasteDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
-      >
-        <DialogTitle sx={{ fontWeight: 700, fontSize: '1.125rem', pb: 1 }}>
-          Paste Job Description
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Job Description"
-            fullWidth
-            multiline
-            rows={8}
-            value={jobDescription}
-            onChange={(e) => setJobDescription(e.target.value)}
-            variant="outlined"
-            error={!!error}
-            helperText={error}
-          />
-          {isGenerating && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                {jobStatus === 'downloading' ? 'Preparing preview…' : 'Generating your resume…'}
-              </Typography>
-              <LinearProgress />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ pb: 2, pr: 2, gap: 1 }}>
-          <Button onClick={() => setIsPasteDialogOpen(false)} variant="outlined" color="inherit">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleGenerateResume}
-            variant="contained"
-            disabled={isGenerating}
-          >
-            {isGenerating ? 'Generating…' : 'Generate Resume'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Snackbar
-        open={!!error && !isPasteDialogOpen}
-        autoHideDuration={6000}
-        onClose={() => setError('')}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert onClose={() => setError('')} severity="error" sx={{ width: '100%' }}>
-          {error}
-        </Alert>
-      </Snackbar>
+      {/* Pulse animation for the progress pill icon */}
+      {showGlobalProgress && (
+        <style>{`
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+          }
+        `}</style>
+      )}
     </>
   );
 };

@@ -38,11 +38,12 @@ import {
   Clear as ClearIcon,
   AutoFixHigh as AutoFixIcon,
   Bolt as BoltIcon,
-  Article as ArticleIcon
+  Article as ArticleIcon,
+  Cancel as CancelIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { resumeService, coverLetterService, pollJobStatus } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useGeneration } from '../contexts/GenerationContext';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import { NAVBAR_HEIGHT, colors } from '../theme';
@@ -70,32 +71,35 @@ function Home() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
-  // Core state
+  // Generation context (persists across navigation)
+  const {
+    isGenerating,
+    documentType,
+    setDocumentType,
+    jobStatus,
+    progress,
+    stepLabel,
+    error,
+    setError,
+    lastGenerated,
+    resumeData,
+    generatedResume,
+    docxContent,
+    pdfContent,
+    generatedCoverLetter,
+    coverLetterDocxContent,
+    coverLetterPdfContent,
+    generateResume,
+    generateCoverLetter,
+    cancelGeneration,
+  } = useGeneration();
+
+  // Core input state (local — workspace fields)
   const [companyName, setCompanyName] = useState('');
   const [role, setRole] = useState('');
   const [jobDescription, setJobDescription] = useState('');
   const pipelineVersion = Number(localStorage.getItem('pipelineVersion')) || 1;
   const bulletCount = Number(localStorage.getItem('bulletCount')) || 5;
-
-  // Generation state
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [jobStatus, setJobStatus] = useState(null);
-  const [progress, setProgress] = useState(0);
-  const [stepLabel, setStepLabel] = useState(null);
-  const [error, setError] = useState('');
-  const [lastGenerated, setLastGenerated] = useState(null);
-
-  // Generated resume state
-  const [generatedResume, setGeneratedResume] = useState(null);
-  const [resumeData, setResumeData] = useState(null);
-  const [docxContent, setDocxContent] = useState(null);
-  const [pdfContent, setPdfContent] = useState(null);
-
-  // Generated cover letter state
-  const [generatedCoverLetter, setGeneratedCoverLetter] = useState(null);
-  const [coverLetterDocxContent, setCoverLetterDocxContent] = useState(null);
-  const [coverLetterPdfContent, setCoverLetterPdfContent] = useState(null);
-  const [documentType, setDocumentType] = useState('resume');
 
   // UI state
   const [revisionDrawerOpen, setRevisionDrawerOpen] = useState(false);
@@ -152,23 +156,6 @@ function Home() {
     }
   }, []);
 
-  // Load generated resume from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('generatedResume');
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        setResumeData(data.resume);
-        setGeneratedResume(data.generatedResume);
-        setDocxContent(data.docxContent);
-        setPdfContent(data.pdfContent);
-        if (data.companyName) setCompanyName(data.companyName);
-        if (data.role) setRole(data.role);
-        if (data.jobDescription) setJobDescription(data.jobDescription);
-      } catch (e) {}
-    }
-  }, []);
-
   // Render DOCX preview
   useEffect(() => {
     const contentToRender = documentType === 'cover-letter' ? coverLetterDocxContent : docxContent;
@@ -194,92 +181,12 @@ function Home() {
     }
   }, [docxContent, coverLetterDocxContent, atsView, documentType]);
 
-  const handleGenerateResume = async () => {
-    if (!jobDescription.trim()) {
-      setError('Please paste a job description first');
-      return;
-    }
-    setIsGenerating(true);
-    setError('');
-    setJobStatus('starting');
-    setProgress(0);
-    setStepLabel(null);
-    setDocumentType('resume');
-    try {
-      const { data: jobData } = await resumeService.generateResume({ jobDescription, companyName, role, version: pipelineVersion, bulletCount });
-      const { jobId } = jobData;
-      setJobStatus('processing');
-      const result = await pollJobStatus(jobId, (progressData) => {
-        setJobStatus(progressData.status);
-        setProgress(progressData.progress || 0);
-        if (progressData.stepLabel) setStepLabel(progressData.stepLabel);
-        if (progressData.error) setError(progressData.error);
-      });
-      if (result) {
-        setResumeData(result.resume);
-        setGeneratedResume(result.generatedResume);
-        setDocxContent(result.docxContent);
-        setPdfContent(result.pdfContent);
-        setLastGenerated(new Date());
-        localStorage.setItem('generatedResume', JSON.stringify({
-          resume: result.resume,
-          generatedResume: result.generatedResume,
-          docxContent: result.docxContent,
-          pdfContent: result.pdfContent,
-          companyName,
-          role,
-          jobDescription
-        }));
-      }
-    } catch (error) {
-      setError(error.message || 'Failed to generate resume. Please try again.');
-      setJobStatus('error');
-    } finally {
-      setIsGenerating(false);
-    }
+  const handleGenerateResume = () => {
+    generateResume({ jobDescription, companyName, role, pipelineVersion, bulletCount });
   };
 
-  const handleGenerateCoverLetter = async () => {
-    if (!jobDescription.trim()) {
-      setError('Please paste a job description first');
-      return;
-    }
-    setIsGenerating(true);
-    setError('');
-    setJobStatus('starting');
-    setProgress(0);
-    setStepLabel(null);
-    setDocumentType('cover-letter');
-    try {
-      const { data: jobData } = await coverLetterService.generateCoverLetter({ jobDescription, companyName, role, resume: resumeData });
-      const { jobId } = jobData;
-      setJobStatus('processing');
-      const result = await pollJobStatus(jobId, (progressData) => {
-        setJobStatus(progressData.status);
-        setProgress(progressData.progress || 0);
-        if (progressData.stepLabel) setStepLabel(progressData.stepLabel);
-        if (progressData.error) setError(progressData.error);
-      });
-      if (result) {
-        setGeneratedCoverLetter(result.coverLetter);
-        setCoverLetterDocxContent(result.docxContent);
-        setCoverLetterPdfContent(result.pdfContent);
-        setLastGenerated(new Date());
-        localStorage.setItem('generatedCoverLetter', JSON.stringify({
-          coverLetter: result.coverLetter,
-          docxContent: result.docxContent,
-          pdfContent: result.pdfContent,
-          companyName,
-          role,
-          jobDescription
-        }));
-      }
-    } catch (error) {
-      setError(error.message || 'Failed to generate cover letter. Please try again.');
-      setJobStatus('error');
-    } finally {
-      setIsGenerating(false);
-    }
+  const handleGenerateCoverLetter = () => {
+    generateCoverLetter({ jobDescription, companyName, role });
   };
 
   const handleDownload = (format) => {
@@ -505,9 +412,25 @@ function Home() {
                   <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 600 }}>
                     {stepLabel || getStepLabel(progress)}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 700 }}>
-                    {Math.round(progress)}%
-                  </Typography>
+                  <Stack direction="row" spacing={0.5} alignItems="center">
+                    <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 700 }}>
+                      {Math.round(progress)}%
+                    </Typography>
+                    <Tooltip title="Cancel generation" arrow>
+                      <IconButton
+                        size="small"
+                        onClick={cancelGeneration}
+                        sx={{
+                          width: 20,
+                          height: 20,
+                          color: 'text.secondary',
+                          '&:hover': { color: colors.error, bgcolor: alpha(colors.error, 0.08) },
+                        }}
+                      >
+                        <CloseIcon sx={{ fontSize: 14 }} />
+                      </IconButton>
+                    </Tooltip>
+                  </Stack>
                 </Stack>
                 <LinearProgress variant="determinate" value={progress} />
               </Box>

@@ -96,12 +96,6 @@ export const profileService = {
   updateProfile: (profileData) => 
     api.put('/api/profile', profileData),
   
-  getOpenAISettings: () =>
-    api.get('/api/settings'),
-  
-  updateOpenAISettings: (settingsData) =>
-    api.put('/api/settings', settingsData),
-
   getAllUsers: () =>
     api.get('/api/admin/users'),
 
@@ -161,13 +155,21 @@ export const historyService = {
 };
 
 // Utility function for polling job status
-export const pollJobStatus = async (jobId, onProgress, maxAttempts = 80, interval = 2000) => {
+// signal: optional AbortSignal for cancellation
+export const pollJobStatus = async (jobId, onProgress, signal, maxAttempts = 80, interval = 2000) => {
   let attempts = 0;
 
-  // Helper to sleep
-  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  // Helper to sleep (abortable)
+  const sleep = (ms) => new Promise((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    if (signal) {
+      signal.addEventListener('abort', () => { clearTimeout(timer); reject(new DOMException('Aborted', 'AbortError')); }, { once: true });
+    }
+  });
 
   while (attempts < maxAttempts) {
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+
     try {
       const response = await resumeService.getJobStatus(jobId);
       const { status, progress, error, stepLabel } = response.data;
@@ -190,6 +192,7 @@ export const pollJobStatus = async (jobId, onProgress, maxAttempts = 80, interva
       attempts += 1;
       await sleep(interval);
     } catch (err) {
+      if (err.name === 'AbortError') throw err;
       if (onProgress) {
         onProgress({ status: 'error', error: err.message });
       }

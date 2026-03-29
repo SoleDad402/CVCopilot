@@ -12,6 +12,7 @@ import ProfilePage from './components/profile/Profile';
 import ResumePreview from './pages/ResumePreview';
 import ResumeEditor from './components/ResumeEditor';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { GenerationProvider } from './contexts/GenerationContext';
 import theme from './theme';
 import Admin from './pages/Admin';
 import History from './pages/History';
@@ -44,6 +45,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
+        <GenerationProvider>
         <Router>
           <Navbar />
           <Routes>
@@ -74,6 +76,7 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
+        </GenerationProvider>
       </AuthProvider>
     </ThemeProvider>
   );
