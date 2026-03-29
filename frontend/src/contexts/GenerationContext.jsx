@@ -84,7 +84,9 @@ export const GenerationProvider = ({ children }) => {
     setError('');
   }, []);
 
-  const generateResume = useCallback(async ({ jobDescription, companyName, role, pipelineVersion, bulletCount }) => {
+  const generateResume = useCallback(async ({ jobDescription, companyName: rawCompany, role: rawRole, pipelineVersion, bulletCount }) => {
+    const companyName = rawCompany?.trim() || '';
+    const role = rawRole?.trim() || '';
     if (!jobDescription.trim()) {
       setError('Please paste a job description first');
       return;
@@ -142,7 +144,9 @@ export const GenerationProvider = ({ children }) => {
     }
   }, []);
 
-  const generateCoverLetter = useCallback(async ({ jobDescription, companyName, role }) => {
+  const generateCoverLetter = useCallback(async ({ jobDescription, companyName: rawCompany, role: rawRole }) => {
+    const companyName = rawCompany?.trim() || '';
+    const role = rawRole?.trim() || '';
     if (!jobDescription.trim()) {
       setError('Please paste a job description first');
       return;

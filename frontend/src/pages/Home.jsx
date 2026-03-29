@@ -21,7 +21,9 @@ import {
   Tab,
   alpha,
   Snackbar,
-  Tooltip
+  Tooltip,
+  ToggleButtonGroup,
+  ToggleButton
 } from '@mui/material';
 import {
   Description as DocIcon,
@@ -105,6 +107,7 @@ function Home() {
   const [revisionDrawerOpen, setRevisionDrawerOpen] = useState(false);
   const [qaDrawerOpen, setQaDrawerOpen] = useState(false);
   const [atsView, setAtsView] = useState(false);
+  const [previewMode, setPreviewMode] = useState('docx'); // 'docx' | 'pdf'
 
   // Revision state
   const [revisionRequest, setRevisionRequest] = useState('');
@@ -505,6 +508,25 @@ function Home() {
               </Stack>
 
               <Stack direction="row" spacing={0.5} alignItems="center">
+                {/* View mode toggle */}
+                <ToggleButtonGroup
+                  value={previewMode}
+                  exclusive
+                  onChange={(e, val) => { if (val) setPreviewMode(val); }}
+                  size="small"
+                  sx={{
+                    height: 30,
+                    '& .MuiToggleButton-root': {
+                      px: 1.25, py: 0, fontSize: '0.75rem', fontWeight: 600,
+                      textTransform: 'none', borderColor: '#e2e8f0',
+                      '&.Mui-selected': { bgcolor: alpha('#6366f1', 0.08), color: '#6366f1', borderColor: alpha('#6366f1', 0.3) },
+                    },
+                  }}
+                >
+                  <ToggleButton value="docx"><DocIcon sx={{ fontSize: 14, mr: 0.5 }} />DOCX</ToggleButton>
+                  <ToggleButton value="pdf"><PdfIcon sx={{ fontSize: 14, mr: 0.5 }} />PDF</ToggleButton>
+                </ToggleButtonGroup>
+                <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
                 <Tooltip title="Copy text" arrow>
                   <IconButton size="small" onClick={handleCopyText} sx={{ border: '1px solid #e2e8f0' }}>
                     <CopyIcon sx={{ fontSize: 15 }} />
@@ -551,30 +573,58 @@ function Home() {
                 p: 3,
               }}
             >
-              <Paper
-                elevation={3}
-                sx={{
-                  width: '8.5in',
-                  maxWidth: '100%',
-                  bgcolor: 'white',
-                  minHeight: '11in',
-                  overflow: 'hidden',
-                  borderRadius: 2,
-                }}
-                className="animate-scale-in"
-              >
-                {atsView ? (
-                  <Box sx={{ p: 4 }}>
-                    <pre style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '13px', margin: 0, lineHeight: 1.6 }}>
-                      {documentType === 'cover-letter'
-                        ? generatedCoverLetter
-                        : (generatedResume?.replace(/\*\*/g, '') || '')}
-                    </pre>
-                  </Box>
-                ) : (
-                  <Box ref={previewContainerRef} sx={{ width: '100%', minHeight: '100%' }} />
-                )}
-              </Paper>
+              {previewMode === 'pdf' ? (
+                /* PDF preview via iframe */
+                (() => {
+                  const pdf = documentType === 'cover-letter' ? coverLetterPdfContent : pdfContent;
+                  return pdf ? (
+                    <Box
+                      component="iframe"
+                      src={`data:application/pdf;base64,${pdf}`}
+                      sx={{
+                        width: '8.5in',
+                        maxWidth: '100%',
+                        height: '100%',
+                        minHeight: '11in',
+                        border: 'none',
+                        borderRadius: 2,
+                        boxShadow: 3,
+                        bgcolor: 'white',
+                      }}
+                      title="PDF Preview"
+                    />
+                  ) : (
+                    <Paper elevation={3} sx={{ width: '8.5in', maxWidth: '100%', minHeight: '11in', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Typography variant="body2" color="text.secondary">No PDF available</Typography>
+                    </Paper>
+                  );
+                })()
+              ) : (
+                <Paper
+                  elevation={3}
+                  sx={{
+                    width: '8.5in',
+                    maxWidth: '100%',
+                    bgcolor: 'white',
+                    minHeight: '11in',
+                    overflow: 'hidden',
+                    borderRadius: 2,
+                  }}
+                  className="animate-scale-in"
+                >
+                  {atsView ? (
+                    <Box sx={{ p: 4 }}>
+                      <pre style={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', fontSize: '13px', margin: 0, lineHeight: 1.6 }}>
+                        {documentType === 'cover-letter'
+                          ? generatedCoverLetter
+                          : (generatedResume?.replace(/\*\*/g, '') || '')}
+                      </pre>
+                    </Box>
+                  ) : (
+                    <Box ref={previewContainerRef} sx={{ width: '100%', minHeight: '100%' }} />
+                  )}
+                </Paper>
+              )}
             </Box>
           </>
         ) : (
