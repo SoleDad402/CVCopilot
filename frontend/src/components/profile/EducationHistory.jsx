@@ -111,6 +111,8 @@ const EducationHistory = ({ education, onUpdate }) => {
 
   const formatDate = (d) => {
     if (!d) return '';
+    // If already in "MMM YYYY" format, return as-is
+    if (!d.includes('-')) return d;
     const [y, m] = d.split('-');
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return m ? `${months[parseInt(m) - 1] || m} ${y}` : y;
@@ -258,13 +260,13 @@ const EducationHistory = ({ education, onUpdate }) => {
               <Grid item xs={6} sm={3}>
                 <TextField required fullWidth size="small" label="Start" name="start_date"
                   value={formData.start_date} onChange={handleChange}
-                  placeholder="YYYY-MM" inputProps={{ maxLength: 7 }} />
+                  placeholder="MMM YYYY" inputProps={{ maxLength: 8 }} />
               </Grid>
               <Grid item xs={6} sm={3}>
                 <TextField fullWidth size="small" label="End" name="end_date"
                   value={formData.end_date} onChange={handleChange}
                   disabled={formData.is_current}
-                  placeholder="YYYY-MM" inputProps={{ maxLength: 7 }} />
+                  placeholder="MMM YYYY" inputProps={{ maxLength: 8 }} />
               </Grid>
               <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center' }}>
                 <FormControlLabel

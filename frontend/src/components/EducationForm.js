@@ -101,8 +101,8 @@ const EducationForm = ({ education, onSubmit, onCancel }) => {
               name="start_date"
               value={formData.start_date}
               onChange={handleChange}
-              placeholder="YYYY-MM"
-              helperText="Enter date as YYYY-MM (e.g., 2020-09)"
+              placeholder="MMM YYYY"
+              helperText="Enter date as MMM YYYY (e.g., Sep 2020)"
             />
           </Grid>
 
@@ -114,8 +114,8 @@ const EducationForm = ({ education, onSubmit, onCancel }) => {
               value={formData.end_date}
               onChange={handleChange}
               disabled={formData.is_current}
-              placeholder="YYYY-MM"
-              helperText="Enter date as YYYY-MM (e.g., 2024-05)"
+              placeholder="MMM YYYY"
+              helperText="Enter date as MMM YYYY (e.g., May 2024)"
             />
           </Grid>
         </Grid>

@@ -38,18 +38,27 @@ const EMPTY_FORM = {
   is_current: false
 };
 
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
 const getYear = (d) => {
   if (!d) return null;
-  const y = parseInt(d.split('-')[0], 10);
+  // Handle both "YYYY-MM" and "MMM YYYY" formats
+  if (d.includes('-')) {
+    const y = parseInt(d.split('-')[0], 10);
+    return isNaN(y) ? null : y;
+  }
+  const parts = d.trim().split(/\s+/);
+  const y = parseInt(parts[parts.length - 1], 10);
   return isNaN(y) ? null : y;
 };
 
 const formatDate = (d) => {
   if (!d) return '';
+  // If already in "MMM YYYY" format, return as-is
+  if (!d.includes('-')) return d;
   const [y, m] = d.split('-');
   if (!m) return y;
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${months[parseInt(m, 10) - 1] || m} ${y}`;
+  return `${MONTHS[parseInt(m, 10) - 1] || m} ${y}`;
 };
 
 // Build list of display items (year labels + gap placeholders) from employment entries
@@ -453,13 +462,13 @@ const EmploymentHistory = ({ employmentHistory, onUpdate }) => {
               <Grid item xs={6} sm={3}>
                 <TextField required fullWidth size="small" label="Start" name="start_date"
                   value={formData.start_date} onChange={handleChange}
-                  placeholder="YYYY-MM" inputProps={{ maxLength: 7 }} />
+                  placeholder="MMM YYYY" inputProps={{ maxLength: 8 }} />
               </Grid>
               <Grid item xs={6} sm={3}>
                 <TextField fullWidth size="small" label="End" name="end_date"
                   value={formData.end_date} onChange={handleChange}
                   disabled={formData.is_current}
-                  placeholder="YYYY-MM" inputProps={{ maxLength: 7 }} />
+                  placeholder="MMM YYYY" inputProps={{ maxLength: 8 }} />
               </Grid>
               <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center' }}>
                 <FormControlLabel
