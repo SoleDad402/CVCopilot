@@ -19,6 +19,7 @@ import History from './pages/History';
 import JobTracker from './pages/JobTracker';
 import Dashboard from './pages/Dashboard';
 import Landing from './pages/Landing';
+import AutoBidTest from './pages/AutoBidTest';
 
 // Protected Route component
 const ProtectedRoute = ({ children, component: Component, adminOnly = false }) => {
@@ -90,6 +91,7 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            <Route path="/autobid" element={<ProtectedRoute><AutoBidTest /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute adminOnly component={Admin} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

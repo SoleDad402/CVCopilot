@@ -463,4 +463,371 @@ ${jobDescription.substring(0, 3000)}`,
   return response.choices[0].message.content.trim();
 }
 
+// ─── Auto-Bid Test Endpoints ──────────────────────────────────────────────
+
+/**
+ * POST /api/v1/autobid/extract
+ *
+ * Extract job metadata from a Greenhouse URL via their public boards API.
+ * Returns structured job data (title, company, description, questions).
+ *
+ * Request body: { job_url: string }
+ * Response: { job_id, title, company, location, department, description, questions, url }
+ */
+router.post('/autobid/extract', async (req, res) => {
+  try {
+    const { job_url } = req.body;
+    if (!job_url) {
+      return res.status(400).json({ error: 'job_url is required' });
+    }
+
+    // Parse Greenhouse URL to get board_token and job_id
+    const ghMatch = job_url.match(
+      /(?:boards|job-boards)\.greenhouse\.io\/(?:[^/]+\/)?([^/]+)\/jobs\/(\d+)/i
+    ) || job_url.match(
+      /([a-z0-9_-]+)\.greenhouse\.io\/jobs\/(\d+)/i
+    );
+
+    if (!ghMatch) {
+      return res.status(400).json({ error: 'Not a recognized Greenhouse URL' });
+    }
+
+    const boardToken = ghMatch[1];
+    const jobId = ghMatch[2];
+
+    // Fetch from Greenhouse public API
+    const apiUrl = `https://boards-api.greenhouse.io/v1/boards/${boardToken}/jobs/${jobId}?questions=true`;
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: `Greenhouse API returned ${response.status}`,
+      });
+    }
+
+    const data = await response.json();
+
+    // Strip HTML from description
+    const descHtml = data.content || '';
+    const descText = descHtml
+      .replace(/<[^>]+>/g, '\n')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+
+    const departments = data.departments || [];
+    const questions = (data.questions || []).map(q => ({
+      label: q.label,
+      required: q.required,
+      fields: (q.fields || []).map(f => ({
+        name: f.name,
+        type: f.type,
+        values: f.values || [],
+      })),
+    }));
+
+    res.json({
+      job_id: String(data.id),
+      title: data.title || '',
+      company: boardToken,
+      location: data.location?.name || '',
+      department: departments[0]?.name || '',
+      description: descText,
+      description_html: descHtml,
+      questions,
+      url: data.absolute_url || job_url,
+    });
+  } catch (error) {
+    console.error('[AutoBid] Extract failed:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/v1/autobid/preview
+ *
+ * Dry-run of the auto-bid: extracts the job, maps profile fields to form
+ * questions, and generates a tailored resume — but does NOT submit anything.
+ *
+ * Request body: {
+ *   job_url: string,
+ *   user_profile: { full_name, email, phone, linkedin_url, ... },
+ *   generate_resume: boolean (default true)
+ * }
+ *
+ * Response: {
+ *   job: { title, company, location, ... },
+ *   field_map: { field_name: value, ... },
+ *   resume: { filename, resume_text, cover_letter_text } | null,
+ *   summary: { fields_filled, questions_total, questions_answered }
+ * }
+ */
+router.post('/autobid/preview', async (req, res) => {
+  const startTime = Date.now();
+
+  try {
+    const { job_url, user_profile, generate_resume = true } = req.body;
+
+    if (!job_url || !user_profile) {
+      return res.status(400).json({ error: 'job_url and user_profile are required' });
+    }
+
+    // Step 1: Extract job metadata (reuse extract logic)
+    const ghMatch = job_url.match(
+      /(?:boards|job-boards)\.greenhouse\.io\/(?:[^/]+\/)?([^/]+)\/jobs\/(\d+)/i
+    ) || job_url.match(
+      /([a-z0-9_-]+)\.greenhouse\.io\/jobs\/(\d+)/i
+    );
+
+    if (!ghMatch) {
+      return res.status(400).json({ error: 'Not a recognized Greenhouse URL' });
+    }
+
+    const boardToken = ghMatch[1];
+    const jobId = ghMatch[2];
+    const apiUrl = `https://boards-api.greenhouse.io/v1/boards/${boardToken}/jobs/${jobId}?questions=true`;
+    const ghResp = await fetch(apiUrl);
+
+    if (!ghResp.ok) {
+      return res.status(ghResp.status).json({ error: `Greenhouse API returned ${ghResp.status}` });
+    }
+
+    const jobData = await ghResp.json();
+    const descText = (jobData.content || '')
+      .replace(/<[^>]+>/g, '\n').replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      .replace(/\n{3,}/g, '\n\n').trim();
+
+    const job = {
+      job_id: String(jobData.id),
+      title: jobData.title || '',
+      company: boardToken,
+      location: jobData.location?.name || '',
+      department: (jobData.departments || [])[0]?.name || '',
+      description: descText,
+      url: jobData.absolute_url || job_url,
+    };
+
+    // Step 2: Map profile to form fields
+    const questions = jobData.questions || [];
+    const fieldMap = {};
+    let questionsAnswered = 0;
+
+    const profile = user_profile;
+    const nameParts = (profile.full_name || '').split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+
+    // Find current company from employment history
+    const currentJob = (profile.employment_history || []).find(e => e.is_current);
+    const currentCompany = currentJob?.company || (profile.employment_history || [])[0]?.company || '';
+
+    const labelMap = {
+      'first name': firstName,
+      'last name': lastName,
+      'email': profile.email || '',
+      'phone': profile.phone || '',
+      'phone number': profile.phone || '',
+      'linkedin url': profile.linkedin_url || '',
+      'linkedin profile': profile.linkedin_url || '',
+      'linkedin profile url': profile.linkedin_url || '',
+      'github url': profile.github_url || '',
+      'github profile url': profile.github_url || '',
+      'website': profile.portfolio_url || '',
+      'website url': profile.portfolio_url || '',
+      'portfolio': profile.portfolio_url || '',
+      'portfolio url': profile.portfolio_url || '',
+      'location': profile.location || '',
+      'city': profile.location || '',
+      'current location': profile.location || '',
+      'current company': currentCompany,
+      'current title': profile.current_title || '',
+    };
+
+    for (const question of questions) {
+      const label = (question.label || '').trim();
+      const required = question.required;
+      const fields = question.fields || [];
+
+      for (const field of fields) {
+        const fname = field.name || '';
+        const ftype = field.type || '';
+        const values = field.values || [];
+
+        // Skip file uploads
+        if (ftype === 'input_file') continue;
+
+        // Standard field mapping
+        const mapped = labelMap[label.toLowerCase()];
+        if (mapped !== undefined && mapped !== '') {
+          fieldMap[fname] = { value: mapped, source: 'profile', label, required };
+          continue;
+        }
+
+        // Yes/No dropdowns
+        if (values.length === 2) {
+          const labels = values.map(v => (v.label || '').toLowerCase());
+          if (labels.includes('yes') && labels.includes('no')) {
+            const ll = label.toLowerCase();
+            let answer = 'yes';
+            if (ll.includes('sponsor') || ll.includes('visa') || ll.includes('immigration')) {
+              answer = profile.visa_sponsorship_needed ? 'yes' : 'no';
+            } else if (ll.includes('authorized') || ll.includes('eligible') || ll.includes('legally')) {
+              answer = profile.visa_sponsorship_needed ? 'no' : 'yes';
+            } else if (ll.includes('relocat')) {
+              answer = profile.willing_to_relocate ? 'yes' : 'no';
+            }
+            const picked = values.find(v => (v.label || '').toLowerCase() === answer);
+            if (picked) {
+              fieldMap[fname] = {
+                value: String(picked.value ?? picked.label),
+                source: 'auto',
+                label,
+                required,
+              };
+              questionsAnswered++;
+              continue;
+            }
+          }
+        }
+
+        // Other dropdowns
+        if (values.length > 0 && ftype.includes('select')) {
+          fieldMap[fname] = {
+            value: null,
+            source: 'needs_selection',
+            label,
+            required,
+            options: values.map(v => v.label),
+          };
+          continue;
+        }
+
+        // Custom text/textarea
+        if (ftype === 'input_text' || ftype === 'textarea') {
+          fieldMap[fname] = {
+            value: null,
+            source: required ? 'needs_input' : 'optional',
+            label,
+            required,
+          };
+          continue;
+        }
+
+        if (required) {
+          fieldMap[fname] = { value: null, source: 'needs_input', label, required };
+        }
+      }
+    }
+
+    // Step 3: Generate resume (optional)
+    let resumeResult = null;
+    if (generate_resume) {
+      try {
+        const openai = req.app.get('openai');
+        if (!openai) {
+          resumeResult = { error: 'OpenAI client not configured' };
+        } else {
+          const { runPipeline } = require('../pipeline');
+          const { convertPlanToJson } = require('../pipeline/convertToJson');
+
+          const employmentHistory = (profile.employment_history || []).map(j => ({
+            title: j.title || j.position || '',
+            company: j.company || j.company_name || '',
+            location: j.location || '',
+            startDate: j.start_date || '',
+            endDate: j.is_current ? 'Present' : (j.end_date || ''),
+            notes: [],
+          }));
+
+          const education = (profile.education || []).map(e => ({
+            school_name: e.school_name || '', location: e.location || '',
+            degree: e.degree || '', field_of_study: e.field_of_study || '',
+            start_date: e.start_date || '', end_date: e.end_date || '',
+            gpa: e.gpa || '', description: e.description || '',
+          }));
+
+          const userContact = {
+            email: profile.email || '', phone: profile.phone || '',
+            linkedin_url: profile.linkedin_url || '', github_url: profile.github_url || '',
+            location: profile.location || '',
+          };
+
+          console.log(`[AutoBid] Generating tailored resume for "${job.title}" at "${job.company}"`);
+
+          const plan = await runPipeline(2, {
+            jobDescription: cleanJobDescription(descText),
+            employmentHistory,
+            voiceSamples: [],
+            options: { includeEducation: true, includeProjects: false },
+            userName: profile.full_name || 'Candidate',
+            userContact,
+            education,
+            openai,
+            bulletCount: 5,
+            returnMarkdown: false,
+          });
+
+          const resumeJson = convertPlanToJson(plan, userContact);
+          const resumeText = buildPlainText(resumeJson);
+
+          const safeName = (profile.full_name || 'Candidate').replace(/[^a-zA-Z0-9]/g, '_');
+          const safeCompany = boardToken.replace(/[^a-zA-Z0-9]/g, '_');
+          const filename = `${safeName}_${safeCompany}.pdf`;
+
+          // Generate cover letter
+          let coverLetterText = null;
+          try {
+            coverLetterText = await generateCoverLetter(openai, {
+              jobDescription: descText.substring(0, 3000),
+              jobTitle: job.title,
+              companyName: job.company,
+              userName: profile.full_name,
+              resumeSummary: resumeJson.summary,
+              experience: resumeJson.experience,
+            });
+          } catch (e) {
+            console.error('[AutoBid] Cover letter failed:', e.message);
+          }
+
+          resumeResult = {
+            filename,
+            resume_text: resumeText,
+            cover_letter_text: coverLetterText,
+            resume_json: resumeJson,
+          };
+        }
+      } catch (err) {
+        console.error('[AutoBid] Resume generation failed:', err.message);
+        resumeResult = { error: err.message };
+      }
+    }
+
+    const elapsed = Date.now() - startTime;
+    const filled = Object.values(fieldMap).filter(f => f.value && f.source === 'profile').length;
+    const autoAnswered = Object.values(fieldMap).filter(f => f.source === 'auto').length;
+
+    res.json({
+      job,
+      field_map: fieldMap,
+      resume: resumeResult,
+      summary: {
+        fields_filled: filled,
+        auto_answered: autoAnswered,
+        needs_input: Object.values(fieldMap).filter(f => f.source === 'needs_input').length,
+        needs_selection: Object.values(fieldMap).filter(f => f.source === 'needs_selection').length,
+        questions_total: questions.length,
+        elapsed_ms: elapsed,
+      },
+    });
+
+  } catch (error) {
+    console.error('[AutoBid] Preview failed:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

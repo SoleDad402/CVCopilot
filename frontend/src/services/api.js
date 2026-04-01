@@ -220,4 +220,15 @@ export const jobTrackerService = {
   deleteEvent: (appId, eventId) => api.delete(`/api/job-applications/${appId}/events/${eventId}`),
 };
 
+// Auto-Bid Engine
+export const autoBidService = {
+  extract: (jobUrl) => api.post('/api/v1/autobid/extract', { job_url: jobUrl }),
+  preview: (jobUrl, userProfile, generateResume = true) =>
+    api.post('/api/v1/autobid/preview', {
+      job_url: jobUrl,
+      user_profile: userProfile,
+      generate_resume: generateResume,
+    }, { timeout: 180000 }),
+};
+
 export default api;
