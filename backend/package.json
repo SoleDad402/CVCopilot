@@ -4,7 +4,7 @@
   "description": "Backend for Resume Generator",
   "main": "src/index.js",
   "engines": {
-    "node": "18.20.2"
+    "node": "20.20.0"
   },
   "scripts": {
     "start": "node src/index.js",
