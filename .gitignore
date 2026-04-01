@@ -145,6 +145,7 @@ backend/data/*.sqlite3
 backend/ssl/
 backend/certificates/
 backend/resumes/
+backend/src/templates/~$sume-template.docx
 
 # Frontend specific
 frontend/node_modules/
