@@ -90,6 +90,7 @@ Gaps: ${gapContext}
 Keywords: ${kwContext}
 
 Rules: [verb]+[what]+[technical context]+[impact]. Bold 2-3 key terms per role. Vary openings. Priority 1: include 1 standout bullet. Never include OMIT skills. MUST-INCLUDE skills take priority - ensure each appears at least once.
+ROLE ALIGNMENT: Bullets MUST reflect the core technology/domain implied by the role title. If the title is "PHP Developer", bullets must mention PHP work. If "Java Engineer", mention Java. The role title signals what the person actually did — never write generic bullets that could apply to any developer.
 PROJECT NAMES: For priority 1-2 roles, at least 1-2 bullets MUST reference a specific, realistic project or system name that fits the company's domain (e.g., "Developed **DataSync**, an internal data pipeline tool..." or "Led migration of **Merchant Portal** to React..."). If user notes mention a project name, USE IT. Otherwise, invent a plausible internal project/product name that fits the company context. This makes bullets concrete and memorable.
 
 Return: {"title":"...","company":"...","location":"...","dateRange":"MM/YYYY - MM/YYYY or Present","bullets":["..."]}`;
@@ -142,7 +143,8 @@ Roles:
 ${rolesBlock}
 
 Return: {"roles":[{"title":"...","company":"...","location":"...","dateRange":"...","bullets":["..."]},...]}
-Each role gets ${roles[0].directive.bulletCount} concise bullets (1 line each). Bold 1-2 terms max. Never include OMIT skills. Where possible, reference a specific project or system name to add credibility.`;
+Each role gets ${roles[0].directive.bulletCount} concise bullets (1 line each). Bold 1-2 terms max. Never include OMIT skills. Where possible, reference a specific project or system name to add credibility.
+ROLE ALIGNMENT: Each role's bullets MUST reflect the core technology implied by its title (e.g., "PHP Developer" → mention PHP, "Java Engineer" → mention Java). Never write generic bullets that ignore the role's technology.`;
 
     try {
       const _t = Date.now();
