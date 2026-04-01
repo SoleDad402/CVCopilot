@@ -208,4 +208,16 @@ export const pollJobStatus = async (jobId, onProgress, signal, maxAttempts = 80,
   throw new Error('Job timeout - maximum polling attempts reached');
 };
 
-export default api; 
+// Job Application Tracker
+export const jobTrackerService = {
+  getAll: () => api.get('/api/job-applications'),
+  getById: (id) => api.get(`/api/job-applications/${id}`),
+  create: (data) => api.post('/api/job-applications', data),
+  update: (id, data) => api.put(`/api/job-applications/${id}`, data),
+  updateStatus: (id, status, comment) => api.put(`/api/job-applications/${id}/status`, { status, comment }),
+  delete: (id) => api.delete(`/api/job-applications/${id}`),
+  addComment: (id, comment) => api.post(`/api/job-applications/${id}/events`, { comment }),
+  deleteEvent: (appId, eventId) => api.delete(`/api/job-applications/${appId}/events/${eventId}`),
+};
+
+export default api;

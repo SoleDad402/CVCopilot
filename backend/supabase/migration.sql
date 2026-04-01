@@ -72,6 +72,37 @@ CREATE TABLE IF NOT EXISTS resume_requests (
 CREATE INDEX IF NOT EXISTS idx_requests_user ON resume_requests(user_id);
 CREATE INDEX IF NOT EXISTS idx_requests_created ON resume_requests(created_at DESC);
 
+-- ── Job Applications (Tracker) ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS job_applications (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  company_name TEXT NOT NULL,
+  position    TEXT NOT NULL,
+  location    TEXT DEFAULT '',
+  job_url     TEXT DEFAULT '',
+  salary_range TEXT DEFAULT '',
+  status      TEXT NOT NULL DEFAULT 'applied',
+  applied_date DATE DEFAULT CURRENT_DATE,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_job_apps_user ON job_applications(user_id);
+CREATE INDEX IF NOT EXISTS idx_job_apps_status ON job_applications(user_id, status);
+
+-- ── Job Application Events (Timeline) ─────────────────────────────────────
+CREATE TABLE IF NOT EXISTS job_application_events (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  application_id  UUID NOT NULL REFERENCES job_applications(id) ON DELETE CASCADE,
+  event_type      TEXT NOT NULL DEFAULT 'comment',
+  from_status     TEXT,
+  to_status       TEXT,
+  comment         TEXT DEFAULT '',
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_job_events_app ON job_application_events(application_id);
+
 -- ── Enable Row Level Security (optional but recommended) ────────────────────
 -- Uncomment these if you want RLS. For now, we use service_role key server-side
 -- which bypasses RLS, so these are informational.

@@ -34,7 +34,9 @@ import {
   KeyboardArrowDown as ArrowDownIcon,
   AdminPanelSettings as AdminIcon,
   Close as CloseIcon,
-  Bolt as BoltIcon
+  Bolt as BoltIcon,
+  Work as WorkIcon,
+  Dashboard as DashboardIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -127,8 +129,8 @@ const Navbar = () => {
     }
   };
 
-  // Show the global progress pill when generating AND not on the home page
-  const showGlobalProgress = isGenerating && location.pathname !== '/';
+  // Show the global progress pill when generating AND not on the generator page
+  const showGlobalProgress = isGenerating && location.pathname !== '/generator';
 
   return (
     <>
@@ -186,11 +188,17 @@ const Navbar = () => {
           {/* Nav Links */}
           {user && (
             <Stack direction="row" spacing={0.5} sx={{ flex: 1 }}>
-              <NavLink to="/" icon={<PasteIcon sx={{ fontSize: 16 }} />}>
+              <NavLink to="/" icon={<DashboardIcon sx={{ fontSize: 16 }} />}>
+                {isMobile ? '' : 'Dashboard'}
+              </NavLink>
+              <NavLink to="/generator" icon={<PasteIcon sx={{ fontSize: 16 }} />}>
                 {isMobile ? '' : 'Generator'}
               </NavLink>
               <NavLink to="/history" icon={<HistoryIcon sx={{ fontSize: 16 }} />}>
                 {isMobile ? '' : 'History'}
+              </NavLink>
+              <NavLink to="/tracker" icon={<WorkIcon sx={{ fontSize: 16 }} />}>
+                {isMobile ? '' : 'Tracker'}
               </NavLink>
               {user.is_admin && (
                 <NavLink to="/admin" icon={<AdminIcon sx={{ fontSize: 16 }} />}>
@@ -202,10 +210,10 @@ const Navbar = () => {
 
           <Box sx={{ flex: user ? 0 : 1 }} />
 
-          {/* Global generation progress pill — shown when navigated away from home */}
+          {/* Global generation progress pill — shown when navigated away from generator */}
           {showGlobalProgress && (
             <Box
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/generator')}
               sx={{
                 display: 'flex',
                 alignItems: 'center',

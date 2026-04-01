@@ -16,6 +16,9 @@ import { GenerationProvider } from './contexts/GenerationContext';
 import theme from './theme';
 import Admin from './pages/Admin';
 import History from './pages/History';
+import JobTracker from './pages/JobTracker';
+import Dashboard from './pages/Dashboard';
+import Landing from './pages/Landing';
 
 // Protected Route component
 const ProtectedRoute = ({ children, component: Component, adminOnly = false }) => {
@@ -40,6 +43,19 @@ const ProtectedRoute = ({ children, component: Component, adminOnly = false }) =
   return Component ? <Component /> : children;
 };
 
+// Home route — Landing for guests, Dashboard for signed-in users
+const HomeRoute = () => {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+  return user ? <Dashboard /> : <Landing />;
+};
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -49,13 +65,15 @@ function App() {
         <Router>
           <Navbar />
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<HomeRoute />} />
+            <Route path="/generator" element={<Home />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/preview" element={<ResumePreview />} />
             <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+            <Route path="/tracker" element={<ProtectedRoute><JobTracker /></ProtectedRoute>} />
             <Route
               path="/editor" 
               element={
