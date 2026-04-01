@@ -894,7 +894,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
       }
 
       try {
-        await User.addResumeRequest(user.id, {
+        const resumeRequestId = await User.addResumeRequest(user.id, {
           company_name: jobs.get(jobId)?.companyName || null,
           role: jobs.get(jobId)?.role || null,
           job_description: cleanedJobDescription,
@@ -902,6 +902,23 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
           pdf_file: pdfAttachment
         });
         console.log('Resume files saved to database successfully');
+
+        // Auto-create job application entry
+        const companyName = jobs.get(jobId)?.companyName;
+        const role = jobs.get(jobId)?.role;
+        if (companyName && role) {
+          try {
+            await JobApplication.create(user.id, {
+              company_name: companyName,
+              position: role,
+              status: 'applied',
+              resume_request_id: resumeRequestId,
+            });
+            console.log('Auto-created job application for', companyName, role);
+          } catch (appErr) {
+            console.error('Failed auto-creating job application:', appErr);
+          }
+        }
       } catch (metaErr) {
         console.error('Failed saving resume request metadata:', metaErr);
       }

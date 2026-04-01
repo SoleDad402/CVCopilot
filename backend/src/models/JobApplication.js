@@ -18,18 +18,22 @@ class JobApplication {
 
   static async create(userId, data) {
     checkConfig();
+    const row = {
+      user_id: userId,
+      company_name: data.company_name,
+      position: data.position,
+      location: data.location || '',
+      job_url: data.job_url || '',
+      salary_range: data.salary_range || '',
+      notes: data.notes || '',
+      status: data.status || 'applied',
+      applied_date: data.applied_date || new Date().toISOString().slice(0, 10),
+    };
+    if (data.resume_request_id) row.resume_request_id = data.resume_request_id;
+
     const { data: app, error } = await supabase
       .from('job_applications')
-      .insert({
-        user_id: userId,
-        company_name: data.company_name,
-        position: data.position,
-        location: data.location || '',
-        job_url: data.job_url || '',
-        salary_range: data.salary_range || '',
-        status: data.status || 'applied',
-        applied_date: data.applied_date || new Date().toISOString().slice(0, 10),
-      })
+      .insert(row)
       .select()
       .single();
     if (error) throw new Error(`Failed to create job application: ${error.message}`);
@@ -71,7 +75,7 @@ class JobApplication {
   static async update(userId, id, data) {
     checkConfig();
     const fields = {};
-    const allowed = ['company_name', 'position', 'location', 'job_url', 'salary_range', 'status', 'applied_date'];
+    const allowed = ['company_name', 'position', 'location', 'job_url', 'salary_range', 'notes', 'status', 'applied_date'];
     for (const key of allowed) {
       if (data[key] !== undefined) fields[key] = data[key];
     }

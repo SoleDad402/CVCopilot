@@ -81,8 +81,10 @@ CREATE TABLE IF NOT EXISTS job_applications (
   location    TEXT DEFAULT '',
   job_url     TEXT DEFAULT '',
   salary_range TEXT DEFAULT '',
+  notes       TEXT DEFAULT '',
   status      TEXT NOT NULL DEFAULT 'applied',
   applied_date DATE DEFAULT CURRENT_DATE,
+  resume_request_id UUID REFERENCES resume_requests(id) ON DELETE SET NULL,
   created_at  TIMESTAMPTZ DEFAULT NOW(),
   updated_at  TIMESTAMPTZ DEFAULT NOW()
 );
