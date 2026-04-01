@@ -75,7 +75,7 @@ class JobApplication {
   static async update(userId, id, data) {
     checkConfig();
     const fields = {};
-    const allowed = ['company_name', 'position', 'location', 'job_url', 'salary_range', 'notes', 'status', 'applied_date'];
+    const allowed = ['company_name', 'position', 'location', 'job_url', 'salary_range', 'notes', 'status', 'applied_date', 'pipeline_steps'];
     for (const key of allowed) {
       if (data[key] !== undefined) fields[key] = data[key];
     }

@@ -19,36 +19,63 @@ import {
   MoreVert as MoreIcon,
   Search as SearchIcon,
   CheckCircle as CheckIcon,
-  Cancel as CancelIcon,
   AccessTime as TimeIcon,
   TrendingUp as TrendingIcon,
   Business as BusinessIcon,
   LocationOn as LocationIcon,
   AttachMoney as MoneyIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  DragIndicator as DragIcon,
+  ArrowUpward as UpIcon,
+  ArrowDownward as DownIcon,
+  Settings as SettingsIcon
 } from '@mui/icons-material';
 import { NAVBAR_HEIGHT, colors } from '../theme';
 import { jobTrackerService } from '../services/api';
 
-// ── Status definitions ──────────────────────────────────────────────────────
-const STATUSES = [
-  { key: 'applied',          label: 'Applied',          color: '#3b82f6', icon: '📄' },
-  { key: 'screening',        label: 'Screening',        color: '#8b5cf6', icon: '🔍' },
-  { key: 'phone_interview',  label: 'Phone Interview',  color: '#6366f1', icon: '📞' },
-  { key: 'video_interview',  label: 'Video Interview',  color: '#0ea5e9', icon: '🎥' },
-  { key: 'technical',        label: 'Technical',        color: '#f59e0b', icon: '💻' },
-  { key: 'onsite',           label: 'Onsite',           color: '#f97316', icon: '🏢' },
-  { key: 'offer',            label: 'Offer',            color: '#10b981', icon: '🎉' },
-  { key: 'accepted',         label: 'Accepted',         color: '#059669', icon: '✅' },
-  { key: 'rejected',         label: 'Rejected',         color: '#ef4444', icon: '❌' },
-  { key: 'withdrawn',        label: 'Withdrawn',        color: '#6b7280', icon: '🚫' },
+// ── Default pipeline steps ──────────────────────────────────────────────────
+const DEFAULT_STEPS = [
+  { key: 'applied',          label: 'Applied' },
+  { key: 'screening',        label: 'Screening' },
+  { key: 'phone_interview',  label: 'Phone Interview' },
+  { key: 'technical',        label: 'Technical' },
+  { key: 'offer',            label: 'Offer' },
+  { key: 'accepted',         label: 'Accepted' },
 ];
 
-const getStatus = (key) => STATUSES.find(s => s.key === key) || STATUSES[0];
-const PIPELINE_STATUSES = STATUSES.filter(s => !['rejected', 'withdrawn'].includes(s.key));
+// Terminal statuses (always available, never in the stepper)
+const TERMINAL_STATUSES = [
+  { key: 'rejected', label: 'Rejected', color: '#ef4444', icon: '❌' },
+  { key: 'withdrawn', label: 'Withdrawn', color: '#6b7280', icon: '🚫' },
+];
+
+// Color palette for steps (cycles through for custom steps)
+const STEP_COLORS = ['#3b82f6', '#8b5cf6', '#6366f1', '#0ea5e9', '#f59e0b', '#f97316', '#10b981', '#059669', '#ec4899', '#14b8a6'];
+const getStepColor = (idx, total) => {
+  if (idx === total - 1) return '#059669'; // last step always green (accepted/offer)
+  return STEP_COLORS[idx % STEP_COLORS.length];
+};
+
+// Get the pipeline steps for an app (use custom or default)
+const getAppSteps = (app) => {
+  if (app.pipeline_steps && Array.isArray(app.pipeline_steps) && app.pipeline_steps.length > 0) {
+    return app.pipeline_steps;
+  }
+  return DEFAULT_STEPS;
+};
+
+// Get status info (label + color) for any status key, given an app's pipeline
+const getStatusInfo = (statusKey, app) => {
+  const terminal = TERMINAL_STATUSES.find(t => t.key === statusKey);
+  if (terminal) return terminal;
+  const steps = getAppSteps(app);
+  const idx = steps.findIndex(s => s.key === statusKey);
+  if (idx >= 0) return { ...steps[idx], color: getStepColor(idx, steps.length) };
+  return { key: statusKey, label: statusKey, color: '#6b7280' };
+};
 
 // ── Custom stepper connector ────────────────────────────────────────────────
-const ColoredConnector = styled(StepConnector)(({ theme }) => ({
+const ColoredConnector = styled(StepConnector)(() => ({
   '& .MuiStepConnector-line': {
     borderColor: '#e2e8f0',
     borderTopWidth: 2,
@@ -101,6 +128,11 @@ export default function JobTracker() {
   const [events, setEvents] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [addingComment, setAddingComment] = useState(false);
+
+  // Pipeline editor
+  const [stepsEditorOpen, setStepsEditorOpen] = useState(false);
+  const [editingSteps, setEditingSteps] = useState([]);
+  const [newStepLabel, setNewStepLabel] = useState('');
 
   // Menu
   const [menuAnchor, setMenuAnchor] = useState(null);
@@ -182,6 +214,61 @@ export default function JobTracker() {
     }
   };
 
+  // ── Pipeline steps editor ─────────────────────────────────────────────
+  const openStepsEditor = () => {
+    if (!selectedApp) return;
+    setEditingSteps([...getAppSteps(selectedApp)]);
+    setNewStepLabel('');
+    setStepsEditorOpen(true);
+  };
+
+  const addStep = () => {
+    const label = newStepLabel.trim();
+    if (!label) return;
+    const key = label.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    if (editingSteps.some(s => s.key === key)) {
+      setSnackbar({ open: true, message: 'Step already exists', severity: 'warning' });
+      return;
+    }
+    setEditingSteps(prev => [...prev, { key, label }]);
+    setNewStepLabel('');
+  };
+
+  const removeStep = (idx) => {
+    setEditingSteps(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const moveStep = (idx, dir) => {
+    setEditingSteps(prev => {
+      const arr = [...prev];
+      const target = idx + dir;
+      if (target < 0 || target >= arr.length) return arr;
+      [arr[idx], arr[target]] = [arr[target], arr[idx]];
+      return arr;
+    });
+  };
+
+  const saveSteps = async () => {
+    if (!selectedApp || editingSteps.length < 2) {
+      setSnackbar({ open: true, message: 'Need at least 2 steps', severity: 'warning' });
+      return;
+    }
+    try {
+      await jobTrackerService.update(selectedApp.id, { pipeline_steps: editingSteps });
+      // If current status isn't in the new steps, reset to first step
+      const validKeys = [...editingSteps.map(s => s.key), ...TERMINAL_STATUSES.map(t => t.key)];
+      if (!validKeys.includes(selectedApp.status)) {
+        await jobTrackerService.updateStatus(selectedApp.id, editingSteps[0].key, 'Pipeline steps updated, status reset');
+      }
+      setStepsEditorOpen(false);
+      fetchApplications();
+      openDetail(selectedApp.id);
+      setSnackbar({ open: true, message: 'Pipeline updated', severity: 'success' });
+    } catch (err) {
+      setSnackbar({ open: true, message: 'Failed to save pipeline', severity: 'error' });
+    }
+  };
+
   // ── Detail panel ──────────────────────────────────────────────────────
   const openDetail = async (id) => {
     try {
@@ -210,6 +297,14 @@ export default function JobTracker() {
   };
 
   // ── Filtering ─────────────────────────────────────────────────────────
+  // Collect all unique status keys across all apps for the filter bar
+  const allStatusKeys = new Set();
+  applications.forEach(a => {
+    allStatusKeys.add(a.status);
+    getAppSteps(a).forEach(s => allStatusKeys.add(s.key));
+  });
+  TERMINAL_STATUSES.forEach(t => allStatusKeys.add(t.key));
+
   const filtered = applications.filter(a => {
     const matchSearch = !search ||
       a.company_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -221,15 +316,17 @@ export default function JobTracker() {
   // ── Stats ─────────────────────────────────────────────────────────────
   const stats = {
     total: applications.length,
-    active: applications.filter(a => !['rejected', 'withdrawn', 'accepted'].includes(a.status)).length,
-    interviews: applications.filter(a => ['phone_interview', 'video_interview', 'technical', 'onsite'].includes(a.status)).length,
-    offers: applications.filter(a => ['offer', 'accepted'].includes(a.status)).length,
-  };
-
-  // ── Current step index for stepper ────────────────────────────────────
-  const getStepIndex = (status) => {
-    const idx = PIPELINE_STATUSES.findIndex(s => s.key === status);
-    return idx >= 0 ? idx : 0;
+    active: applications.filter(a => !['rejected', 'withdrawn'].includes(a.status)).length,
+    interviews: applications.filter(a => {
+      const steps = getAppSteps(a);
+      const idx = steps.findIndex(s => s.key === a.status);
+      return idx > 0 && idx < steps.length - 1 && !['rejected', 'withdrawn'].includes(a.status);
+    }).length,
+    offers: applications.filter(a => {
+      const steps = getAppSteps(a);
+      const idx = steps.findIndex(s => s.key === a.status);
+      return idx === steps.length - 1 || idx === steps.length - 2;
+    }).length,
   };
 
   return (
@@ -259,8 +356,8 @@ export default function JobTracker() {
           {[
             { label: 'Total', value: stats.total, icon: <WorkIcon />, color: colors.primary },
             { label: 'Active', value: stats.active, icon: <TrendingIcon />, color: colors.info },
-            { label: 'Interviews', value: stats.interviews, icon: <TimeIcon />, color: colors.warning },
-            { label: 'Offers', value: stats.offers, icon: <CheckIcon />, color: colors.success },
+            { label: 'In Progress', value: stats.interviews, icon: <TimeIcon />, color: colors.warning },
+            { label: 'Final Stage', value: stats.offers, icon: <CheckIcon />, color: colors.success },
           ].map(s => (
             <Card key={s.label} sx={{ minWidth: 140, flex: 1, border: '1px solid', borderColor: colors.border, '&:hover': { transform: 'none' } }}>
               <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
@@ -288,17 +385,22 @@ export default function JobTracker() {
             InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 18, color: 'text.secondary' }} /></InputAdornment> }}
             sx={{ flex: 1, maxWidth: 360 }}
           />
-          <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap' }}>
+          <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
             <Chip label="All" size="small" variant={filterStatus === 'all' ? 'filled' : 'outlined'}
               color={filterStatus === 'all' ? 'primary' : 'default'}
               onClick={() => setFilterStatus('all')} />
-            {STATUSES.map(s => (
-              <Chip key={s.key} label={s.label} size="small"
-                variant={filterStatus === s.key ? 'filled' : 'outlined'}
-                onClick={() => setFilterStatus(s.key)}
-                sx={filterStatus === s.key ? { bgcolor: s.color, color: '#fff', '&:hover': { bgcolor: s.color } } : {}}
-              />
-            ))}
+            {[...allStatusKeys].map(key => {
+              // Use first app that has this status to get color
+              const refApp = applications.find(a => a.status === key) || applications[0] || {};
+              const info = getStatusInfo(key, refApp);
+              return (
+                <Chip key={key} label={info.label} size="small"
+                  variant={filterStatus === key ? 'filled' : 'outlined'}
+                  onClick={() => setFilterStatus(key)}
+                  sx={filterStatus === key ? { bgcolor: info.color, color: '#fff', '&:hover': { bgcolor: info.color } } : {}}
+                />
+              );
+            })}
           </Stack>
         </Stack>
 
@@ -326,15 +428,16 @@ export default function JobTracker() {
         ) : (
           <Stack spacing={1.5}>
             {filtered.map(app => {
-              const status = getStatus(app.status);
-              const stepIndex = getStepIndex(app.status);
-              const isTerminal = ['rejected', 'withdrawn'].includes(app.status);
+              const steps = getAppSteps(app);
+              const statusInfo = getStatusInfo(app.status, app);
+              const stepIndex = steps.findIndex(s => s.key === app.status);
+              const isTerminal = TERMINAL_STATUSES.some(t => t.key === app.status);
 
               return (
                 <Card key={app.id} onClick={() => openDetail(app.id)} sx={{
                   cursor: 'pointer', border: '1px solid', borderColor: colors.border,
-                  borderLeft: `4px solid ${status.color}`,
-                  '&:hover': { borderColor: alpha(status.color, 0.5), boxShadow: 3 },
+                  borderLeft: `4px solid ${statusInfo.color}`,
+                  '&:hover': { borderColor: alpha(statusInfo.color, 0.5), boxShadow: 3 },
                   transition: 'all 0.15s ease',
                 }}>
                   <CardContent sx={{ p: { xs: 2, md: 2.5 }, '&:last-child': { pb: { xs: 2, md: 2.5 } } }}>
@@ -345,8 +448,8 @@ export default function JobTracker() {
                           <Typography variant="subtitle1" sx={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {app.position}
                           </Typography>
-                          <Chip label={status.label} size="small" sx={{
-                            bgcolor: alpha(status.color, 0.1), color: status.color,
+                          <Chip label={statusInfo.label} size="small" sx={{
+                            bgcolor: alpha(statusInfo.color, 0.1), color: statusInfo.color,
                             fontWeight: 600, fontSize: '0.7rem', height: 22,
                           }} />
                         </Stack>
@@ -373,21 +476,21 @@ export default function JobTracker() {
                         </Stack>
                       </Box>
 
-                      {/* Right: Mini Stepper */}
-                      <Box sx={{ display: { xs: 'none', md: 'block' }, width: 420, flexShrink: 0 }}
+                      {/* Right: Mini Stepper (dynamic) */}
+                      <Box sx={{ display: { xs: 'none', md: 'block' }, width: Math.min(steps.length * 70, 500), flexShrink: 0 }}
                         onClick={e => e.stopPropagation()}>
                         {!isTerminal ? (
                           <Stepper activeStep={stepIndex} alternativeLabel connector={<ColoredConnector />}
                             sx={{ '& .MuiStepLabel-label': { fontSize: '0.6rem', mt: 0.5 } }}>
-                            {PIPELINE_STATUSES.map((s) => (
-                              <Step key={s.key} completed={PIPELINE_STATUSES.indexOf(s) <= stepIndex}>
+                            {steps.map((s, i) => (
+                              <Step key={s.key} completed={i <= stepIndex}>
                                 <StepLabel
                                   StepIconProps={{
                                     sx: {
                                       fontSize: 18,
-                                      color: PIPELINE_STATUSES.indexOf(s) <= stepIndex ? `${status.color} !important` : undefined,
-                                      '&.Mui-active': { color: `${status.color} !important` },
-                                      '&.Mui-completed': { color: `${status.color} !important` },
+                                      color: i <= stepIndex ? `${getStepColor(stepIndex, steps.length)} !important` : undefined,
+                                      '&.Mui-active': { color: `${getStepColor(stepIndex, steps.length)} !important` },
+                                      '&.Mui-completed': { color: `${getStepColor(stepIndex, steps.length)} !important` },
                                     }
                                   }}
                                   sx={{ cursor: 'pointer', '&:hover': { opacity: 0.7 } }}
@@ -400,8 +503,8 @@ export default function JobTracker() {
                           </Stepper>
                         ) : (
                           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                            <Chip label={`${status.icon} ${status.label}`} sx={{
-                              bgcolor: alpha(status.color, 0.1), color: status.color,
+                            <Chip label={`${statusInfo.icon || ''} ${statusInfo.label}`} sx={{
+                              bgcolor: alpha(statusInfo.color, 0.1), color: statusInfo.color,
                               fontWeight: 600, fontSize: '0.85rem',
                             }} />
                           </Box>
@@ -469,20 +572,6 @@ export default function JobTracker() {
               onChange={e => setFormData(p => ({ ...p, job_url: e.target.value }))}
               placeholder="https://..." />
             <Stack direction="row" spacing={2}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Status</InputLabel>
-                <Select value={formData.status} label="Status"
-                  onChange={e => setFormData(p => ({ ...p, status: e.target.value }))}>
-                  {STATUSES.map(s => (
-                    <MenuItem key={s.key} value={s.key}>
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: s.color }} />
-                        <span>{s.label}</span>
-                      </Stack>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
               <TextField fullWidth size="small" label="Applied Date" type="date"
                 value={formData.applied_date}
                 onChange={e => setFormData(p => ({ ...p, applied_date: e.target.value }))}
@@ -502,9 +591,10 @@ export default function JobTracker() {
       <Dialog open={detailOpen} onClose={() => setDetailOpen(false)} maxWidth="md" fullWidth
         PaperProps={{ sx: { borderRadius: 3 } }}>
         {selectedApp && (() => {
-          const status = getStatus(selectedApp.status);
-          const stepIndex = getStepIndex(selectedApp.status);
-          const isTerminal = ['rejected', 'withdrawn'].includes(selectedApp.status);
+          const steps = getAppSteps(selectedApp);
+          const statusInfo = getStatusInfo(selectedApp.status, selectedApp);
+          const stepIndex = steps.findIndex(s => s.key === selectedApp.status);
+          const isTerminal = TERMINAL_STATUSES.some(t => t.key === selectedApp.status);
 
           return (
             <>
@@ -531,7 +621,7 @@ export default function JobTracker() {
                       )}
                     </Stack>
                   </Box>
-                  <Stack direction="row" spacing={1} alignItems="center">
+                  <Stack direction="row" spacing={0.5} alignItems="center">
                     {selectedApp.job_url && (
                       <Tooltip title="Open job posting">
                         <IconButton size="small" onClick={() => window.open(selectedApp.job_url, '_blank')}>
@@ -547,19 +637,26 @@ export default function JobTracker() {
               </DialogTitle>
 
               <DialogContent>
-                {/* Stepper */}
+                {/* Stepper with edit button */}
                 <Box sx={{ mb: 3, mt: 1 }}>
+                  <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
+                    <Button size="small" startIcon={<SettingsIcon sx={{ fontSize: 14 }} />}
+                      onClick={openStepsEditor}
+                      sx={{ fontSize: '0.7rem', color: 'text.secondary' }}>
+                      Customize Steps
+                    </Button>
+                  </Stack>
                   {!isTerminal ? (
                     <Stepper activeStep={stepIndex} alternativeLabel connector={<ColoredConnector />}>
-                      {PIPELINE_STATUSES.map((s) => (
-                        <Step key={s.key} completed={PIPELINE_STATUSES.indexOf(s) <= stepIndex}>
+                      {steps.map((s, i) => (
+                        <Step key={s.key} completed={i <= stepIndex}>
                           <StepLabel
                             StepIconProps={{
                               sx: {
                                 fontSize: 22,
-                                color: PIPELINE_STATUSES.indexOf(s) <= stepIndex ? `${status.color} !important` : undefined,
-                                '&.Mui-active': { color: `${status.color} !important` },
-                                '&.Mui-completed': { color: `${status.color} !important` },
+                                color: i <= stepIndex ? `${getStepColor(stepIndex, steps.length)} !important` : undefined,
+                                '&.Mui-active': { color: `${getStepColor(stepIndex, steps.length)} !important` },
+                                '&.Mui-completed': { color: `${getStepColor(stepIndex, steps.length)} !important` },
                               }
                             }}
                             sx={{ cursor: 'pointer', '&:hover': { opacity: 0.7 } }}
@@ -572,24 +669,35 @@ export default function JobTracker() {
                     </Stepper>
                   ) : (
                     <Box sx={{ textAlign: 'center', py: 2 }}>
-                      <Chip label={`${status.icon} ${status.label}`} sx={{
-                        bgcolor: alpha(status.color, 0.1), color: status.color,
+                      <Chip label={`${statusInfo.icon || ''} ${statusInfo.label}`} sx={{
+                        bgcolor: alpha(statusInfo.color, 0.1), color: statusInfo.color,
                         fontWeight: 600, fontSize: '0.9rem', px: 2, height: 32,
                       }} />
                     </Box>
                   )}
                 </Box>
 
-                {/* Quick status update */}
+                {/* Quick status: pipeline steps + terminal */}
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>Update Status</Typography>
                   <Stack direction="row" spacing={0.75} sx={{ flexWrap: 'wrap', gap: 0.75 }}>
-                    {STATUSES.map(s => (
-                      <Chip key={s.key} label={`${s.icon} ${s.label}`} size="small"
+                    {steps.map((s, i) => (
+                      <Chip key={s.key} label={s.label} size="small"
                         variant={selectedApp.status === s.key ? 'filled' : 'outlined'}
                         onClick={() => handleStatusChange(selectedApp.id, s.key)}
                         sx={selectedApp.status === s.key
-                          ? { bgcolor: s.color, color: '#fff', fontWeight: 600, '&:hover': { bgcolor: s.color } }
+                          ? { bgcolor: getStepColor(i, steps.length), color: '#fff', fontWeight: 600, '&:hover': { bgcolor: getStepColor(i, steps.length) } }
+                          : { cursor: 'pointer' }
+                        }
+                      />
+                    ))}
+                    <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+                    {TERMINAL_STATUSES.map(t => (
+                      <Chip key={t.key} label={`${t.icon} ${t.label}`} size="small"
+                        variant={selectedApp.status === t.key ? 'filled' : 'outlined'}
+                        onClick={() => handleStatusChange(selectedApp.id, t.key)}
+                        sx={selectedApp.status === t.key
+                          ? { bgcolor: t.color, color: '#fff', fontWeight: 600, '&:hover': { bgcolor: t.color } }
                           : { cursor: 'pointer' }
                         }
                       />
@@ -605,52 +713,54 @@ export default function JobTracker() {
                 </Typography>
 
                 <Stack spacing={0}>
-                  {events.map((event, idx) => (
-                    <Stack key={event.id} direction="row" spacing={1.5} sx={{ pb: 2, position: 'relative' }}>
-                      {/* Timeline line */}
-                      {idx < events.length - 1 && (
-                        <Box sx={{
-                          position: 'absolute', left: 14, top: 28, bottom: 0,
-                          width: 2, bgcolor: colors.border,
-                        }} />
-                      )}
-                      {/* Dot */}
-                      <Box sx={{
-                        width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-                        bgcolor: event.event_type === 'status_change' ? alpha(colors.primary, 0.1) : alpha(colors.info, 0.1),
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        zIndex: 1,
-                      }}>
-                        {event.event_type === 'status_change'
-                          ? <TrendingIcon sx={{ fontSize: 14, color: colors.primary }} />
-                          : <CommentIcon sx={{ fontSize: 14, color: colors.info }} />
-                        }
-                      </Box>
-                      {/* Content */}
-                      <Box sx={{ flex: 1, pt: 0.25 }}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center">
-                          <Typography variant="body2" sx={{
-                            fontWeight: event.event_type === 'status_change' ? 600 : 400,
-                            color: event.event_type === 'status_change' ? 'text.primary' : 'text.secondary',
-                          }}>
-                            {event.comment || `${event.from_status || '—'} → ${event.to_status || '—'}`}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.disabled', whiteSpace: 'nowrap', ml: 1 }}>
-                            {timeAgo(event.created_at)}
-                          </Typography>
-                        </Stack>
-                        {event.event_type === 'status_change' && event.from_status && event.to_status && (
-                          <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
-                            <Chip label={getStatus(event.from_status).label} size="small"
-                              sx={{ height: 20, fontSize: '0.65rem', bgcolor: alpha(getStatus(event.from_status).color, 0.1), color: getStatus(event.from_status).color }} />
-                            <Typography variant="caption" sx={{ color: 'text.disabled', lineHeight: '20px' }}>→</Typography>
-                            <Chip label={getStatus(event.to_status).label} size="small"
-                              sx={{ height: 20, fontSize: '0.65rem', bgcolor: alpha(getStatus(event.to_status).color, 0.1), color: getStatus(event.to_status).color }} />
-                          </Stack>
+                  {events.map((event, idx) => {
+                    const fromInfo = event.from_status ? getStatusInfo(event.from_status, selectedApp) : null;
+                    const toInfo = event.to_status ? getStatusInfo(event.to_status, selectedApp) : null;
+
+                    return (
+                      <Stack key={event.id} direction="row" spacing={1.5} sx={{ pb: 2, position: 'relative' }}>
+                        {idx < events.length - 1 && (
+                          <Box sx={{
+                            position: 'absolute', left: 14, top: 28, bottom: 0,
+                            width: 2, bgcolor: colors.border,
+                          }} />
                         )}
-                      </Box>
-                    </Stack>
-                  ))}
+                        <Box sx={{
+                          width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+                          bgcolor: event.event_type === 'status_change' ? alpha(colors.primary, 0.1) : alpha(colors.info, 0.1),
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          zIndex: 1,
+                        }}>
+                          {event.event_type === 'status_change'
+                            ? <TrendingIcon sx={{ fontSize: 14, color: colors.primary }} />
+                            : <CommentIcon sx={{ fontSize: 14, color: colors.info }} />
+                          }
+                        </Box>
+                        <Box sx={{ flex: 1, pt: 0.25 }}>
+                          <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Typography variant="body2" sx={{
+                              fontWeight: event.event_type === 'status_change' ? 600 : 400,
+                              color: event.event_type === 'status_change' ? 'text.primary' : 'text.secondary',
+                            }}>
+                              {event.comment || `${event.from_status || '—'} → ${event.to_status || '—'}`}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: 'text.disabled', whiteSpace: 'nowrap', ml: 1 }}>
+                              {timeAgo(event.created_at)}
+                            </Typography>
+                          </Stack>
+                          {event.event_type === 'status_change' && fromInfo && toInfo && (
+                            <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
+                              <Chip label={fromInfo.label} size="small"
+                                sx={{ height: 20, fontSize: '0.65rem', bgcolor: alpha(fromInfo.color, 0.1), color: fromInfo.color }} />
+                              <Typography variant="caption" sx={{ color: 'text.disabled', lineHeight: '20px' }}>→</Typography>
+                              <Chip label={toInfo.label} size="small"
+                                sx={{ height: 20, fontSize: '0.65rem', bgcolor: alpha(toInfo.color, 0.1), color: toInfo.color }} />
+                            </Stack>
+                          )}
+                        </Box>
+                      </Stack>
+                    );
+                  })}
 
                   {events.length === 0 && (
                     <Typography variant="body2" sx={{ color: 'text.disabled', fontStyle: 'italic', py: 2, textAlign: 'center' }}>
@@ -676,6 +786,70 @@ export default function JobTracker() {
             </>
           );
         })()}
+      </Dialog>
+
+      {/* ── Pipeline Steps Editor ────────────────────────────────────────── */}
+      <Dialog open={stepsEditorOpen} onClose={() => setStepsEditorOpen(false)} maxWidth="xs" fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}>
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          Customize Pipeline
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 400, mt: 0.25 }}>
+            Add, remove, or reorder interview steps
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={0.5} sx={{ mb: 2 }}>
+            {editingSteps.map((step, idx) => (
+              <Stack key={step.key} direction="row" alignItems="center" spacing={1}
+                sx={{
+                  py: 0.75, px: 1.5, borderRadius: 2,
+                  bgcolor: alpha(getStepColor(idx, editingSteps.length), 0.04),
+                  border: '1px solid', borderColor: alpha(getStepColor(idx, editingSteps.length), 0.15),
+                }}>
+                <Box sx={{
+                  width: 8, height: 8, borderRadius: '50%',
+                  bgcolor: getStepColor(idx, editingSteps.length), flexShrink: 0,
+                }} />
+                <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>{step.label}</Typography>
+                <IconButton size="small" disabled={idx === 0}
+                  onClick={() => moveStep(idx, -1)} sx={{ p: 0.25 }}>
+                  <UpIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+                <IconButton size="small" disabled={idx === editingSteps.length - 1}
+                  onClick={() => moveStep(idx, 1)} sx={{ p: 0.25 }}>
+                  <DownIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+                <IconButton size="small" onClick={() => removeStep(idx)}
+                  sx={{ p: 0.25, color: 'text.disabled', '&:hover': { color: colors.error } }}
+                  disabled={editingSteps.length <= 2}>
+                  <CloseIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+              </Stack>
+            ))}
+          </Stack>
+
+          {/* Add new step */}
+          <Stack direction="row" spacing={1}>
+            <TextField fullWidth size="small" placeholder="e.g. Culture Fit, Panel Interview..."
+              value={newStepLabel} onChange={e => setNewStepLabel(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addStep(); } }}
+            />
+            <Button variant="outlined" size="small" onClick={addStep} disabled={!newStepLabel.trim()}
+              sx={{ minWidth: 'auto', px: 1.5 }}>
+              <AddIcon sx={{ fontSize: 18 }} />
+            </Button>
+          </Stack>
+
+          <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block', mt: 1.5 }}>
+            Rejected and Withdrawn are always available as terminal statuses.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setStepsEditorOpen(false)} color="inherit">Cancel</Button>
+          <Button variant="contained" onClick={saveSteps} disabled={editingSteps.length < 2}>
+            Save Pipeline
+          </Button>
+        </DialogActions>
       </Dialog>
 
       {/* ── Snackbar ─────────────────────────────────────────────────────── */}
