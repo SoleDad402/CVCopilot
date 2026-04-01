@@ -100,11 +100,11 @@ const apiInstance = new CloudmersiveConvertApiClient.ConvertDocumentApi();
 
 // Middleware
 // Load CORS origins from environment variable (comma-separated) or use defaults
-const corsOrigin = process.env.CORS_ORIGIN 
-  ? process.env.CORS_ORIGIN.trim()
-  : 'http://127.0.0.1:3000';
+const corsOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(s => s.trim())
+  : ['http://127.0.0.1:3000'];
 app.use(cors({
-  origin: corsOrigin,
+  origin: corsOrigins.length === 1 ? corsOrigins[0] : corsOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
