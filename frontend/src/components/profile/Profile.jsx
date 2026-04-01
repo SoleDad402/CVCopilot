@@ -13,7 +13,9 @@ import {
   Chip,
   CircularProgress,
   Tabs,
-  Tab
+  Tab,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -64,6 +66,14 @@ const Profile = () => {
     const saved = localStorage.getItem('bulletCount');
     return saved ? Number(saved) : 5;
   });
+  const [includeAchievements, setIncludeAchievements] = useState(() => {
+    const saved = localStorage.getItem('includeAchievements');
+    return saved !== null ? saved === 'true' : true;
+  });
+  const [includeHobbies, setIncludeHobbies] = useState(() => {
+    const saved = localStorage.getItem('includeHobbies');
+    return saved !== null ? saved === 'true' : true;
+  });
   const [savingPrefs, setSavingPrefs] = useState(false);
 
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -101,6 +111,8 @@ const Profile = () => {
     try {
       localStorage.setItem('pipelineVersion', pipelineVersion);
       localStorage.setItem('bulletCount', bulletCount);
+      localStorage.setItem('includeAchievements', includeAchievements);
+      localStorage.setItem('includeHobbies', includeHobbies);
       setSnackbar({ open: true, message: 'Preferences saved', severity: 'success' });
     } catch (error) {
       setSnackbar({ open: true, message: 'Failed to save preferences', severity: 'error' });
@@ -346,6 +358,38 @@ const Profile = () => {
                     inputProps={{ min: 1, max: 10, step: 1 }}
                     helperText="Number of bullet points per experience role (1–10)"
                   />
+                </Grid>
+
+                {/* Resume Sections */}
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+                    Resume Sections
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1 }}>
+                    Toggle optional sections in the generated resume
+                  </Typography>
+                  <Stack spacing={0}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={includeAchievements}
+                          onChange={(e) => setIncludeAchievements(e.target.checked)}
+                          color="primary"
+                        />
+                      }
+                      label={<Typography variant="body2" sx={{ fontWeight: 500 }}>Key Achievements</Typography>}
+                    />
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={includeHobbies}
+                          onChange={(e) => setIncludeHobbies(e.target.checked)}
+                          color="primary"
+                        />
+                      }
+                      label={<Typography variant="body2" sx={{ fontWeight: 500 }}>Hobbies & Interests</Typography>}
+                    />
+                  </Stack>
                 </Grid>
 
                 {/* Save button */}

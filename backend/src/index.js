@@ -788,12 +788,16 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
       location: resumeData.contact.location || '',
       contact: `${resumeData.contact.location} | ${resumeData.contact.email} | ${resumeData.contact.phonenumber} | ${resumeData.contact.linkedinURL}`,
       summary: markdownToWordXml(resumeData.summary) || '',
-      achievements: resumeData.achievements.map(achievement => {
-        const text = typeof achievement === 'object' ? achievement.text : achievement;
-        const company = typeof achievement === 'object' ? achievement.company : null;
-        const line = company ? `${text} - at **${company}**` : text;
-        return { rawXml: markdownToWordXmlWithBullet(line) };
-      }),
+      showAchievements: userPrefs.includeAchievements !== false,
+      achievements: userPrefs.includeAchievements !== false
+        ? resumeData.achievements.map(achievement => {
+            const text = typeof achievement === 'object' ? achievement.text : achievement;
+            const company = typeof achievement === 'object' ? achievement.company : null;
+            const line = company ? `${text} - at **${company}**` : text;
+            return { rawXml: markdownToWordXmlWithBullet(line) };
+          })
+        : [],
+      showHobbies: userPrefs.includeHobbies !== false,
       experience: resumeData.experience.map((exp, index) => ({
         company: clearedText(exp.company) || '',
         location: clearedText(exp.location) || '',
@@ -952,7 +956,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
 // Resume generation endpoint - now returns job ID immediately
 app.post('/api/generate-resume', auth, async (req, res) => {
   try {
-    const { jobDescription, companyName, role, version, bulletCount } = req.body;
+    const { jobDescription, companyName, role, version, bulletCount, includeAchievements = true, includeHobbies = true } = req.body;
 
     if (!jobDescription) {
       return res.status(400).json({ error: 'Job description is required' });
@@ -998,7 +1002,7 @@ app.post('/api/generate-resume', auth, async (req, res) => {
     });
 
     // Start async processing
-    generateResumeAsync(jobId, req.user.email, cleanedJobDescription, pipelineVersion, { bulletCount: Number(bulletCount) || 5 });
+    generateResumeAsync(jobId, req.user.email, cleanedJobDescription, pipelineVersion, { bulletCount: Number(bulletCount) || 5, includeAchievements: includeAchievements !== false, includeHobbies: includeHobbies !== false });
 
     // Return job ID immediately
     res.json({ 

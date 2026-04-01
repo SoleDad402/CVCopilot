@@ -102,6 +102,8 @@ function Home() {
   const [jobDescription, setJobDescription] = useState('');
   const pipelineVersion = Number(localStorage.getItem('pipelineVersion')) || 1;
   const bulletCount = Number(localStorage.getItem('bulletCount')) || 5;
+  const includeAchievements = localStorage.getItem('includeAchievements') !== 'false';
+  const includeHobbies = localStorage.getItem('includeHobbies') !== 'false';
 
   // UI state
   const [revisionDrawerOpen, setRevisionDrawerOpen] = useState(false);
@@ -185,7 +187,7 @@ function Home() {
   }, [docxContent, coverLetterDocxContent, atsView, documentType]);
 
   const handleGenerateResume = () => {
-    generateResume({ jobDescription, companyName, role, pipelineVersion, bulletCount });
+    generateResume({ jobDescription, companyName, role, pipelineVersion, bulletCount, includeAchievements, includeHobbies });
   };
 
   const handleGenerateCoverLetter = () => {

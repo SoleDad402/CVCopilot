@@ -84,7 +84,7 @@ export const GenerationProvider = ({ children }) => {
     setError('');
   }, []);
 
-  const generateResume = useCallback(async ({ jobDescription, companyName: rawCompany, role: rawRole, pipelineVersion, bulletCount }) => {
+  const generateResume = useCallback(async ({ jobDescription, companyName: rawCompany, role: rawRole, pipelineVersion, bulletCount, includeAchievements = true, includeHobbies = true }) => {
     const companyName = rawCompany?.trim() || '';
     const role = rawRole?.trim() || '';
     if (!jobDescription.trim()) {
@@ -106,7 +106,7 @@ export const GenerationProvider = ({ children }) => {
 
     try {
       const { data: jobData } = await resumeService.generateResume({
-        jobDescription, companyName, role, version: pipelineVersion, bulletCount
+        jobDescription, companyName, role, version: pipelineVersion, bulletCount, includeAchievements, includeHobbies
       });
       const { jobId } = jobData;
       setJobStatus('processing');
