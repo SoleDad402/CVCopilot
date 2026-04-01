@@ -98,6 +98,9 @@ class JobApplication {
     const current = await this.getById(userId, id);
     const oldStatus = current.status;
 
+    // Skip if status hasn't changed
+    if (oldStatus === newStatus) return current;
+
     const { data: app, error } = await supabase
       .from('job_applications')
       .update({ status: newStatus, updated_at: new Date().toISOString() })
