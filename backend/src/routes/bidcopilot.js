@@ -163,6 +163,7 @@ router.post('/generate', async (req, res) => {
           userName,
           resumeSummary: resumeJson.summary,
           experience: resumeJson.experience,
+          userContact: { ...userContact, address: profile.address, city: profile.city, state: profile.state, zip_code: profile.zip_code },
         });
         // Encode cover letter as plain text bytes (base64)
         coverLetterFile = Buffer.from(coverLetterText, 'utf-8').toString('base64');
@@ -431,10 +432,16 @@ function generatePdf(resumeJson) {
   });
 }
 
-async function generateCoverLetter(openai, { jobDescription, jobTitle, companyName, userName, resumeSummary, experience }) {
+async function generateCoverLetter(openai, { jobDescription, jobTitle, companyName, userName, resumeSummary, experience, userContact }) {
   const topRoles = (experience || []).slice(0, 3).map(e =>
     `${e.position} at ${e.company}`
   ).join(', ');
+
+  const contact = userContact || {};
+  const addressParts = [contact.address, contact.city, contact.state, contact.zip_code].filter(Boolean);
+  const addressBlock = addressParts.length > 0
+    ? `\n\nCandidate contact info (use in the letter header):\n${userName}\n${addressParts.join(', ')}\n${contact.email || ''}\n${contact.phone || ''}`
+    : `\n\nCandidate contact info:\n${userName}\n${contact.email || ''}\n${contact.phone || ''}\n${contact.location || ''}`;
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -443,7 +450,7 @@ async function generateCoverLetter(openai, { jobDescription, jobTitle, companyNa
     messages: [
       {
         role: 'system',
-        content: `You are a professional cover letter writer. Write a concise, compelling cover letter (3-4 paragraphs) that connects the candidate's background to the specific role. Be genuine, not generic. Do not use clichés like "I am excited to apply" or "I believe I would be a great fit".`,
+        content: `You are a professional cover letter writer. Write a concise, compelling cover letter (3-4 paragraphs) that connects the candidate's background to the specific role. Be genuine, not generic. Do not use clichés like "I am excited to apply" or "I believe I would be a great fit". Use the candidate's real contact information in the header — never use placeholder text like "[Your Address]" or "[City, State, Zip]".`,
       },
       {
         role: 'user',
@@ -452,7 +459,7 @@ Candidate: ${userName}
 Role: ${jobTitle || 'the advertised position'}
 Company: ${companyName || 'the company'}
 Recent experience: ${topRoles}
-Professional summary: ${resumeSummary || ''}
+Professional summary: ${resumeSummary || ''}${addressBlock}
 
 Job description:
 ${jobDescription.substring(0, 3000)}`,
@@ -861,6 +868,10 @@ router.post('/autobid/preview', async (req, res) => {
               userName: profile.full_name,
               resumeSummary: resumeJson.summary,
               experience: resumeJson.experience,
+              userContact: {
+                email: profile.email, phone: profile.phone, location: profile.location,
+                address: profile.address, city: profile.city, state: profile.state, zip_code: profile.zip_code,
+              },
             });
           } catch (e) {
             console.error('[AutoBid] Cover letter failed:', e.message);
