@@ -582,7 +582,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
 };
 
 // Resume generation endpoint - now returns job ID immediately
-router.post('/api/generate-resume', auth, async (req, res) => {
+router.post('/generate-resume', auth, async (req, res) => {
   try {
     const { jobDescription, companyName, role, version, bulletCount, includeAchievements = true, includeHobbies = true } = req.body;
 
@@ -639,7 +639,7 @@ router.post('/api/generate-resume', auth, async (req, res) => {
 });
 
 // Cover letter generation endpoint
-router.post('/api/generate-cover-letter', auth, async (req, res) => {
+router.post('/generate-cover-letter', auth, async (req, res) => {
   try {
     const { jobDescription, companyName, role, resume } = req.body;
 
@@ -686,7 +686,7 @@ router.post('/api/generate-cover-letter', auth, async (req, res) => {
 });
 
 // Job status endpoint
-router.get('/api/status/:jobId', auth, async (req, res) => {
+router.get('/status/:jobId', auth, async (req, res) => {
   try {
     const { jobId } = req.params;
     const job = await jobManager.getJob(jobId);
@@ -729,7 +729,7 @@ router.get('/api/status/:jobId', auth, async (req, res) => {
 });
 
 // Job results endpoint
-router.get('/api/results/:jobId', auth, async (req, res) => {
+router.get('/results/:jobId', auth, async (req, res) => {
   try {
     const { jobId } = req.params;
     const job = await jobManager.getJob(jobId);
