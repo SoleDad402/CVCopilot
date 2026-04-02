@@ -346,21 +346,37 @@ function Home() {
               />
             </Stack>
 
-            {/* Generate button */}
-            <Button
-              variant="contained"
-              fullWidth
-              size="large"
-              onClick={handleGenerateResume}
-              disabled={isGenerating || !jobDescription.trim()}
-              startIcon={isGenerating && documentType === 'resume'
-                ? <CircularProgress size={16} color="inherit" />
-                : <BoltIcon />
-              }
-              sx={{ py: 1.5, fontSize: '0.9375rem', letterSpacing: '-0.01em', mb: 0.75 }}
-            >
-              {isGenerating && documentType === 'resume' ? 'Generating...' : 'Generate Resume'}
-            </Button>
+            {/* Generate buttons */}
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="contained"
+                fullWidth
+                size="large"
+                onClick={handleGenerateResume}
+                disabled={isGenerating || !jobDescription.trim()}
+                startIcon={isGenerating && documentType === 'resume'
+                  ? <CircularProgress size={16} color="inherit" />
+                  : <BoltIcon />
+                }
+                sx={{ py: 1.5, fontSize: '0.9375rem', letterSpacing: '-0.01em', mb: 0.75 }}
+              >
+                {isGenerating && documentType === 'resume' ? 'Generating...' : 'Resume'}
+              </Button>
+              <Button
+                variant="outlined"
+                fullWidth
+                size="large"
+                onClick={handleGenerateCoverLetter}
+                disabled={isGenerating || !jobDescription.trim()}
+                startIcon={isGenerating && documentType === 'cover-letter'
+                  ? <CircularProgress size={16} color="inherit" />
+                  : <BoltIcon />
+                }
+                sx={{ py: 1.5, fontSize: '0.9375rem', letterSpacing: '-0.01em', mb: 0.75 }}
+              >
+                {isGenerating && documentType === 'cover-letter' ? 'Generating...' : 'Cover Letter'}
+              </Button>
+            </Stack>
 
             {/* Hint text */}
             {!isGenerating && (
