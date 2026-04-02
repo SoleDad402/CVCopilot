@@ -1,25 +1,8 @@
-const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const { supabase, getSupabase } = require('../utils/supabaseClient');
 
-// Initialize Supabase
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // service_role key bypasses RLS
-
-if (!supabaseUrl || !supabaseKey) {
-  console.warn('⚠️  WARNING: Supabase credentials not found. Database operations will fail.');
-  console.warn('   Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.');
-}
-
-const supabase = supabaseUrl && supabaseKey
-  ? createClient(supabaseUrl, supabaseKey)
-  : null;
-
-const checkConfig = () => {
-  if (!supabase) {
-    throw new Error('Supabase is not configured. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
-  }
-};
+const checkConfig = () => { getSupabase(); };
 
 class User {
   // ── Auth & Profile ──────────────────────────────────────────────────────

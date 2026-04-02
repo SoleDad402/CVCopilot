@@ -737,11 +737,7 @@ router.post('/autobid/preview', async (req, res) => {
 // ─── Question Pattern Learning ────────────────────────────────────────────
 
 const jwt = require('jsonwebtoken');
-const { createClient } = require('@supabase/supabase-js');
-
-function getSupabase() {
-  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-}
+const { getSupabase } = require('../utils/supabaseClient');
 
 /** Inline auth helper — extracts user from JWT. */
 function getUserFromToken(req) {
