@@ -27,7 +27,11 @@ import {
   Phone as PhoneIcon,
   LocationOn as LocationIcon,
   Email as EmailIcon,
-  Tune as TuneIcon
+  Tune as TuneIcon,
+  RocketLaunch as RocketIcon,
+  Home as HomeIcon,
+  AttachMoney as MoneyIcon,
+  Language as WebIcon,
 } from '@mui/icons-material';
 import { NAVBAR_HEIGHT, colors, gradients } from '../../theme';
 import { useAuth } from '../../contexts/AuthContext';
@@ -50,7 +54,24 @@ const Profile = () => {
     personal_email: '',
     linkedin_url: '',
     github_url: '',
-    location: ''
+    location: '',
+  });
+
+  const [jobApplyData, setJobApplyData] = useState({
+    address: '',
+    city: '',
+    state: '',
+    zip_code: '',
+    country: 'United States',
+    portfolio_url: '',
+    current_title: '',
+    work_authorization: 'authorized',
+    visa_sponsorship_needed: false,
+    willing_to_relocate: false,
+    remote_preference: 'remote',
+    desired_salary_min: '',
+    desired_salary_max: '',
+    preferred_pronouns: '',
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -88,7 +109,23 @@ const Profile = () => {
         personal_email: data.user.personal_email || '',
         linkedin_url: data.user.linkedin_url || '',
         github_url: data.user.github_url || '',
-        location: data.user.location || ''
+        location: data.user.location || '',
+      });
+      setJobApplyData({
+        address: data.user.address || '',
+        city: data.user.city || '',
+        state: data.user.state || '',
+        zip_code: data.user.zip_code || '',
+        country: data.user.country || 'United States',
+        portfolio_url: data.user.portfolio_url || '',
+        current_title: data.user.current_title || '',
+        work_authorization: data.user.work_authorization || 'authorized',
+        visa_sponsorship_needed: data.user.visa_sponsorship_needed || false,
+        willing_to_relocate: data.user.willing_to_relocate || false,
+        remote_preference: data.user.remote_preference || 'remote',
+        desired_salary_min: data.user.desired_salary_min || '',
+        desired_salary_max: data.user.desired_salary_max || '',
+        preferred_pronouns: data.user.preferred_pronouns || '',
       });
       setEmploymentHistory(data.employmentHistory || []);
       setEducation(data.education || []);
@@ -121,6 +158,11 @@ const Profile = () => {
     }
   };
 
+  const handleJobApplyChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setJobApplyData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+  };
+
   const handleSaveContact = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -131,6 +173,25 @@ const Profile = () => {
       setSnackbar({ open: true, message: error.message || 'Failed to update profile', severity: 'error' });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const [savingJobApply, setSavingJobApply] = useState(false);
+  const handleSaveJobApply = async (e) => {
+    e.preventDefault();
+    setSavingJobApply(true);
+    try {
+      const payload = {
+        ...jobApplyData,
+        desired_salary_min: jobApplyData.desired_salary_min ? Number(jobApplyData.desired_salary_min) : null,
+        desired_salary_max: jobApplyData.desired_salary_max ? Number(jobApplyData.desired_salary_max) : null,
+      };
+      const success = await updateProfile(payload);
+      if (success) setSnackbar({ open: true, message: 'Job apply profile saved', severity: 'success' });
+    } catch (error) {
+      setSnackbar({ open: true, message: error.message || 'Failed to save', severity: 'error' });
+    } finally {
+      setSavingJobApply(false);
     }
   };
 
@@ -207,6 +268,7 @@ const Profile = () => {
               iconPosition="start"
               label={`Education${education.length ? ` (${education.length})` : ''}`}
             />
+            <Tab icon={<RocketIcon sx={{ fontSize: 16 }} />} iconPosition="start" label="Job Apply" />
             <Tab icon={<TuneIcon sx={{ fontSize: 16 }} />} iconPosition="start" label="Preferences" />
           </Tabs>
         </Container>
@@ -294,8 +356,164 @@ const Profile = () => {
             </Box>
           )}
 
-          {/* Tab 3: Preferences */}
+          {/* Tab 3: Job Apply */}
           {tab === 3 && (
+            <Box className="animate-fade-in-up">
+              <form onSubmit={handleSaveJobApply}>
+                <Grid container spacing={2}>
+                  {/* Current Title */}
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>Professional Info</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth label="Current Job Title" name="current_title"
+                      value={jobApplyData.current_title} onChange={handleJobApplyChange}
+                      placeholder="Senior Software Engineer"
+                      InputProps={{ startAdornment: <WorkIcon sx={{ mr: 1, color: 'text.disabled', fontSize: 18 }} /> }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth label="Portfolio / Website URL" name="portfolio_url"
+                      value={jobApplyData.portfolio_url} onChange={handleJobApplyChange}
+                      placeholder="https://yourportfolio.com"
+                      InputProps={{ startAdornment: <WebIcon sx={{ mr: 1, color: 'text.disabled', fontSize: 18 }} /> }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth label="Preferred Pronouns" name="preferred_pronouns"
+                      value={jobApplyData.preferred_pronouns} onChange={handleJobApplyChange}
+                      placeholder="he/him, she/her, they/them"
+                    />
+                  </Grid>
+
+                  {/* Address */}
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5, mt: 1 }}>Mailing Address</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Some applications require a full address for cover letters and forms
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth label="Street Address" name="address"
+                      value={jobApplyData.address} onChange={handleJobApplyChange}
+                      placeholder="123 Main St, Apt 4B"
+                      InputProps={{ startAdornment: <HomeIcon sx={{ mr: 1, color: 'text.disabled', fontSize: 18 }} /> }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <TextField
+                      fullWidth label="City" name="city"
+                      value={jobApplyData.city} onChange={handleJobApplyChange}
+                    />
+                  </Grid>
+                  <Grid item xs={6} sm={4}>
+                    <TextField
+                      fullWidth label="State" name="state"
+                      value={jobApplyData.state} onChange={handleJobApplyChange}
+                      placeholder="WA"
+                    />
+                  </Grid>
+                  <Grid item xs={6} sm={4}>
+                    <TextField
+                      fullWidth label="Zip Code" name="zip_code"
+                      value={jobApplyData.zip_code} onChange={handleJobApplyChange}
+                      placeholder="98101"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth label="Country" name="country"
+                      value={jobApplyData.country} onChange={handleJobApplyChange}
+                    />
+                  </Grid>
+
+                  {/* Work Preferences */}
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5, mt: 1 }}>Work Preferences</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth select label="Remote Preference" name="remote_preference"
+                      value={jobApplyData.remote_preference} onChange={handleJobApplyChange}
+                      SelectProps={{ native: true }}
+                    >
+                      <option value="remote">Remote Only</option>
+                      <option value="hybrid">Hybrid</option>
+                      <option value="onsite">On-site</option>
+                      <option value="any">Any / Flexible</option>
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth select label="Work Authorization" name="work_authorization"
+                      value={jobApplyData.work_authorization} onChange={handleJobApplyChange}
+                      SelectProps={{ native: true }}
+                    >
+                      <option value="authorized">Authorized to work (no sponsorship needed)</option>
+                      <option value="citizen">US Citizen</option>
+                      <option value="green_card">Green Card / Permanent Resident</option>
+                      <option value="need_sponsorship">Need visa sponsorship</option>
+                      <option value="have_visa">Have work visa (H1B, L1, etc.)</option>
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormControlLabel
+                      control={
+                        <Switch checked={jobApplyData.visa_sponsorship_needed} onChange={handleJobApplyChange} name="visa_sponsorship_needed" color="primary" />
+                      }
+                      label={<Typography variant="body2" sx={{ fontWeight: 500 }}>Need visa sponsorship</Typography>}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormControlLabel
+                      control={
+                        <Switch checked={jobApplyData.willing_to_relocate} onChange={handleJobApplyChange} name="willing_to_relocate" color="primary" />
+                      }
+                      label={<Typography variant="body2" sx={{ fontWeight: 500 }}>Willing to relocate</Typography>}
+                    />
+                  </Grid>
+
+                  {/* Salary */}
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5, mt: 1 }}>Salary Expectations</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth type="number" label="Minimum Salary (USD)" name="desired_salary_min"
+                      value={jobApplyData.desired_salary_min} onChange={handleJobApplyChange}
+                      placeholder="120000"
+                      InputProps={{ startAdornment: <MoneyIcon sx={{ mr: 1, color: 'text.disabled', fontSize: 18 }} /> }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth type="number" label="Maximum Salary (USD)" name="desired_salary_max"
+                      value={jobApplyData.desired_salary_max} onChange={handleJobApplyChange}
+                      placeholder="180000"
+                      InputProps={{ startAdornment: <MoneyIcon sx={{ mr: 1, color: 'text.disabled', fontSize: 18 }} /> }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <Button
+                      type="submit" variant="contained" size="large" disabled={savingJobApply}
+                      startIcon={savingJobApply ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+                      sx={{ px: 4 }}
+                    >
+                      {savingJobApply ? 'Saving…' : 'Save Job Apply Profile'}
+                    </Button>
+                  </Grid>
+                </Grid>
+              </form>
+            </Box>
+          )}
+
+          {/* Tab 4: Preferences */}
+          {tab === 4 && (
             <Box className="animate-fade-in-up">
               <Grid container spacing={3}>
                 {/* Pipeline Engine */}

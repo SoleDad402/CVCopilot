@@ -72,17 +72,28 @@ export default function AutoBidTest() {
       const profileData = profileResp.data;
 
       // Build user_profile in the format the backend expects
+      const u = profileData.user || {};
       const userProfile = {
-        full_name: profileData.user?.full_name || '',
-        email: profileData.user?.email || '',
-        phone: profileData.user?.phone || '',
-        location: profileData.user?.location || '',
-        linkedin_url: profileData.user?.linkedin_url || '',
-        github_url: profileData.user?.github_url || '',
-        portfolio_url: profileData.user?.portfolio_url || '',
-        current_title: profileData.user?.current_title || '',
-        visa_sponsorship_needed: false,
-        willing_to_relocate: false,
+        full_name: u.full_name || '',
+        email: u.email || '',
+        phone: u.phone || '',
+        location: u.location || '',
+        linkedin_url: u.linkedin_url || '',
+        github_url: u.github_url || '',
+        portfolio_url: u.portfolio_url || '',
+        current_title: u.current_title || '',
+        address: u.address || '',
+        city: u.city || '',
+        state: u.state || '',
+        zip_code: u.zip_code || '',
+        country: u.country || '',
+        work_authorization: u.work_authorization || 'authorized',
+        visa_sponsorship_needed: u.visa_sponsorship_needed || false,
+        willing_to_relocate: u.willing_to_relocate || false,
+        remote_preference: u.remote_preference || 'remote',
+        desired_salary_min: u.desired_salary_min || null,
+        desired_salary_max: u.desired_salary_max || null,
+        preferred_pronouns: u.preferred_pronouns || '',
         employment_history: (profileData.employmentHistory || []).map(e => ({
           title: e.position || '',
           company: e.company_name || '',

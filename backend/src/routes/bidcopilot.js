@@ -625,6 +625,10 @@ router.post('/autobid/preview', async (req, res) => {
     const currentJob = (profile.employment_history || []).find(e => e.is_current);
     const currentCompany = currentJob?.company || (profile.employment_history || [])[0]?.company || '';
 
+    // Build full location string from structured address fields
+    const fullLocation = [profile.city, profile.state, profile.country].filter(Boolean).join(', ') || profile.location || '';
+    const fullAddress = [profile.address, profile.city, profile.state, profile.zip_code].filter(Boolean).join(', ');
+
     const labelMap = {
       'first name': firstName,
       'last name': lastName,
@@ -640,15 +644,26 @@ router.post('/autobid/preview', async (req, res) => {
       'website url': profile.portfolio_url || '',
       'portfolio': profile.portfolio_url || '',
       'portfolio url': profile.portfolio_url || '',
-      'location': profile.location || '',
-      'city': profile.location || '',
-      'current location': profile.location || '',
+      'location': fullLocation,
+      'city': profile.city || profile.location || '',
+      'current location': fullLocation,
       'current company': currentCompany,
       'current title': profile.current_title || '',
+      'address': fullAddress,
+      'street address': profile.address || '',
+      'state': profile.state || '',
+      'zip': profile.zip_code || '',
+      'zip code': profile.zip_code || '',
+      'postal code': profile.zip_code || '',
+      'country': profile.country || '',
+      'pronouns': profile.preferred_pronouns || '',
+      'preferred pronouns': profile.preferred_pronouns || '',
+      'preferred first name': firstName,
     };
 
     for (const question of questions) {
       const label = (question.label || '').trim();
+      const ll = label.toLowerCase();
       const required = question.required;
       const fields = question.fields || [];
 
@@ -671,7 +686,6 @@ router.post('/autobid/preview', async (req, res) => {
         if (values.length === 2) {
           const labels = values.map(v => (v.label || '').toLowerCase());
           if (labels.includes('yes') && labels.includes('no')) {
-            const ll = label.toLowerCase();
             let answer = 'yes';
             if (ll.includes('sponsor') || ll.includes('visa') || ll.includes('immigration')) {
               answer = profile.visa_sponsorship_needed ? 'yes' : 'no';
@@ -694,6 +708,19 @@ router.post('/autobid/preview', async (req, res) => {
           }
         }
 
+        // Pronouns dropdown — match from profile
+        if (values.length > 0 && ftype.includes('select') && ll.includes('pronoun')) {
+          if (profile.preferred_pronouns) {
+            const pronounLower = profile.preferred_pronouns.toLowerCase();
+            const match = values.find(v => (v.label || '').toLowerCase().includes(pronounLower));
+            if (match) {
+              fieldMap[fname] = { value: String(match.value ?? match.label), source: 'auto', label, required };
+              questionsAnswered++;
+              continue;
+            }
+          }
+        }
+
         // Other dropdowns
         if (values.length > 0 && ftype.includes('select')) {
           fieldMap[fname] = {
@@ -704,6 +731,16 @@ router.post('/autobid/preview', async (req, res) => {
             options: values.map(v => v.label),
           };
           continue;
+        }
+
+        // "From where do you intend to work" or similar location questions
+        if ((ftype === 'input_text' || ftype === 'textarea') && (ll.includes('where') || ll.includes('intend to work') || ll.includes('work from'))) {
+          const workLocation = fullLocation || profile.location || '';
+          if (workLocation) {
+            fieldMap[fname] = { value: workLocation, source: 'auto', label, required };
+            questionsAnswered++;
+            continue;
+          }
         }
 
         // Custom text/textarea

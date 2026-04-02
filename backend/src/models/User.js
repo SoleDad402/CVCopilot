@@ -70,13 +70,17 @@ class User {
 
   static async updateProfile(userId, userData) {
     checkConfig();
+    const allowedFields = [
+      'full_name', 'phone', 'personal_email', 'linkedin_url', 'github_url', 'location',
+      // Job apply fields
+      'address', 'city', 'state', 'zip_code', 'country', 'portfolio_url', 'current_title',
+      'work_authorization', 'visa_sponsorship_needed', 'willing_to_relocate',
+      'remote_preference', 'desired_salary_min', 'desired_salary_max', 'preferred_pronouns',
+    ];
     const fields = {};
-    if (userData.full_name !== undefined) fields.full_name = userData.full_name;
-    if (userData.phone !== undefined) fields.phone = userData.phone;
-    if (userData.personal_email !== undefined) fields.personal_email = userData.personal_email;
-    if (userData.linkedin_url !== undefined) fields.linkedin_url = userData.linkedin_url;
-    if (userData.github_url !== undefined) fields.github_url = userData.github_url;
-    if (userData.location !== undefined) fields.location = userData.location;
+    for (const key of allowedFields) {
+      if (userData[key] !== undefined) fields[key] = userData[key];
+    }
     const { error } = await supabase.from('users').update(fields).eq('id', userId);
     if (error) throw new Error(`Failed to update profile: ${error.message}`);
     return true;

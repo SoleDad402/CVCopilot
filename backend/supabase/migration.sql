@@ -24,6 +24,22 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
+-- ── Job Apply Profile Fields (added for auto-bid) ─────────────────────────
+ALTER TABLE users ADD COLUMN IF NOT EXISTS address TEXT DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS city TEXT DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS state TEXT DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS zip_code TEXT DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS country TEXT DEFAULT 'United States';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS portfolio_url TEXT DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS current_title TEXT DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS work_authorization TEXT DEFAULT 'authorized';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS visa_sponsorship_needed BOOLEAN DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS willing_to_relocate BOOLEAN DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS remote_preference TEXT DEFAULT 'remote';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS desired_salary_min INT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS desired_salary_max INT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_pronouns TEXT DEFAULT '';
+
 -- ── Employment History ──────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS employment_history (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
