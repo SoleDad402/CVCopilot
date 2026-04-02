@@ -54,6 +54,28 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS seniority_preference TEXT DEFAULT '';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS target_countries TEXT DEFAULT 'US';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_locations TEXT DEFAULT '';
 
+-- ── Generation Jobs (replaces in-memory Map) ───────────────────────────────
+CREATE TABLE IF NOT EXISTS generation_jobs (
+  id            TEXT PRIMARY KEY,
+  user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type          TEXT NOT NULL DEFAULT 'resume',
+  status        TEXT NOT NULL DEFAULT 'pending',
+  progress      INT DEFAULT 0,
+  step_label    TEXT DEFAULT '',
+  job_description TEXT DEFAULT '',
+  company_name  TEXT DEFAULT '',
+  role          TEXT DEFAULT '',
+  pipeline_version INT DEFAULT 2,
+  result        JSONB,
+  error         TEXT,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  started_at    TIMESTAMPTZ,
+  completed_at  TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_gen_jobs_user ON generation_jobs(user_id);
+CREATE INDEX IF NOT EXISTS idx_gen_jobs_status ON generation_jobs(status);
+
 -- ── Question Patterns (auto-bid learning) ──────────────────────────────────
 CREATE TABLE IF NOT EXISTS question_patterns (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),

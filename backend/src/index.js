@@ -23,16 +23,8 @@ const app = express();
 const port = process.env.PORT || 4090;
 
 // Job storage system
-const jobs = new Map();
-const JOB_EXPIRY_TIME = 30 * 60 * 1000; // 30 minutes
-
-// Job statuses
-const JOB_STATUS = {
-  PENDING: 'pending',
-  PROCESSING: 'processing',
-  COMPLETED: 'completed',
-  FAILED: 'failed'
-};
+const jobManager = require('./services/jobManager');
+const { JOB_STATUS } = jobManager;
 
 // Safely parse JSON from LLM text that may include markdown code fences
 const parseJsonFromText = (text) => {
@@ -56,23 +48,7 @@ const parseJsonFromText = (text) => {
   return JSON.parse(withoutFences);
 };
 
-// Helper function to generate job ID
-const generateJobId = () => {
-  return 'job_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-};
-
-// Helper function to clean up expired jobs
-const cleanupExpiredJobs = () => {
-  const now = Date.now();
-  for (const [jobId, job] of jobs.entries()) {
-    if (now - job.createdAt > JOB_EXPIRY_TIME) {
-      jobs.delete(jobId);
-    }
-  }
-};
-
-// Clean up expired jobs every 5 minutes
-setInterval(cleanupExpiredJobs, 5 * 60 * 1000);
+// Job cleanup handled by jobManager service
 
 // Initialize OpenAI
 // Validate OpenAI API key
@@ -137,10 +113,9 @@ app.use('/api/job-applications', jobApplicationsRouter);
 const generateCoverLetterAsync = async (jobId, userId, cleanedJobDescription, companyName, role, resumeData) => {
   try {
     // Update job status to processing
-    jobs.set(jobId, {
-      ...jobs.get(jobId),
+    await jobManager.updateJob(jobId, {
       status: JOB_STATUS.PROCESSING,
-      startedAt: Date.now()
+      started_at: new Date().toISOString()
     });
 
     // Get user data
@@ -330,10 +305,9 @@ Return ONLY the cover letter body text (no headers, no "Dear Hiring Manager", no
     }
 
     // Update job with completed results
-    jobs.set(jobId, {
-      ...jobs.get(jobId),
+    await jobManager.updateJob(jobId, {
       status: JOB_STATUS.COMPLETED,
-      completedAt: Date.now(),
+      completed_at: new Date().toISOString(),
       result: {
         coverLetter: coverLetterContent,
         docxContent: buffer.toString('base64'),
@@ -352,10 +326,9 @@ Return ONLY the cover letter body text (no headers, no "Dear Hiring Manager", no
       errorMessage = 'OpenAI API rate limit exceeded. Please try again later.';
     }
     
-    jobs.set(jobId, {
-      ...jobs.get(jobId),
+    await jobManager.updateJob(jobId, {
       status: JOB_STATUS.FAILED,
-      completedAt: Date.now(),
+      completed_at: new Date().toISOString(),
       error: errorMessage
     });
   }
@@ -365,10 +338,9 @@ Return ONLY the cover letter body text (no headers, no "Dear Hiring Manager", no
 const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelineVersion = 1, userPrefs = {}) => {
   try {
     // Update job status to processing
-    jobs.set(jobId, {
-      ...jobs.get(jobId),
+    await jobManager.updateJob(jobId, {
       status: JOB_STATUS.PROCESSING,
-      startedAt: Date.now()
+      started_at: new Date().toISOString()
     });
 
     // Get user data, employment history, and education
@@ -462,11 +434,8 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
       openai: openai,
       bulletCount: userPrefs.bulletCount || 5,
       returnMarkdown: false, // Return plan object for JSON conversion
-      onProgress: ({ progress, stepLabel }) => {
-        const job = jobs.get(jobId);
-        if (job) {
-          jobs.set(jobId, { ...job, progress, stepLabel });
-        }
+      onProgress: async ({ progress, stepLabel }) => {
+        await jobManager.updateProgress(jobId, progress, stepLabel);
       }
     });
 
@@ -492,9 +461,9 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
     };
 
     // Update progress for document generation
-    const job = jobs.get(jobId);
+    const job = await jobManager.getJob(jobId);
     if (job) {
-      jobs.set(jobId, { ...job, progress: 90, stepLabel: 'Generating your document…' });
+      await jobManager.updateProgress(jobId, 90, 'Generating your document…');
     }
 
     // Generate DOCX content
@@ -620,9 +589,10 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
       }
 
       try {
+        const jobRecord = await jobManager.getJob(jobId);
         const resumeRequestId = await User.addResumeRequest(user.id, {
-          company_name: jobs.get(jobId)?.companyName || null,
-          role: jobs.get(jobId)?.role || null,
+          company_name: jobRecord?.company_name || null,
+          role: jobRecord?.role || null,
           job_description: cleanedJobDescription,
           docx_file: docxAttachment,
           pdf_file: pdfAttachment
@@ -630,8 +600,8 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
         console.log('Resume files saved to database successfully');
 
         // Auto-create job application entry
-        const companyName = jobs.get(jobId)?.companyName;
-        const role = jobs.get(jobId)?.role;
+        const companyName = jobRecord?.company_name;
+        const role = jobRecord?.role;
         if (companyName && role) {
           try {
             await JobApplication.create(user.id, {
@@ -653,10 +623,9 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
     }
 
     // Update job with completed results
-    jobs.set(jobId, {
-      ...jobs.get(jobId),
+    await jobManager.updateJob(jobId, {
       status: JOB_STATUS.COMPLETED,
-      completedAt: Date.now(),
+      completed_at: new Date().toISOString(),
       result: {
         resume: resumeData,
         generatedResume,
@@ -687,10 +656,9 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
     }
     
     // Update job with error
-    jobs.set(jobId, {
-      ...jobs.get(jobId),
+    await jobManager.updateJob(jobId, {
       status: JOB_STATUS.FAILED,
-      completedAt: Date.now(),
+      completed_at: new Date().toISOString(),
       error: errorMessage
     });
   }
@@ -728,20 +696,14 @@ app.post('/api/generate-resume', auth, async (req, res) => {
       });
     }
 
-    // Generate job ID
-    const jobId = generateJobId();
-
-    // Create job entry
-    jobs.set(jobId, {
-      id: jobId,
-      userId: req.user.email,
+    // Create job entry in DB
+    const jobId = await jobManager.createJob({
+      userId: user.id,
+      type: 'resume',
       jobDescription: cleanedJobDescription,
       companyName: companyName || '',
       role: role || '',
       pipelineVersion,
-      status: JOB_STATUS.PENDING,
-      createdAt: Date.now(),
-      progress: 0
     });
 
     // Start async processing
@@ -782,20 +744,13 @@ app.post('/api/generate-cover-letter', auth, async (req, res) => {
       });
     }
 
-    // Generate job ID
-    const jobId = generateJobId();
-
-    // Create job entry
-    jobs.set(jobId, {
-      id: jobId,
-      userId: req.user.email,
+    // Create job entry in DB
+    const jobId = await jobManager.createJob({
+      userId: user.id,
+      type: 'cover-letter',
       jobDescription: cleanedJobDescription,
       companyName: companyName || '',
       role: role || '',
-      type: 'cover-letter',
-      status: JOB_STATUS.PENDING,
-      createdAt: Date.now(),
-      progress: 0
     });
 
     // Start async processing
@@ -817,31 +772,32 @@ app.post('/api/generate-cover-letter', auth, async (req, res) => {
 app.get('/api/status/:jobId', auth, async (req, res) => {
   try {
     const { jobId } = req.params;
-    const job = jobs.get(jobId);
+    const job = await jobManager.getJob(jobId);
 
     if (!job) {
       return res.status(404).json({ error: 'Job not found' });
     }
 
     // Check if user owns this job
-    if (job.userId !== req.user.email) {
+    const user = await User.findByEmail(req.user.email);
+    if (job.user_id !== user?.id) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
     const response = {
       jobId: job.id,
       status: job.status,
-      createdAt: job.createdAt,
+      createdAt: job.created_at,
       progress: job.progress || 0,
-      stepLabel: job.stepLabel || null
+      step_label: job.step_label || null
     };
 
-    if (job.startedAt) {
-      response.startedAt = job.startedAt;
+    if (job.started_at) {
+      response.startedAt = job.started_at;
     }
 
-    if (job.completedAt) {
-      response.completedAt = job.completedAt;
+    if (job.completed_at) {
+      response.completedAt = job.completed_at;
     }
 
     if (job.status === JOB_STATUS.FAILED && job.error) {
@@ -859,21 +815,22 @@ app.get('/api/status/:jobId', auth, async (req, res) => {
 app.get('/api/results/:jobId', auth, async (req, res) => {
   try {
     const { jobId } = req.params;
-    const job = jobs.get(jobId);
+    const job = await jobManager.getJob(jobId);
 
     if (!job) {
       return res.status(404).json({ error: 'Job not found' });
     }
 
     // Check if user owns this job
-    if (job.userId !== req.user.email) {
+    const user = await User.findByEmail(req.user.email);
+    if (job.user_id !== user?.id) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
     if (job.status !== JOB_STATUS.COMPLETED) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Job not completed yet',
-        status: job.status 
+        status: job.status
       });
     }
 
