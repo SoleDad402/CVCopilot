@@ -122,7 +122,7 @@ Return ONLY the cover letter body text (no headers, no "Dear Hiring Manager", no
     });
 
     // Generate DOCX content using cover letter template
-    const templatePath = path.join(__dirname, 'templates', 'cover-letter-template.docx');
+    const templatePath = path.join(__dirname, '..', 'templates', 'cover-letter-template.docx');
     const content = fs.readFileSync(templatePath, 'binary');
     const zip = new PizZip(content);
     const doc = new Docxtemplater(zip, {
@@ -153,7 +153,7 @@ Return ONLY the cover letter body text (no headers, no "Dear Hiring Manager", no
     let pdfContent = null;
     let pdfBuffer = null;
     try {
-      const tmpDocxPath = path.join(__dirname, 'tmp_input_cover.docx');
+      const tmpDocxPath = path.join(__dirname, '..', 'tmp_input_cover.docx');
       fs.writeFileSync(tmpDocxPath, buffer);
       const inputFile = fs.createReadStream(tmpDocxPath);
       const convertDocxToPdf = () => new Promise((resolve, reject) => {
@@ -180,7 +180,7 @@ Return ONLY the cover letter body text (no headers, no "Dear Hiring Manager", no
       const createAttachment = async (buffer, filename, contentType) => {
         const timestamp = Date.now();
         const fileId = crypto.randomBytes(8).toString('hex');
-        const uploadsDir = path.join(__dirname, '../uploads');
+        const uploadsDir = path.join(__dirname, '../../uploads');
         if (!fs.existsSync(uploadsDir)) {
           fs.mkdirSync(uploadsDir, { recursive: true });
         }
@@ -302,8 +302,8 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
     }));
 
     // Convert to pipeline format
-    const { runPipeline } = require('./pipeline');
-    const { convertPlanToJson } = require('./pipeline/convertToJson');
+    const { runPipeline } = require('../pipeline');
+    const { convertPlanToJson } = require('../pipeline/convertToJson');
 
     // Convert employment history to pipeline format
     const pipelineEmploymentHistory = cleanEmploymentHistory.map(job => ({
@@ -384,7 +384,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
     }
 
     // Generate DOCX content
-    const templatePath = path.join(__dirname, 'templates', 'resume-template.docx');
+    const templatePath = path.join(__dirname, '..', 'templates', 'resume-template.docx');
     const content = fs.readFileSync(templatePath, 'binary');
     const zip = new PizZip(content);
     const doc = new Docxtemplater(zip, {
@@ -453,7 +453,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
     let pdfBuffer = null;
     try {
       // Write buffer to a temp file
-      const tmpDocxPath = path.join(__dirname, 'tmp_input.docx');
+      const tmpDocxPath = path.join(__dirname, '..', 'tmp_input.docx');
       fs.writeFileSync(tmpDocxPath, buffer);
       const inputFile = fs.createReadStream(tmpDocxPath);
       // Use promise wrapper for the callback API
@@ -483,7 +483,7 @@ const generateResumeAsync = async (jobId, userId, cleanedJobDescription, pipelin
       const createAttachment = async (buffer, filename, contentType) => {
         const timestamp = Date.now();
         const fileId = crypto.randomBytes(8).toString('hex');
-        const uploadsDir = path.join(__dirname, '../uploads');
+        const uploadsDir = path.join(__dirname, '../../uploads');
         if (!fs.existsSync(uploadsDir)) {
           fs.mkdirSync(uploadsDir, { recursive: true });
         }
@@ -591,7 +591,7 @@ router.post('/generate-resume', auth, async (req, res) => {
     }
 
     // Validate pipeline version
-    const { SUPPORTED_VERSIONS, DEFAULT_VERSION } = require('./pipeline');
+    const { SUPPORTED_VERSIONS, DEFAULT_VERSION } = require('../pipeline');
     const pipelineVersion = Number(version) || DEFAULT_VERSION;
     if (!SUPPORTED_VERSIONS.includes(pipelineVersion)) {
       return res.status(400).json({
