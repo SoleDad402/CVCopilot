@@ -903,4 +903,304 @@ router.post('/autobid/preview', async (req, res) => {
   }
 });
 
+// ─── Question Pattern Learning ────────────────────────────────────────────
+
+const jwt = require('jsonwebtoken');
+const { createClient } = require('@supabase/supabase-js');
+
+function getSupabase() {
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
+/** Inline auth helper — extracts user from JWT. */
+function getUserFromToken(req) {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  if (!token) return null;
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Normalize a question into a reusable pattern.
+ * "Why do you want to join Figma?" → "Why do you want to join {company}?"
+ */
+function normalizePattern(question, company) {
+  let pattern = question.trim();
+  if (company) {
+    // Replace company name with placeholder (case-insensitive)
+    const escaped = company.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    pattern = pattern.replace(new RegExp(escaped, 'gi'), '{company}');
+  }
+  return pattern;
+}
+
+/**
+ * Categorize a question by its content.
+ */
+function categorizeQuestion(question) {
+  const q = question.toLowerCase();
+  if (q.includes('why') && (q.includes('join') || q.includes('interest') || q.includes('apply') || q.includes('want'))) return 'motivation';
+  if (q.includes('looking for') || q.includes('next role') || q.includes('ideal role')) return 'role_fit';
+  if (q.includes('describe') || q.includes('tell us about') || q.includes('example of')) return 'experience';
+  if (q.includes('salary') || q.includes('compensation') || q.includes('pay')) return 'salary';
+  if (q.includes('start') || q.includes('available') || q.includes('when can')) return 'availability';
+  if (q.includes('hear about') || q.includes('how did you') || q.includes('source')) return 'source';
+  return 'custom';
+}
+
+/**
+ * POST /api/v1/autobid/patterns/track
+ *
+ * Track a user's choice (auto-gen or manual) for a question.
+ * If auto_gen_count reaches the threshold, mark as learned.
+ *
+ * Body: { question, company, choice: "auto"|"manual", answer }
+ */
+router.post('/autobid/patterns/track', async (req, res) => {
+  const user = getUserFromToken(req);
+  if (!user) return res.status(401).json({ error: 'Auth required' });
+
+  try {
+    const { question, company, choice, answer } = req.body;
+    if (!question || !choice) {
+      return res.status(400).json({ error: 'question and choice required' });
+    }
+
+    const pattern = normalizePattern(question, company);
+    const category = categorizeQuestion(question);
+    const supabase = getSupabase();
+
+    // Find existing user by email to get ID
+    const { data: userData } = await supabase.from('users').select('id').eq('email', user.email).single();
+    if (!userData) return res.status(404).json({ error: 'User not found' });
+    const userId = userData.id;
+
+    // Upsert the pattern
+    const { data: existing } = await supabase
+      .from('question_patterns')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('pattern', pattern)
+      .maybeSingle();
+
+    if (existing) {
+      const updates = { updated_at: new Date().toISOString() };
+      if (choice === 'auto') {
+        updates.auto_gen_count = existing.auto_gen_count + 1;
+        if (updates.auto_gen_count >= existing.threshold) {
+          updates.is_learned = true;
+        }
+      } else {
+        updates.manual_count = existing.manual_count + 1;
+      }
+
+      if (answer) {
+        updates.last_answer = answer;
+        // Append to sample_answers (keep last 5)
+        const samples = Array.isArray(existing.sample_answers) ? existing.sample_answers : [];
+        samples.push({ answer, company: company || '', timestamp: new Date().toISOString() });
+        updates.sample_answers = samples.slice(-5);
+      }
+
+      await supabase.from('question_patterns').update(updates).eq('id', existing.id);
+      res.json({ pattern, is_learned: updates.is_learned ?? existing.is_learned, auto_gen_count: updates.auto_gen_count ?? existing.auto_gen_count });
+    } else {
+      const newRow = {
+        user_id: userId,
+        pattern,
+        category,
+        auto_gen_count: choice === 'auto' ? 1 : 0,
+        manual_count: choice === 'manual' ? 1 : 0,
+        is_learned: false,
+        threshold: 3,
+        sample_answers: answer ? [{ answer, company: company || '', timestamp: new Date().toISOString() }] : [],
+        last_answer: answer || '',
+      };
+
+      await supabase.from('question_patterns').insert(newRow);
+      res.json({ pattern, is_learned: false, auto_gen_count: newRow.auto_gen_count });
+    }
+  } catch (error) {
+    console.error('[Patterns] Track error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/v1/autobid/patterns/check
+ *
+ * Check if questions match learned patterns. Returns which questions
+ * can be auto-filled and what the suggested answers are.
+ *
+ * Body: { questions: [{ label, company }], job_description }
+ */
+router.post('/autobid/patterns/check', async (req, res) => {
+  const user = getUserFromToken(req);
+  if (!user) return res.status(401).json({ error: 'Auth required' });
+
+  try {
+    const { questions, job_description } = req.body;
+    if (!questions) return res.status(400).json({ error: 'questions required' });
+
+    const supabase = getSupabase();
+    const { data: userData } = await supabase.from('users').select('id').eq('email', user.email).single();
+    if (!userData) return res.status(404).json({ error: 'User not found' });
+
+    const { data: patterns } = await supabase
+      .from('question_patterns')
+      .select('*')
+      .eq('user_id', userData.id);
+
+    const results = {};
+    for (const q of questions) {
+      const normalized = normalizePattern(q.label, q.company);
+      const match = (patterns || []).find(p => p.pattern === normalized);
+      if (match) {
+        results[q.label] = {
+          pattern: match.pattern,
+          is_learned: match.is_learned,
+          auto_gen_count: match.auto_gen_count,
+          category: match.category,
+          last_answer: match.last_answer,
+          sample_answers: match.sample_answers,
+        };
+      }
+    }
+
+    res.json({ matches: results });
+  } catch (error) {
+    console.error('[Patterns] Check error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/v1/autobid/patterns
+ *
+ * List all learned patterns for the current user (for settings page).
+ */
+router.get('/autobid/patterns', async (req, res) => {
+  const user = getUserFromToken(req);
+  if (!user) return res.status(401).json({ error: 'Auth required' });
+
+  try {
+    const supabase = getSupabase();
+    const { data: userData } = await supabase.from('users').select('id').eq('email', user.email).single();
+    if (!userData) return res.status(404).json({ error: 'User not found' });
+
+    const { data, error } = await supabase
+      .from('question_patterns')
+      .select('*')
+      .eq('user_id', userData.id)
+      .order('updated_at', { ascending: false });
+
+    if (error) throw error;
+    res.json({ patterns: data || [] });
+  } catch (error) {
+    console.error('[Patterns] List error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * PUT /api/v1/autobid/patterns/:id
+ *
+ * Update a pattern (toggle is_learned, change threshold, edit answer).
+ */
+router.put('/autobid/patterns/:id', async (req, res) => {
+  const user = getUserFromToken(req);
+  if (!user) return res.status(401).json({ error: 'Auth required' });
+
+  try {
+    const { id } = req.params;
+    const { is_learned, threshold, last_answer } = req.body;
+    const supabase = getSupabase();
+
+    const updates = { updated_at: new Date().toISOString() };
+    if (is_learned !== undefined) updates.is_learned = is_learned;
+    if (threshold !== undefined) updates.threshold = threshold;
+    if (last_answer !== undefined) updates.last_answer = last_answer;
+
+    const { error } = await supabase.from('question_patterns').update(updates).eq('id', id);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * DELETE /api/v1/autobid/patterns/:id
+ */
+router.delete('/autobid/patterns/:id', async (req, res) => {
+  const user = getUserFromToken(req);
+  if (!user) return res.status(401).json({ error: 'Auth required' });
+
+  try {
+    const supabase = getSupabase();
+    const { error } = await supabase.from('question_patterns').delete().eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/v1/autobid/generate-answer
+ *
+ * Use LLM to generate an answer for a custom question.
+ * Uses sample answers from learned patterns as few-shot examples.
+ */
+router.post('/autobid/generate-answer', async (req, res) => {
+  const user = getUserFromToken(req);
+  if (!user) return res.status(401).json({ error: 'Auth required' });
+
+  try {
+    const { question, company, job_title, job_description, sample_answers } = req.body;
+    if (!question) return res.status(400).json({ error: 'question required' });
+
+    const openai = req.app.get('openai');
+    if (!openai) return res.status(503).json({ error: 'OpenAI not configured' });
+
+    // Fetch user profile for context
+    const supabase = getSupabase();
+    const { data: userData } = await supabase.from('users').select('*').eq('email', user.email).single();
+
+    const profileContext = userData
+      ? `Candidate: ${userData.full_name || ''}, ${userData.current_title || ''} with ${userData.years_of_experience || '?'} years of experience. Location: ${userData.location || userData.city || ''}. Skills/specializations: ${(userData.target_job_titles || []).join(', ')}.`
+      : '';
+
+    const samplesText = (sample_answers || []).length > 0
+      ? '\n\nHere are some previously approved answers for similar questions:\n' +
+        sample_answers.map((s, i) => `Example ${i + 1} (for ${s.company || 'a company'}): ${s.answer}`).join('\n')
+      : '';
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.7,
+      max_tokens: 500,
+      messages: [
+        {
+          role: 'system',
+          content: `You are filling out a job application. Write a concise, genuine 2-4 sentence answer. Be specific — reference the company and role by name. Don't use cliches like "I am excited to apply" or "I believe I would be a great fit". Draw from the candidate's real background.`,
+        },
+        {
+          role: 'user',
+          content: `Question: ${question}\n\nJob: ${job_title || 'N/A'} at ${company || 'N/A'}\nJob description excerpt: ${(job_description || '').substring(0, 1500)}\n\n${profileContext}${samplesText}\n\nWrite the answer:`,
+        },
+      ],
+    });
+
+    const answer = response.choices[0].message.content.trim();
+    res.json({ answer });
+  } catch (error) {
+    console.error('[Patterns] Generate answer error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

@@ -229,6 +229,17 @@ export const autoBidService = {
       user_profile: userProfile,
       generate_resume: generateResume,
     }, { timeout: 180000 }),
+  // Question pattern learning
+  checkPatterns: (questions) => api.post('/api/v1/autobid/patterns/check', { questions }),
+  trackPattern: (question, company, choice, answer) =>
+    api.post('/api/v1/autobid/patterns/track', { question, company, choice, answer }),
+  generateAnswer: (question, company, jobTitle, jobDescription, sampleAnswers) =>
+    api.post('/api/v1/autobid/generate-answer', {
+      question, company, job_title: jobTitle, job_description: jobDescription, sample_answers: sampleAnswers,
+    }),
+  getPatterns: () => api.get('/api/v1/autobid/patterns'),
+  updatePattern: (id, data) => api.put(`/api/v1/autobid/patterns/${id}`, data),
+  deletePattern: (id) => api.delete(`/api/v1/autobid/patterns/${id}`),
 };
 
 export default api;

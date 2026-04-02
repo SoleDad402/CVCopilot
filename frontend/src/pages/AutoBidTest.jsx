@@ -3,7 +3,7 @@ import {
   Box, Typography, Button, TextField, Card, CardContent, Stack,
   Chip, Alert, LinearProgress, Divider, Collapse, IconButton,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Tooltip,
+  Paper, Tooltip, CircularProgress,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import {
@@ -20,6 +20,9 @@ import {
   Work as WorkIcon,
   ContentPaste as PasteIcon,
   PlayArrow as RunIcon,
+  AutoFixHigh as AutoGenIcon,
+  Psychology as LearnedIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { NAVBAR_HEIGHT, colors, gradients } from '../theme';
 import { autoBidService, profileService } from '../services/api';
@@ -28,6 +31,7 @@ import { useAuth } from '../contexts/AuthContext';
 const SOURCE_COLORS = {
   profile: { bg: '#dcfce7', text: '#166534', label: 'From Profile' },
   auto: { bg: '#dbeafe', text: '#1e40af', label: 'Auto-answered' },
+  learned: { bg: '#ede9fe', text: '#5b21b6', label: 'Learned' },
   needs_input: { bg: '#fef3c7', text: '#92400e', label: 'Needs Input' },
   needs_selection: { bg: '#fce7f3', text: '#9d174d', label: 'Needs Selection' },
   optional: { bg: '#f1f5f9', text: '#475569', label: 'Optional' },
@@ -44,6 +48,8 @@ export default function AutoBidTest() {
   const [showDescription, setShowDescription] = useState(false);
   const [showResume, setShowResume] = useState(false);
   const [showCoverLetter, setShowCoverLetter] = useState(false);
+  const [generatingField, setGeneratingField] = useState(null); // fname being generated
+  const [generatedAnswers, setGeneratedAnswers] = useState({}); // fname -> answer
 
   const handleExtract = async () => {
     if (!jobUrl.trim()) return;
@@ -126,6 +132,29 @@ export default function AutoBidTest() {
       setError(err.response?.data?.error || err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAutoGen = async (fname, field) => {
+    if (!jobData) return;
+    setGeneratingField(fname);
+    try {
+      const resp = await autoBidService.generateAnswer(
+        field.label,
+        jobData.company,
+        jobData.title,
+        jobData.description || '',
+        [], // sample_answers — will be populated once patterns exist
+      );
+      const answer = resp.data.answer;
+      setGeneratedAnswers(prev => ({ ...prev, [fname]: answer }));
+
+      // Track as auto-gen choice
+      await autoBidService.trackPattern(field.label, jobData.company, 'auto', answer);
+    } catch (err) {
+      setError(`Failed to generate answer: ${err.response?.data?.error || err.message}`);
+    } finally {
+      setGeneratingField(null);
     }
   };
 
@@ -322,14 +351,29 @@ export default function AutoBidTest() {
                   </TableHead>
                   <TableBody>
                     {fieldEntries.map(([fname, field]) => {
-                      const sourceInfo = SOURCE_COLORS[field.source] || SOURCE_COLORS.optional;
+                      const genAnswer = generatedAnswers[fname];
+                      const displaySource = genAnswer ? 'learned' : field.source;
+                      const sourceInfo = SOURCE_COLORS[displaySource] || SOURCE_COLORS.optional;
+                      const isGenerating = generatingField === fname;
+                      const canAutoGen = (field.source === 'needs_input' || field.source === 'optional') && !genAnswer;
+
                       return (
                         <TableRow key={fname} hover>
                           <TableCell>
                             <Typography variant="body2" fontWeight={500}>{field.label}</Typography>
                           </TableCell>
                           <TableCell>
-                            {field.value ? (
+                            {genAnswer ? (
+                              <Tooltip title={genAnswer}>
+                                <Typography variant="body2" sx={{
+                                  maxWidth: 300, overflow: 'hidden',
+                                  textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                  color: '#5b21b6',
+                                }}>
+                                  {genAnswer}
+                                </Typography>
+                              </Tooltip>
+                            ) : field.value ? (
                               <Typography variant="body2" sx={{
                                 maxWidth: 300, overflow: 'hidden',
                                 textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -346,15 +390,34 @@ export default function AutoBidTest() {
                                 )}
                               </Stack>
                             ) : (
-                              <Typography variant="body2" color="text.secondary" fontStyle="italic">
-                                {field.source === 'needs_input' ? 'Requires answer' : 'Empty'}
-                              </Typography>
+                              <Stack direction="row" spacing={1} alignItems="center">
+                                <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                                  {field.source === 'needs_input' ? 'Requires answer' : 'Empty'}
+                                </Typography>
+                                {canAutoGen && (
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    startIcon={isGenerating ? <CircularProgress size={14} /> : <AutoGenIcon />}
+                                    disabled={isGenerating}
+                                    onClick={() => handleAutoGen(fname, field)}
+                                    sx={{
+                                      fontSize: '0.7rem', py: 0.25, px: 1, minWidth: 0,
+                                      borderColor: '#8b5cf6', color: '#8b5cf6',
+                                      '&:hover': { borderColor: '#7c3aed', bgcolor: alpha('#8b5cf6', 0.05) },
+                                    }}
+                                  >
+                                    {isGenerating ? 'Generating...' : 'Auto-gen'}
+                                  </Button>
+                                )}
+                              </Stack>
                             )}
                           </TableCell>
                           <TableCell>
                             <Chip
                               label={sourceInfo.label}
                               size="small"
+                              icon={displaySource === 'learned' ? <LearnedIcon sx={{ fontSize: '14px !important' }} /> : undefined}
                               sx={{
                                 bgcolor: sourceInfo.bg,
                                 color: sourceInfo.text,

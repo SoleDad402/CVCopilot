@@ -54,6 +54,25 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS seniority_preference TEXT DEFAULT '';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS target_countries TEXT DEFAULT 'US';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_locations TEXT DEFAULT '';
 
+-- ── Question Patterns (auto-bid learning) ──────────────────────────────────
+CREATE TABLE IF NOT EXISTS question_patterns (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  pattern       TEXT NOT NULL,
+  category      TEXT DEFAULT 'custom',
+  auto_gen_count INT DEFAULT 0,
+  manual_count  INT DEFAULT 0,
+  is_learned    BOOLEAN DEFAULT FALSE,
+  threshold     INT DEFAULT 3,
+  sample_answers JSONB DEFAULT '[]',
+  last_answer   TEXT DEFAULT '',
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_qp_user ON question_patterns(user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_qp_user_pattern ON question_patterns(user_id, pattern);
+
 -- ── Employment History ──────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS employment_history (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
