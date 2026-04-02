@@ -951,53 +951,19 @@ router.post('/autobid/generate-answer', async (req, res) => {
   if (!user) return res.status(401).json({ error: 'Auth required' });
 
   try {
-    const { question, company, job_title, job_description, sample_answers, resume_text } = req.body;
+    const { question, company, job_title, job_description, resume_text } = req.body;
     if (!question) return res.status(400).json({ error: 'question required' });
 
     const openai = req.app.get('openai');
     if (!openai) return res.status(503).json({ error: 'OpenAI not configured' });
 
-    // Fetch user profile for context
-    const supabase = getSupabase();
-    const { data: userData } = await supabase.from('users').select('*').eq('email', user.email).single();
-
-    const profileContext = userData
-      ? `Candidate: ${userData.full_name || ''}, ${userData.current_title || ''} with ${userData.years_of_experience || '?'} years of experience. Location: ${userData.location || userData.city || ''}. Skills/specializations: ${(userData.target_job_titles || []).join(', ')}.`
-      : '';
-
-    const resumeContext = resume_text
-      ? `\n\nCandidate's tailored resume for this role:\n${resume_text.substring(0, 2000)}`
-      : '';
-
-    const samplesText = (sample_answers || []).length > 0
-      ? '\n\nHere are some previously approved answers for similar questions:\n' +
-        sample_answers.map((s, i) => `Example ${i + 1} (for ${s.company || 'a company'}): ${s.answer}`).join('\n')
-      : '';
-
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.7,
-      max_tokens: 500,
-      messages: [
-        {
-          role: 'system',
-          content: `You are filling out a job application. Write a concise, genuine answer in 1-3 sentences. CRITICAL: Keep your answer under 200 characters total. Be specific — reference the company and role by name. Don't use cliches like "I am excited to apply" or "I believe I would be a great fit". Draw from the candidate's real background.`,
-        },
-        {
-          role: 'user',
-          content: `Question: ${question}\n\nJob: ${job_title || 'N/A'} at ${company || 'N/A'}\nJob description excerpt: ${(job_description || '').substring(0, 1500)}\n\n${profileContext}${resumeContext}${samplesText}\n\nWrite the answer:`,
-        },
-      ],
+    const { answerQuestion } = require('../services/questionAnswerer');
+    const answer = await answerQuestion(openai, {
+      question,
+      jobDescription: `${job_title || ''} at ${company || ''}\n\n${job_description || ''}`,
+      resumeText: resume_text,
+      maxChars: 200,
     });
-
-    let answer = response.choices[0].message.content.trim();
-    // Hard cap at 200 characters
-    if (answer.length > 200) {
-      // Try to cut at last sentence boundary within 200 chars
-      const truncated = answer.substring(0, 200);
-      const lastPeriod = truncated.lastIndexOf('.');
-      answer = lastPeriod > 100 ? truncated.substring(0, lastPeriod + 1) : truncated;
-    }
     res.json({ answer });
   } catch (error) {
     console.error('[Patterns] Generate answer error:', error.message);
