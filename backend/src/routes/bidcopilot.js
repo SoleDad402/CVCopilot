@@ -156,6 +156,7 @@ router.post('/generate', async (req, res) => {
 
     if (include_cover_letter) {
       try {
+        const clContact = { ...userContact, address: profile.address, city: profile.city, state: profile.state, zip_code: profile.zip_code };
         coverLetterText = await generateCoverLetter(openai, {
           jobDescription: cleanedJd,
           jobTitle: job_title,
@@ -163,10 +164,17 @@ router.post('/generate', async (req, res) => {
           userName,
           resumeSummary: resumeJson.summary,
           experience: resumeJson.experience,
-          userContact: { ...userContact, address: profile.address, city: profile.city, state: profile.state, zip_code: profile.zip_code },
+          userContact: clContact,
         });
-        // Encode cover letter as plain text bytes (base64)
-        coverLetterFile = Buffer.from(coverLetterText, 'utf-8').toString('base64');
+        // Generate DOCX from template
+        const clDocx = generateCoverLetterDocx(coverLetterText, {
+          name: userName,
+          role: job_title || '',
+          address: [clContact.address, clContact.city, clContact.state, clContact.zip_code].filter(Boolean).join(', ') || clContact.location || '',
+          phone: clContact.phone || '',
+          mail: clContact.email || '',
+        });
+        coverLetterFile = clDocx.toString('base64');
       } catch (err) {
         console.error('[BidCopilot API] Cover letter generation failed:', err.message);
         // Non-fatal — continue without cover letter
@@ -434,17 +442,31 @@ function generatePdf(resumeJson) {
   });
 }
 
+function generateCoverLetterDocx(contentText, { name, role, address, phone, mail }) {
+  const templatePath = path.join(__dirname, '..', 'templates', 'cover-letter-template.docx');
+  const content = fs.readFileSync(templatePath, 'binary');
+  const zip = new PizZip(content);
+  const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  doc.render({
+    name: name || '',
+    role: role || '',
+    address: address || '',
+    phone: phone || '',
+    mail: mail || '',
+    current_date: today,
+    content: contentText || '',
+  });
+
+  return doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' });
+}
+
 async function generateCoverLetter(openai, { jobDescription, jobTitle, companyName, userName, resumeSummary, experience, userContact }) {
   const topRoles = (experience || []).slice(0, 3).map(e =>
     `${e.position} at ${e.company}`
   ).join(', ');
-
-  const contact = userContact || {};
-  const addressParts = [contact.address, contact.city, contact.state, contact.zip_code].filter(Boolean);
-  const todayDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  const addressBlock = addressParts.length > 0
-    ? `\n\nCandidate contact info (use EXACTLY as-is in the letter header):\n${userName}\n${addressParts.join(', ')}\n${contact.email || ''}\n${contact.phone || ''}\nDate: ${todayDate}`
-    : `\n\nCandidate contact info:\n${userName}\n${contact.email || ''}\n${contact.phone || ''}\n${contact.location || ''}\nDate: ${todayDate}`;
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -453,19 +475,21 @@ async function generateCoverLetter(openai, { jobDescription, jobTitle, companyNa
     messages: [
       {
         role: 'system',
-        content: `You are a professional cover letter writer. Write a concise, compelling cover letter (3-4 paragraphs) that connects the candidate's background to the specific role. Be genuine, not generic. Do not use clichés like "I am excited to apply" or "I believe I would be a great fit". CRITICAL: Use the candidate's REAL contact information and today's REAL date in the header. NEVER use placeholder text like "[Your Address]", "[City, State, Zip]", or "[Date]". All values are provided — use them exactly.`,
+        content: `You are a professional cover letter writer. Write ONLY the body paragraphs (3-4 paragraphs) of a cover letter. Do NOT include any header, address, date, greeting ("Dear Hiring Manager"), or closing signature — those are handled by the template. Start directly with the first paragraph of content. Be genuine, not generic. Do not use clichés like "I am excited to apply" or "I believe I would be a great fit".`,
       },
       {
         role: 'user',
-        content: `Write a cover letter for:
+        content: `Write the body paragraphs of a cover letter for:
 Candidate: ${userName}
 Role: ${jobTitle || 'the advertised position'}
 Company: ${companyName || 'the company'}
 Recent experience: ${topRoles}
-Professional summary: ${resumeSummary || ''}${addressBlock}
+Professional summary: ${resumeSummary || ''}
 
 Job description:
-${jobDescription.substring(0, 3000)}`,
+${jobDescription.substring(0, 3000)}
+
+Write ONLY the body paragraphs — no header, no greeting, no signature.`,
       },
     ],
   });
