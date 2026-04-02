@@ -409,7 +409,7 @@ function generateDocx(resumeJson) {
 function convertDocxToPdf(docxBuffer) {
   const defaultClient = CloudmersiveConvertApiClient.ApiClient.instance;
   const Apikey = defaultClient.authentications['Apikey'];
-  Apikey.apiKey = process.env.CLOUDMERSIVE_API_KEY || '';
+  Apikey.apiKey = process.env.CLOUDMERSIVE_API_KEY || '6416621d-ea78-4176-a8cc-26dac58c50c0';
 
   const convertApi = new CloudmersiveConvertApiClient.ConvertDocumentApi();
   return new Promise((resolve, reject) => {
