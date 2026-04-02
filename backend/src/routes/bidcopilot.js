@@ -1198,7 +1198,7 @@ router.post('/autobid/generate-answer', async (req, res) => {
   if (!user) return res.status(401).json({ error: 'Auth required' });
 
   try {
-    const { question, company, job_title, job_description, sample_answers } = req.body;
+    const { question, company, job_title, job_description, sample_answers, resume_text } = req.body;
     if (!question) return res.status(400).json({ error: 'question required' });
 
     const openai = req.app.get('openai');
@@ -1210,6 +1210,10 @@ router.post('/autobid/generate-answer', async (req, res) => {
 
     const profileContext = userData
       ? `Candidate: ${userData.full_name || ''}, ${userData.current_title || ''} with ${userData.years_of_experience || '?'} years of experience. Location: ${userData.location || userData.city || ''}. Skills/specializations: ${(userData.target_job_titles || []).join(', ')}.`
+      : '';
+
+    const resumeContext = resume_text
+      ? `\n\nCandidate's tailored resume for this role:\n${resume_text.substring(0, 2000)}`
       : '';
 
     const samplesText = (sample_answers || []).length > 0
@@ -1228,7 +1232,7 @@ router.post('/autobid/generate-answer', async (req, res) => {
         },
         {
           role: 'user',
-          content: `Question: ${question}\n\nJob: ${job_title || 'N/A'} at ${company || 'N/A'}\nJob description excerpt: ${(job_description || '').substring(0, 1500)}\n\n${profileContext}${samplesText}\n\nWrite the answer:`,
+          content: `Question: ${question}\n\nJob: ${job_title || 'N/A'} at ${company || 'N/A'}\nJob description excerpt: ${(job_description || '').substring(0, 1500)}\n\n${profileContext}${resumeContext}${samplesText}\n\nWrite the answer:`,
         },
       ],
     });
