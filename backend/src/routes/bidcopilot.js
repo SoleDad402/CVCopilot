@@ -10,6 +10,7 @@
 const express = require('express');
 const { generateResumeDocx, generateCoverLetterDocx, convertDocxToPdf } = require('../services/documentGeneration');
 const { cleanJobDescription, buildPlainText, normalizeDate } = require('../utils/textUtils');
+const { generateCoverLetterContent } = require('../services/coverLetterGenerator');
 
 const router = express.Router();
 
@@ -158,14 +159,13 @@ router.post('/generate', async (req, res) => {
     if (include_cover_letter) {
       try {
         const clContact = { ...userContact, address: profile.address, city: profile.city, state: profile.state, zip_code: profile.zip_code };
-        coverLetterText = await generateCoverLetter(openai, {
+        coverLetterText = await generateCoverLetterContent(openai, {
           jobDescription: cleanedJd,
           jobTitle: job_title,
           companyName: company_name,
           userName,
           resumeSummary: resumeJson.summary,
           experience: resumeJson.experience,
-          userContact: clContact,
         });
         // Generate DOCX from template
         const clDocx = generateCoverLetterDocx(coverLetterText, {
@@ -236,39 +236,7 @@ router.get('/health', (req, res) => {
  *   ../services/documentGeneration.js
  */
 
-async function generateCoverLetter(openai, { jobDescription, jobTitle, companyName, userName, resumeSummary, experience, userContact }) {
-  const topRoles = (experience || []).slice(0, 3).map(e =>
-    `${e.position} at ${e.company}`
-  ).join(', ');
-
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    temperature: 0.5,
-    max_tokens: 1200,
-    messages: [
-      {
-        role: 'system',
-        content: `You are a professional cover letter writer. Write ONLY the body paragraphs (3-4 paragraphs) of a cover letter. Do NOT include any header, address, date, greeting ("Dear Hiring Manager"), or closing signature — those are handled by the template. Start directly with the first paragraph of content. Be genuine, not generic. Do not use clichés like "I am excited to apply" or "I believe I would be a great fit".`,
-      },
-      {
-        role: 'user',
-        content: `Write the body paragraphs of a cover letter for:
-Candidate: ${userName}
-Role: ${jobTitle || 'the advertised position'}
-Company: ${companyName || 'the company'}
-Recent experience: ${topRoles}
-Professional summary: ${resumeSummary || ''}
-
-Job description:
-${jobDescription.substring(0, 3000)}
-
-Write ONLY the body paragraphs — no header, no greeting, no signature.`,
-      },
-    ],
-  });
-
-  return response.choices[0].message.content.trim();
-}
+// generateCoverLetter — removed, now in services/coverLetterGenerator.js
 
 // ─── Auto-Bid Test Endpoints ──────────────────────────────────────────────
 
@@ -681,17 +649,13 @@ router.post('/autobid/preview', async (req, res) => {
           // Generate cover letter
           let coverLetterText = null;
           try {
-            coverLetterText = await generateCoverLetter(openai, {
+            coverLetterText = await generateCoverLetterContent(openai, {
               jobDescription: descText.substring(0, 3000),
               jobTitle: job.title,
               companyName: job.company,
               userName: profile.full_name,
               resumeSummary: resumeJson.summary,
               experience: resumeJson.experience,
-              userContact: {
-                email: profile.email, phone: profile.phone, location: profile.location,
-                address: profile.address, city: profile.city, state: profile.state, zip_code: profile.zip_code,
-              },
             });
           } catch (e) {
             console.error('[AutoBid] Cover letter failed:', e.message);
