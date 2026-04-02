@@ -10,7 +10,7 @@
 const express = require('express');
 const PizZip = require('pizzip');
 const Docxtemplater = require('docxtemplater');
-const PDFDocument = require('pdfkit');
+const CloudmersiveConvertApiClient = require("cloudmersive-convert-api-client");
 const fs = require('fs');
 const path = require('path');
 
@@ -149,26 +149,8 @@ router.post('/generate', async (req, res) => {
       fileBuffer = docxBuffer;
       filename = `${safeName}_${safeCompany}.docx`;
     } else {
-      // Convert DOCX → PDF via Cloudmersive for ATS-friendly output
-      try {
-        const CloudmersiveConvertApiClient = require("cloudmersive-convert-api-client");
-        const defaultClient = CloudmersiveConvertApiClient.ApiClient.instance;
-        const Apikey = defaultClient.authentications['Apikey'];
-        Apikey.apiKey = process.env.CLOUDMERSIVE_API_KEY || '';
-
-        const convertApi = new CloudmersiveConvertApiClient.ConvertDocumentApi();
-        const pdfBuffer = await new Promise((resolve, reject) => {
-          convertApi.convertDocumentDocxToPdf(docxBuffer, (err, data) => {
-            if (err) reject(err);
-            else resolve(data);
-          });
-        });
-        fileBuffer = pdfBuffer;
-        console.log('[BidCopilot API] DOCX→PDF conversion successful');
-      } catch (convErr) {
-        console.warn('[BidCopilot API] Cloudmersive conversion failed, using PDFKit fallback:', convErr.message);
-        fileBuffer = await generatePdf(resumeJson);
-      }
+      // Convert DOCX → PDF via Cloudmersive
+      fileBuffer = await convertDocxToPdf(docxBuffer);
       filename = `${safeName}_${safeCompany}.pdf`;
     }
 
@@ -421,82 +403,20 @@ function generateDocx(resumeJson) {
   return doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' });
 }
 
-function generatePdf(resumeJson) {
+/**
+ * Convert a DOCX buffer to PDF via Cloudmersive API.
+ */
+function convertDocxToPdf(docxBuffer) {
+  const defaultClient = CloudmersiveConvertApiClient.ApiClient.instance;
+  const Apikey = defaultClient.authentications['Apikey'];
+  Apikey.apiKey = process.env.CLOUDMERSIVE_API_KEY || '';
+
+  const convertApi = new CloudmersiveConvertApiClient.ConvertDocumentApi();
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'A4', margin: 50 });
-    const chunks = [];
-
-    doc.on('data', chunk => chunks.push(chunk));
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', reject);
-
-    // Header
-    doc.fontSize(24).font('Helvetica-Bold')
-      .text(resumeJson.name || '', { align: 'center' })
-      .moveDown(0.5);
-
-    const contactInfo = [
-      resumeJson.contact?.email,
-      resumeJson.contact?.phonenumber,
-      resumeJson.contact?.linkedinURL,
-      resumeJson.contact?.location,
-    ].filter(Boolean).join(' | ');
-
-    doc.fontSize(11).font('Helvetica')
-      .text(contactInfo, { align: 'center' })
-      .moveDown(1);
-
-    // Summary
-    if (resumeJson.summary) {
-      doc.fontSize(14).font('Helvetica-Bold').text('Professional Summary').moveDown(0.5);
-      doc.fontSize(11).font('Helvetica')
-        .text(resumeJson.summary.replace(/\*\*(.+?)\*\*/g, '$1'))
-        .moveDown(1);
-    }
-
-    // Experience
-    if (resumeJson.experience?.length) {
-      doc.fontSize(14).font('Helvetica-Bold').text('Professional Experience').moveDown(0.5);
-      for (const exp of resumeJson.experience) {
-        doc.fontSize(12).font('Helvetica-Bold')
-          .text(`${exp.company}${exp.location ? ', ' + exp.location : ''}`)
-          .moveDown(0.3);
-        doc.fontSize(11).font('Helvetica')
-          .text(`${exp.position} (${exp.dates})`)
-          .moveDown(0.3);
-        for (const bullet of (exp.bullets || [])) {
-          doc.fontSize(11).font('Helvetica')
-            .text(`• ${bullet.replace(/\*\*(.+?)\*\*/g, '$1')}`, { indent: 20 })
-            .moveDown(0.2);
-        }
-        doc.moveDown(0.4);
-      }
-    }
-
-    // Skills
-    if (resumeJson.skills?.length) {
-      doc.fontSize(14).font('Helvetica-Bold').text('Skills').moveDown(0.5);
-      for (const section of resumeJson.skills) {
-        doc.fontSize(11).font('Helvetica-Bold').text(section.section, { continued: true });
-        doc.font('Helvetica').text(`: ${section.list.join(', ')}`).moveDown(0.3);
-      }
-      doc.moveDown(0.5);
-    }
-
-    // Education
-    if (resumeJson.education?.length) {
-      doc.fontSize(14).font('Helvetica-Bold').text('Education').moveDown(0.5);
-      for (const edu of resumeJson.education) {
-        doc.fontSize(12).font('Helvetica-Bold')
-          .text(`${edu.school}${edu.location ? ', ' + edu.location : ''}`)
-          .moveDown(0.3);
-        doc.fontSize(11).font('Helvetica')
-          .text(`${edu.program} (${edu.dates})`)
-          .moveDown(0.3);
-      }
-    }
-
-    doc.end();
+    convertApi.convertDocumentDocxToPdf(docxBuffer, (err, data) => {
+      if (err) reject(new Error(`DOCX→PDF conversion failed: ${err.message || err}`));
+      else resolve(data);
+    });
   });
 }
 
@@ -802,7 +722,7 @@ router.post('/autobid/preview', async (req, res) => {
             const picked = values.find(v => (v.label || '').toLowerCase() === answer);
             if (picked) {
               fieldMap[fname] = {
-                value: String(picked.value ?? picked.label),
+                value: String(picked.label || picked.value || ''),
                 source: 'auto',
                 label,
                 required,
@@ -819,7 +739,7 @@ router.post('/autobid/preview', async (req, res) => {
             const pronounLower = profile.preferred_pronouns.toLowerCase();
             const match = values.find(v => (v.label || '').toLowerCase().includes(pronounLower));
             if (match) {
-              fieldMap[fname] = { value: String(match.value ?? match.label), source: 'auto', label, required };
+              fieldMap[fname] = { value: String(match.label || match.value || ''), source: 'auto', label, required };
               questionsAnswered++;
               continue;
             }
@@ -833,7 +753,7 @@ router.post('/autobid/preview', async (req, res) => {
             const profileVal = eeoMap[eeoKey].toLowerCase();
             const match = values.find(v => (v.label || '').toLowerCase().includes(profileVal));
             if (match) {
-              fieldMap[fname] = { value: String(match.value ?? match.label), source: 'auto', label, required };
+              fieldMap[fname] = { value: String(match.label || match.value || ''), source: 'auto', label, required };
               questionsAnswered++;
               continue;
             }
