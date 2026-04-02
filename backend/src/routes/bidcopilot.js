@@ -1224,7 +1224,7 @@ router.post('/autobid/generate-answer', async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: `You are filling out a job application. Write a concise, genuine 2-4 sentence answer. Be specific — reference the company and role by name. Don't use cliches like "I am excited to apply" or "I believe I would be a great fit". Draw from the candidate's real background.`,
+          content: `You are filling out a job application. Write a concise, genuine answer in 1-3 sentences. CRITICAL: Keep your answer under 200 characters total. Be specific — reference the company and role by name. Don't use cliches like "I am excited to apply" or "I believe I would be a great fit". Draw from the candidate's real background.`,
         },
         {
           role: 'user',
@@ -1233,7 +1233,14 @@ router.post('/autobid/generate-answer', async (req, res) => {
       ],
     });
 
-    const answer = response.choices[0].message.content.trim();
+    let answer = response.choices[0].message.content.trim();
+    // Hard cap at 200 characters
+    if (answer.length > 200) {
+      // Try to cut at last sentence boundary within 200 chars
+      const truncated = answer.substring(0, 200);
+      const lastPeriod = truncated.lastIndexOf('.');
+      answer = lastPeriod > 100 ? truncated.substring(0, lastPeriod + 1) : truncated;
+    }
     res.json({ answer });
   } catch (error) {
     console.error('[Patterns] Generate answer error:', error.message);
