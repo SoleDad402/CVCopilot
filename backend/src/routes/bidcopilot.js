@@ -711,13 +711,33 @@ router.post('/autobid/preview', async (req, res) => {
         if (values.length === 2) {
           const labels = values.map(v => (v.label || '').toLowerCase());
           if (labels.includes('yes') && labels.includes('no')) {
-            let answer = 'yes';
-            if (ll.includes('sponsor') || ll.includes('visa') || ll.includes('immigration')) {
-              answer = profile.visa_sponsorship_needed ? 'yes' : 'no';
-            } else if (ll.includes('authorized') || ll.includes('eligible') || ll.includes('legally')) {
-              answer = profile.visa_sponsorship_needed ? 'no' : 'yes';
-            } else if (ll.includes('relocat')) {
-              answer = profile.willing_to_relocate ? 'yes' : 'no';
+            // Use LLM to judge yes/no based on question + profile
+            let answer = 'no';
+            const openai = req.app.get('openai');
+            if (openai) {
+              try {
+                const profileSummary = [
+                  `Name: ${profile.full_name || ''}`,
+                  `Location: ${profile.location || profile.city || ''}`,
+                  `Visa sponsorship needed: ${profile.visa_sponsorship_needed ? 'yes' : 'no'}`,
+                  `Willing to relocate: ${profile.willing_to_relocate ? 'yes' : 'no'}`,
+                  `Work authorization: ${profile.work_authorization || 'authorized'}`,
+                  `Criminal conviction: ${profile.criminal_conviction || 'no'}`,
+                  `Remote preference: ${profile.remote_preference || 'remote'}`,
+                  `Employers: ${(profile.employment_history || []).map(e => e.company || e.company_name || '').join(', ')}`,
+                ].join('\n');
+                const llmResp = await openai.chat.completions.create({
+                  model: 'gpt-4o-mini', temperature: 0, max_tokens: 5,
+                  messages: [
+                    { role: 'system', content: "Answer ONLY 'yes' or 'no'. Nothing else." },
+                    { role: 'user', content: `Question: ${label}\n\nCandidate:\n${profileSummary}\n\nAnswer yes or no:` },
+                  ],
+                });
+                const llmAnswer = llmResp.choices[0].message.content.trim().toLowerCase();
+                answer = llmAnswer.includes('yes') ? 'yes' : 'no';
+              } catch (e) {
+                console.warn('[AutoBid] LLM yes/no failed:', e.message);
+              }
             }
             const picked = values.find(v => (v.label || '').toLowerCase() === answer);
             if (picked) {
