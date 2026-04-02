@@ -441,9 +441,10 @@ async function generateCoverLetter(openai, { jobDescription, jobTitle, companyNa
 
   const contact = userContact || {};
   const addressParts = [contact.address, contact.city, contact.state, contact.zip_code].filter(Boolean);
+  const todayDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   const addressBlock = addressParts.length > 0
-    ? `\n\nCandidate contact info (use in the letter header):\n${userName}\n${addressParts.join(', ')}\n${contact.email || ''}\n${contact.phone || ''}`
-    : `\n\nCandidate contact info:\n${userName}\n${contact.email || ''}\n${contact.phone || ''}\n${contact.location || ''}`;
+    ? `\n\nCandidate contact info (use EXACTLY as-is in the letter header):\n${userName}\n${addressParts.join(', ')}\n${contact.email || ''}\n${contact.phone || ''}\nDate: ${todayDate}`
+    : `\n\nCandidate contact info:\n${userName}\n${contact.email || ''}\n${contact.phone || ''}\n${contact.location || ''}\nDate: ${todayDate}`;
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -452,7 +453,7 @@ async function generateCoverLetter(openai, { jobDescription, jobTitle, companyNa
     messages: [
       {
         role: 'system',
-        content: `You are a professional cover letter writer. Write a concise, compelling cover letter (3-4 paragraphs) that connects the candidate's background to the specific role. Be genuine, not generic. Do not use clichés like "I am excited to apply" or "I believe I would be a great fit". Use the candidate's real contact information in the header — never use placeholder text like "[Your Address]" or "[City, State, Zip]".`,
+        content: `You are a professional cover letter writer. Write a concise, compelling cover letter (3-4 paragraphs) that connects the candidate's background to the specific role. Be genuine, not generic. Do not use clichés like "I am excited to apply" or "I believe I would be a great fit". CRITICAL: Use the candidate's REAL contact information and today's REAL date in the header. NEVER use placeholder text like "[Your Address]", "[City, State, Zip]", or "[Date]". All values are provided — use them exactly.`,
       },
       {
         role: 'user',
