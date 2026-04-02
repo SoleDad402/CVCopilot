@@ -62,19 +62,19 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+// Initialize SendGrid
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+// Setup Cloudmersive API client
+const defaultClient = CloudmersiveConvertApiClient.ApiClient.instance;
+const Apikey = defaultClient.authentications["Apikey"];
+Apikey.apiKey = process.env.CLOUDMERSIVE_API_KEY || "6416621d-ea78-4176-a8cc-26dac58c50c0";
+const apiInstance = new CloudmersiveConvertApiClient.ConvertDocumentApi();
+
 // Share instances with route handlers
 app.set('openai', openai);
 app.set('apiInstance', apiInstance);
 app.set('port', port);
-
-// Initialize SendGrid
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
-// Setup API client
-const defaultClient = CloudmersiveConvertApiClient.ApiClient.instance;
-const Apikey = defaultClient.authentications["Apikey"];
-Apikey.apiKey = process.env.CLOUDMERSIVE_API_KEY || "6416621d-ea78-4176-a8cc-26dac58c50c0"; // Use env var or fallback
-const apiInstance = new CloudmersiveConvertApiClient.ConvertDocumentApi();
 
 // Middleware
 // Load CORS origins from environment variable (comma-separated) or use defaults
