@@ -173,29 +173,31 @@ const Navbar = () => {
               <AutoAwesomeIcon sx={{ fontSize: 16, color: '#fff' }} />
             </Box>
             {!isMobile && (
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: 700,
-                  fontSize: '1rem',
-                  color: '#fff',
-                  letterSpacing: '-0.01em',
-                }}
-              >
-                CV Copilot
-              </Typography>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: 'rgba(255,255,255,0.35)',
-                  fontSize: '0.6rem',
-                  fontWeight: 500,
-                  ml: 0.75,
-                  mt: 0.25,
-                }}
-              >
-                v{versionInfo.version}
-              </Typography>
+              <>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    color: '#fff',
+                    letterSpacing: '-0.01em',
+                  }}
+                >
+                  CV Copilot
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: 'rgba(255,255,255,0.35)',
+                    fontSize: '0.6rem',
+                    fontWeight: 500,
+                    ml: 0.75,
+                    mt: 0.25,
+                  }}
+                >
+                  v{versionInfo.version}
+                </Typography>
+              </>
             )}
           </Box>
 
