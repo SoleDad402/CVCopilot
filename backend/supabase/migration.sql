@@ -40,6 +40,20 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS desired_salary_min INT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS desired_salary_max INT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_pronouns TEXT DEFAULT '';
 
+-- ── Additional Job Apply Fields ────────────────────────────────────────────
+ALTER TABLE users ADD COLUMN IF NOT EXISTS date_of_birth TEXT DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS gender TEXT DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS race_ethnicity TEXT DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS disability_status TEXT DEFAULT 'no';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS veteran_status TEXT DEFAULT 'no';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS criminal_conviction TEXT DEFAULT 'no';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS start_availability TEXT DEFAULT 'immediately';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS years_of_experience INT DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS target_job_titles TEXT[] DEFAULT '{}';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS seniority_preference TEXT DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS target_countries TEXT DEFAULT 'US';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_locations TEXT DEFAULT '';
+
 -- ── Employment History ──────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS employment_history (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),

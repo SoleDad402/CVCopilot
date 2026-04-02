@@ -659,6 +659,19 @@ router.post('/autobid/preview', async (req, res) => {
       'pronouns': profile.preferred_pronouns || '',
       'preferred pronouns': profile.preferred_pronouns || '',
       'preferred first name': firstName,
+      'date of birth': profile.date_of_birth || '',
+      'birthday': profile.date_of_birth || '',
+    };
+
+    // EEO helper — maps question keywords to profile values for dropdown matching
+    const eeoMap = {
+      gender: profile.gender || '',
+      race: profile.race_ethnicity || '',
+      ethnicity: profile.race_ethnicity || '',
+      disability: profile.disability_status || '',
+      veteran: profile.veteran_status || '',
+      'convicted': profile.criminal_conviction || '',
+      'felony': profile.criminal_conviction || '',
     };
 
     for (const question of questions) {
@@ -721,6 +734,20 @@ router.post('/autobid/preview', async (req, res) => {
           }
         }
 
+        // EEO dropdowns (gender, race, disability, veteran)
+        if (values.length > 0 && ftype.includes('select')) {
+          const eeoKey = Object.keys(eeoMap).find(k => ll.includes(k));
+          if (eeoKey && eeoMap[eeoKey]) {
+            const profileVal = eeoMap[eeoKey].toLowerCase();
+            const match = values.find(v => (v.label || '').toLowerCase().includes(profileVal));
+            if (match) {
+              fieldMap[fname] = { value: String(match.value ?? match.label), source: 'auto', label, required };
+              questionsAnswered++;
+              continue;
+            }
+          }
+        }
+
         // Other dropdowns
         if (values.length > 0 && ftype.includes('select')) {
           fieldMap[fname] = {
@@ -730,6 +757,15 @@ router.post('/autobid/preview', async (req, res) => {
             required,
             options: values.map(v => v.label),
           };
+          continue;
+        }
+
+        // "When can you start" questions
+        if ((ftype === 'input_text' || ftype === 'textarea') && (ll.includes('when can you start') || ll.includes('start date') || ll.includes('availability'))) {
+          const availMap = { immediately: 'Immediately', '2_weeks': '2 weeks', '1_month': '1 month', '2_months': '2 months', '3_months': '3+ months' };
+          const val = availMap[profile.start_availability] || 'Immediately';
+          fieldMap[fname] = { value: val, source: 'auto', label, required };
+          questionsAnswered++;
           continue;
         }
 

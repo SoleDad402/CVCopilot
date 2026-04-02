@@ -72,6 +72,18 @@ const Profile = () => {
     desired_salary_min: '',
     desired_salary_max: '',
     preferred_pronouns: '',
+    date_of_birth: '',
+    gender: '',
+    race_ethnicity: '',
+    disability_status: 'no',
+    veteran_status: 'no',
+    criminal_conviction: 'no',
+    start_availability: 'immediately',
+    years_of_experience: '',
+    target_job_titles: '',
+    seniority_preference: '',
+    target_countries: 'US',
+    preferred_locations: '',
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -111,21 +123,34 @@ const Profile = () => {
         github_url: data.user.github_url || '',
         location: data.user.location || '',
       });
+      const u = data.user;
       setJobApplyData({
-        address: data.user.address || '',
-        city: data.user.city || '',
-        state: data.user.state || '',
-        zip_code: data.user.zip_code || '',
-        country: data.user.country || 'United States',
-        portfolio_url: data.user.portfolio_url || '',
-        current_title: data.user.current_title || '',
-        work_authorization: data.user.work_authorization || 'authorized',
-        visa_sponsorship_needed: data.user.visa_sponsorship_needed || false,
-        willing_to_relocate: data.user.willing_to_relocate || false,
-        remote_preference: data.user.remote_preference || 'remote',
-        desired_salary_min: data.user.desired_salary_min || '',
-        desired_salary_max: data.user.desired_salary_max || '',
-        preferred_pronouns: data.user.preferred_pronouns || '',
+        address: u.address || '',
+        city: u.city || '',
+        state: u.state || '',
+        zip_code: u.zip_code || '',
+        country: u.country || 'United States',
+        portfolio_url: u.portfolio_url || '',
+        current_title: u.current_title || '',
+        work_authorization: u.work_authorization || 'authorized',
+        visa_sponsorship_needed: u.visa_sponsorship_needed || false,
+        willing_to_relocate: u.willing_to_relocate || false,
+        remote_preference: u.remote_preference || 'remote',
+        desired_salary_min: u.desired_salary_min || '',
+        desired_salary_max: u.desired_salary_max || '',
+        preferred_pronouns: u.preferred_pronouns || '',
+        date_of_birth: u.date_of_birth || '',
+        gender: u.gender || '',
+        race_ethnicity: u.race_ethnicity || '',
+        disability_status: u.disability_status || 'no',
+        veteran_status: u.veteran_status || 'no',
+        criminal_conviction: u.criminal_conviction || 'no',
+        start_availability: u.start_availability || 'immediately',
+        years_of_experience: u.years_of_experience || '',
+        target_job_titles: Array.isArray(u.target_job_titles) ? u.target_job_titles.join(', ') : (u.target_job_titles || ''),
+        seniority_preference: u.seniority_preference || '',
+        target_countries: u.target_countries || 'US',
+        preferred_locations: u.preferred_locations || '',
       });
       setEmploymentHistory(data.employmentHistory || []);
       setEducation(data.education || []);
@@ -185,6 +210,10 @@ const Profile = () => {
         ...jobApplyData,
         desired_salary_min: jobApplyData.desired_salary_min ? Number(jobApplyData.desired_salary_min) : null,
         desired_salary_max: jobApplyData.desired_salary_max ? Number(jobApplyData.desired_salary_max) : null,
+        years_of_experience: jobApplyData.years_of_experience ? Number(jobApplyData.years_of_experience) : null,
+        target_job_titles: jobApplyData.target_job_titles
+          ? jobApplyData.target_job_titles.split(',').map(s => s.trim()).filter(Boolean)
+          : [],
       };
       const success = await updateProfile(payload);
       if (success) setSnackbar({ open: true, message: 'Job apply profile saved', severity: 'success' });
@@ -496,6 +525,144 @@ const Profile = () => {
                       placeholder="180000"
                       InputProps={{ startAdornment: <MoneyIcon sx={{ mr: 1, color: 'text.disabled', fontSize: 18 }} /> }}
                     />
+                  </Grid>
+
+                  {/* Job Search Preferences */}
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5, mt: 1 }}>Job Search Preferences</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth type="number" label="Years of Experience" name="years_of_experience"
+                      value={jobApplyData.years_of_experience} onChange={handleJobApplyChange}
+                      placeholder="12"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth select label="Seniority Preference" name="seniority_preference"
+                      value={jobApplyData.seniority_preference} onChange={handleJobApplyChange}
+                      SelectProps={{ native: true }}
+                    >
+                      <option value="">Select...</option>
+                      <option value="mid_senior">Mid or Senior Level</option>
+                      <option value="senior">Senior only</option>
+                      <option value="mid">Mid-level only</option>
+                      <option value="entry_mid">Entry or Mid-level</option>
+                      <option value="any">Any level</option>
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth label="Target Job Titles" name="target_job_titles"
+                      value={jobApplyData.target_job_titles} onChange={handleJobApplyChange}
+                      placeholder="Senior Software Engineer, Staff Engineer, Tech Lead"
+                      helperText="Comma-separated list of job titles to apply for"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth label="Target Countries (Remote)" name="target_countries"
+                      value={jobApplyData.target_countries} onChange={handleJobApplyChange}
+                      placeholder="US, Canada"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth label="Preferred Locations (Hybrid/Onsite)" name="preferred_locations"
+                      value={jobApplyData.preferred_locations} onChange={handleJobApplyChange}
+                      placeholder="Seattle, WA; San Francisco, CA"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth select label="Start Availability" name="start_availability"
+                      value={jobApplyData.start_availability} onChange={handleJobApplyChange}
+                      SelectProps={{ native: true }}
+                    >
+                      <option value="immediately">Immediately</option>
+                      <option value="2_weeks">2 Weeks Notice</option>
+                      <option value="1_month">1 Month</option>
+                      <option value="2_months">2 Months</option>
+                      <option value="3_months">3+ Months</option>
+                    </TextField>
+                  </Grid>
+
+                  {/* Personal / EEO Information */}
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5, mt: 1 }}>Personal / EEO Information</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Optional — many US applications ask these for compliance reporting. Your answers don't affect hiring decisions.
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth label="Date of Birth (MM/YY or MM/DD/YYYY)" name="date_of_birth"
+                      value={jobApplyData.date_of_birth} onChange={handleJobApplyChange}
+                      placeholder="10/17"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth select label="Gender" name="gender"
+                      value={jobApplyData.gender} onChange={handleJobApplyChange}
+                      SelectProps={{ native: true }}
+                    >
+                      <option value="">Prefer not to say</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="non_binary">Non-binary</option>
+                      <option value="other">Other</option>
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth select label="Race / Ethnicity" name="race_ethnicity"
+                      value={jobApplyData.race_ethnicity} onChange={handleJobApplyChange}
+                      SelectProps={{ native: true }}
+                    >
+                      <option value="">Prefer not to say</option>
+                      <option value="white">White</option>
+                      <option value="black">Black or African American</option>
+                      <option value="hispanic">Hispanic or Latino</option>
+                      <option value="asian">Asian</option>
+                      <option value="native">American Indian or Alaska Native</option>
+                      <option value="pacific">Native Hawaiian or Pacific Islander</option>
+                      <option value="two_or_more">Two or More Races</option>
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth select label="Disability Status" name="disability_status"
+                      value={jobApplyData.disability_status} onChange={handleJobApplyChange}
+                      SelectProps={{ native: true }}
+                    >
+                      <option value="no">No, I do not have a disability</option>
+                      <option value="yes">Yes, I have a disability</option>
+                      <option value="prefer_not">Prefer not to answer</option>
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth select label="Protected Veteran Status" name="veteran_status"
+                      value={jobApplyData.veteran_status} onChange={handleJobApplyChange}
+                      SelectProps={{ native: true }}
+                    >
+                      <option value="no">Not a protected veteran</option>
+                      <option value="yes">Protected veteran</option>
+                      <option value="prefer_not">Prefer not to answer</option>
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth select label="Criminal Conviction" name="criminal_conviction"
+                      value={jobApplyData.criminal_conviction} onChange={handleJobApplyChange}
+                      SelectProps={{ native: true }}
+                    >
+                      <option value="no">No</option>
+                      <option value="yes">Yes</option>
+                      <option value="prefer_not">Prefer not to answer</option>
+                    </TextField>
                   </Grid>
 
                   <Grid item xs={12}>

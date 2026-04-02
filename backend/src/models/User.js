@@ -76,6 +76,10 @@ class User {
       'address', 'city', 'state', 'zip_code', 'country', 'portfolio_url', 'current_title',
       'work_authorization', 'visa_sponsorship_needed', 'willing_to_relocate',
       'remote_preference', 'desired_salary_min', 'desired_salary_max', 'preferred_pronouns',
+      // EEO & additional
+      'date_of_birth', 'gender', 'race_ethnicity', 'disability_status', 'veteran_status',
+      'criminal_conviction', 'start_availability', 'years_of_experience',
+      'target_job_titles', 'seniority_preference', 'target_countries', 'preferred_locations',
     ];
     const fields = {};
     for (const key of allowedFields) {
