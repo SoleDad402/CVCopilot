@@ -46,6 +46,7 @@ import { resumeService, pollJobStatus } from '../services/api';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import { NAVBAR_HEIGHT, colors } from '../theme';
+import versionInfo from '../version.json';
 
 // Step labels for the global progress pill
 const GENERATION_STEPS = [
@@ -182,6 +183,18 @@ const Navbar = () => {
                 }}
               >
                 CV Copilot
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'rgba(255,255,255,0.35)',
+                  fontSize: '0.6rem',
+                  fontWeight: 500,
+                  ml: 0.75,
+                  mt: 0.25,
+                }}
+              >
+                v{versionInfo.version}
               </Typography>
             )}
           </Box>

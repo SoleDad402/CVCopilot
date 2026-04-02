@@ -201,7 +201,9 @@ router.post('/generate', async (req, res) => {
  * Quick health check for BidCopilot connectivity tests.
  */
 router.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'cvcopilot', version: 'v1' });
+  let version = 'v1';
+  try { version = require('../../version.json').version; } catch {}
+  res.json({ status: 'ok', service: 'cvcopilot', version });
 });
 
 // ─── Helper functions ──────────────────────────────────────────────────────
