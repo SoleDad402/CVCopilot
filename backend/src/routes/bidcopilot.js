@@ -76,8 +76,8 @@ router.post('/generate', async (req, res) => {
       title: job.title || job.position || '',
       company: job.company || job.company_name || '',
       location: job.location || '',
-      startDate: job.start_date || '',
-      endDate: job.is_current ? 'Present' : (job.end_date || ''),
+      startDate: normalizeDate(job.start_date || ''),
+      endDate: job.is_current ? 'Present' : normalizeDate(job.end_date || ''),
       notes: [],
     }));
 
@@ -142,11 +142,33 @@ router.post('/generate', async (req, res) => {
     const safeName = userName.replace(/[^a-zA-Z0-9]/g, '_');
     const safeCompany = (company_name || 'resume').replace(/[^a-zA-Z0-9]/g, '_');
 
+    // Always generate DOCX first (uses template with proper formatting)
+    const docxBuffer = generateDocx(resumeJson);
+
     if (format === 'docx') {
-      fileBuffer = generateDocx(resumeJson);
+      fileBuffer = docxBuffer;
       filename = `${safeName}_${safeCompany}.docx`;
     } else {
-      fileBuffer = await generatePdf(resumeJson);
+      // Convert DOCX → PDF via Cloudmersive for ATS-friendly output
+      try {
+        const CloudmersiveConvertApiClient = require("cloudmersive-convert-api-client");
+        const defaultClient = CloudmersiveConvertApiClient.ApiClient.instance;
+        const Apikey = defaultClient.authentications['Apikey'];
+        Apikey.apiKey = process.env.CLOUDMERSIVE_API_KEY || '';
+
+        const convertApi = new CloudmersiveConvertApiClient.ConvertDocumentApi();
+        const pdfBuffer = await new Promise((resolve, reject) => {
+          convertApi.convertDocumentDocxToPdf(docxBuffer, (err, data) => {
+            if (err) reject(err);
+            else resolve(data);
+          });
+        });
+        fileBuffer = pdfBuffer;
+        console.log('[BidCopilot API] DOCX→PDF conversion successful');
+      } catch (convErr) {
+        console.warn('[BidCopilot API] Cloudmersive conversion failed, using PDFKit fallback:', convErr.message);
+        fileBuffer = await generatePdf(resumeJson);
+      }
       filename = `${safeName}_${safeCompany}.pdf`;
     }
 
@@ -215,6 +237,42 @@ router.get('/health', (req, res) => {
 });
 
 // ─── Helper functions ──────────────────────────────────────────────────────
+
+/**
+ * Normalize a date string to "Mon YYYY" format for consistency.
+ * Handles: "2014-11", "11/2014", "Nov 2014", "November 2014", "2014"
+ */
+function normalizeDate(dateStr) {
+  if (!dateStr || dateStr === 'Present') return dateStr;
+  const s = dateStr.trim();
+
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthsFull = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+  // "2014-11" or "2014-1"
+  const isoMatch = s.match(/^(\d{4})-(\d{1,2})$/);
+  if (isoMatch) return `${months[parseInt(isoMatch[2], 10) - 1]} ${isoMatch[1]}`;
+
+  // "11/2014" or "1/2014"
+  const slashMatch = s.match(/^(\d{1,2})\/(\d{4})$/);
+  if (slashMatch) return `${months[parseInt(slashMatch[1], 10) - 1]} ${slashMatch[2]}`;
+
+  // Already "Mon YYYY" — return as-is
+  const shortMatch = s.match(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}$/i);
+  if (shortMatch) return s;
+
+  // "November 2014" → "Nov 2014"
+  const fullMatch = s.match(/^([A-Za-z]+)\s+(\d{4})$/);
+  if (fullMatch) {
+    const idx = monthsFull.findIndex(m => m.toLowerCase() === fullMatch[1].toLowerCase());
+    if (idx >= 0) return `${months[idx]} ${fullMatch[2]}`;
+  }
+
+  // "2014" (year only)
+  if (/^\d{4}$/.test(s)) return s;
+
+  return s; // unrecognized — return as-is
+}
 
 function cleanJobDescription(text) {
   if (!text) return '';
@@ -845,8 +903,8 @@ router.post('/autobid/preview', async (req, res) => {
             title: j.title || j.position || '',
             company: j.company || j.company_name || '',
             location: j.location || '',
-            startDate: j.start_date || '',
-            endDate: j.is_current ? 'Present' : (j.end_date || ''),
+            startDate: normalizeDate(j.start_date || ''),
+            endDate: j.is_current ? 'Present' : normalizeDate(j.end_date || ''),
             notes: [],
           }));
 
