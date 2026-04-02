@@ -23,6 +23,7 @@ import {
   AutoFixHigh as AutoGenIcon,
   Psychology as LearnedIcon,
   Edit as EditIcon,
+  Cancel as CancelIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { NAVBAR_HEIGHT, colors, gradients } from '../theme';
@@ -51,7 +52,9 @@ export default function AutoBidTest() {
   const [showResume, setShowResume] = useState(false);
   const [showCoverLetter, setShowCoverLetter] = useState(false);
   const [generatingField, setGeneratingField] = useState(null); // fname being generated
-  const [generatedAnswers, setGeneratedAnswers] = useState({}); // fname -> answer
+  const [generatedAnswers, setGeneratedAnswers] = useState({}); // fname -> { answer, accepted }
+  const [editingField, setEditingField] = useState(null); // fname being edited
+  const [editText, setEditText] = useState('');
 
   const handleExtract = async () => {
     if (!jobUrl.trim()) return;
@@ -146,18 +149,41 @@ export default function AutoBidTest() {
         jobData.company,
         jobData.title,
         jobData.description || '',
-        [], // sample_answers — will be populated once patterns exist
+        [],
       );
       const answer = resp.data.answer;
-      setGeneratedAnswers(prev => ({ ...prev, [fname]: answer }));
-
-      // Track as auto-gen choice
-      await autoBidService.trackPattern(field.label, jobData.company, 'auto', answer);
+      // Show in edit mode — user must accept or modify before it's tracked
+      setGeneratedAnswers(prev => ({ ...prev, [fname]: { answer, accepted: false, label: field.label } }));
+      setEditingField(fname);
+      setEditText(answer);
     } catch (err) {
       setError(`Failed to generate answer: ${err.response?.data?.error || err.message}`);
     } finally {
       setGeneratingField(null);
     }
+  };
+
+  const handleAcceptAnswer = async (fname) => {
+    const entry = generatedAnswers[fname];
+    if (!entry) return;
+    const finalAnswer = editingField === fname ? editText : entry.answer;
+    // Track as auto-gen with the final (possibly edited) answer
+    try {
+      await autoBidService.trackPattern(entry.label, jobData?.company, 'auto', finalAnswer);
+    } catch {}
+    setGeneratedAnswers(prev => ({ ...prev, [fname]: { ...prev[fname], answer: finalAnswer, accepted: true } }));
+    setEditingField(null);
+    setEditText('');
+  };
+
+  const handleRejectAnswer = (fname) => {
+    setGeneratedAnswers(prev => {
+      const next = { ...prev };
+      delete next[fname];
+      return next;
+    });
+    setEditingField(null);
+    setEditText('');
   };
 
   const fieldEntries = previewData?.field_map
@@ -364,26 +390,62 @@ export default function AutoBidTest() {
                   </TableHead>
                   <TableBody>
                     {fieldEntries.map(([fname, field]) => {
-                      const genAnswer = generatedAnswers[fname];
-                      const displaySource = genAnswer ? 'learned' : field.source;
-                      const sourceInfo = SOURCE_COLORS[displaySource] || SOURCE_COLORS.optional;
+                      const genEntry = generatedAnswers[fname];
+                      const isEditing = editingField === fname;
+                      const displaySource = genEntry?.accepted ? 'learned' : genEntry ? 'needs_input' : field.source;
+                      const sourceInfo = genEntry?.accepted
+                        ? SOURCE_COLORS.learned
+                        : genEntry && !genEntry.accepted
+                        ? { bg: '#ede9fe', text: '#5b21b6', label: 'Review' }
+                        : (SOURCE_COLORS[field.source] || SOURCE_COLORS.optional);
                       const isGenerating = generatingField === fname;
-                      const canAutoGen = (field.source === 'needs_input' || field.source === 'optional') && !genAnswer;
+                      const canAutoGen = (field.source === 'needs_input' || field.source === 'optional') && !genEntry;
 
                       return (
-                        <TableRow key={fname} hover>
+                        <TableRow key={fname} hover sx={isEditing ? { bgcolor: alpha('#8b5cf6', 0.03) } : {}}>
                           <TableCell>
                             <Typography variant="body2" fontWeight={500}>{field.label}</Typography>
                           </TableCell>
                           <TableCell>
-                            {genAnswer ? (
-                              <Tooltip title={genAnswer}>
+                            {isEditing ? (
+                              <Stack spacing={1}>
+                                <TextField
+                                  multiline
+                                  minRows={2}
+                                  maxRows={6}
+                                  fullWidth
+                                  size="small"
+                                  value={editText}
+                                  onChange={(e) => setEditText(e.target.value)}
+                                  sx={{ '& .MuiOutlinedInput-root': { fontSize: '0.85rem' } }}
+                                />
+                                <Stack direction="row" spacing={1}>
+                                  <Button
+                                    size="small" variant="contained" color="primary"
+                                    startIcon={<CheckIcon />}
+                                    onClick={() => handleAcceptAnswer(fname)}
+                                    sx={{ fontSize: '0.7rem', py: 0.25 }}
+                                  >
+                                    Accept
+                                  </Button>
+                                  <Button
+                                    size="small" variant="outlined" color="error"
+                                    startIcon={<CancelIcon />}
+                                    onClick={() => handleRejectAnswer(fname)}
+                                    sx={{ fontSize: '0.7rem', py: 0.25 }}
+                                  >
+                                    Reject
+                                  </Button>
+                                </Stack>
+                              </Stack>
+                            ) : genEntry?.accepted ? (
+                              <Tooltip title={genEntry.answer}>
                                 <Typography variant="body2" sx={{
                                   maxWidth: 300, overflow: 'hidden',
                                   textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                                   color: '#5b21b6',
                                 }}>
-                                  {genAnswer}
+                                  {genEntry.answer}
                                 </Typography>
                               </Tooltip>
                             ) : field.value ? (
