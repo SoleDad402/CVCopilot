@@ -8,11 +8,8 @@
  * Response: ResumeResponse (resume_file as base64, resume_text, etc.)
  */
 const express = require('express');
-const PizZip = require('pizzip');
-const Docxtemplater = require('docxtemplater');
-const CloudmersiveConvertApiClient = require("cloudmersive-convert-api-client");
-const fs = require('fs');
-const path = require('path');
+const { generateResumeDocx, generateCoverLetterDocx, convertDocxToPdf } = require('../services/documentGeneration');
+const { cleanJobDescription, buildPlainText, normalizeDate } = require('../utils/textUtils');
 
 const router = express.Router();
 
@@ -143,7 +140,7 @@ router.post('/generate', async (req, res) => {
     const safeCompany = (company_name || 'resume').replace(/[^a-zA-Z0-9]/g, '_');
 
     // Always generate DOCX first (uses template with proper formatting)
-    const docxBuffer = generateDocx(resumeJson);
+    const docxBuffer = generateResumeDocx(resumeJson);
 
     if (format === 'docx') {
       fileBuffer = docxBuffer;
@@ -229,228 +226,15 @@ router.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'cvcopilot', version });
 });
 
-// ─── Helper functions ──────────────────────────────────────────────────────
+// ─── Helper functions (LLM-based, not extracted to shared modules) ────────
 
 /**
- * Normalize a date string to "Mon YYYY" format for consistency.
- * Handles: "2014-11", "11/2014", "Nov 2014", "November 2014", "2014"
+ * REMOVED: normalizeDate, cleanJobDescription, buildPlainText, escapeXml,
+ * markdownToWordXml, markdownToWordXmlWithBullet, clearedText, generateResumeDocx,
+ * convertDocxToPdf, generateCoverLetterDocx — now in shared modules:
+ *   ../utils/textUtils.js
+ *   ../services/documentGeneration.js
  */
-function normalizeDate(dateStr) {
-  if (!dateStr || dateStr === 'Present') return dateStr;
-  const s = dateStr.trim();
-
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const monthsFull = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-  // "2014-11" or "2014-1"
-  const isoMatch = s.match(/^(\d{4})-(\d{1,2})$/);
-  if (isoMatch) return `${months[parseInt(isoMatch[2], 10) - 1]} ${isoMatch[1]}`;
-
-  // "11/2014" or "1/2014"
-  const slashMatch = s.match(/^(\d{1,2})\/(\d{4})$/);
-  if (slashMatch) return `${months[parseInt(slashMatch[1], 10) - 1]} ${slashMatch[2]}`;
-
-  // Already "Mon YYYY" — return as-is
-  const shortMatch = s.match(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}$/i);
-  if (shortMatch) return s;
-
-  // "November 2014" → "Nov 2014"
-  const fullMatch = s.match(/^([A-Za-z]+)\s+(\d{4})$/);
-  if (fullMatch) {
-    const idx = monthsFull.findIndex(m => m.toLowerCase() === fullMatch[1].toLowerCase());
-    if (idx >= 0) return `${months[idx]} ${fullMatch[2]}`;
-  }
-
-  // "2014" (year only)
-  if (/^\d{4}$/.test(s)) return s;
-
-  return s; // unrecognized — return as-is
-}
-
-function cleanJobDescription(text) {
-  if (!text) return '';
-  return text
-    .replace(/[\u{1F600}-\u{1F9FF}]/gu, '')
-    .replace(/[\u{2600}-\u{27BF}]/gu, '')
-    .replace(/[\u{FE00}-\u{FE0F}]/gu, '')
-    .trim();
-}
-
-function buildPlainText(resumeJson) {
-  const lines = [];
-
-  lines.push(resumeJson.name || '');
-  const contact = resumeJson.contact || {};
-  const contactParts = [contact.email, contact.phonenumber, contact.linkedinURL, contact.location]
-    .filter(Boolean);
-  if (contactParts.length) lines.push(contactParts.join(' | '));
-  lines.push('');
-
-  if (resumeJson.summary) {
-    lines.push('PROFESSIONAL SUMMARY');
-    // Strip markdown bold
-    lines.push(resumeJson.summary.replace(/\*\*(.+?)\*\*/g, '$1'));
-    lines.push('');
-  }
-
-  if (resumeJson.experience?.length) {
-    lines.push('PROFESSIONAL EXPERIENCE');
-    for (const exp of resumeJson.experience) {
-      lines.push(`${exp.position || exp.title} | ${exp.company} | ${exp.location || ''} | ${exp.dates || exp.dateRange || ''}`);
-      for (const bullet of (exp.bullets || [])) {
-        lines.push(`  - ${bullet.replace(/\*\*(.+?)\*\*/g, '$1')}`);
-      }
-      lines.push('');
-    }
-  }
-
-  if (resumeJson.skills?.length) {
-    lines.push('SKILLS');
-    for (const section of resumeJson.skills) {
-      lines.push(`${section.section}: ${section.list.join(', ')}`);
-    }
-    lines.push('');
-  }
-
-  if (resumeJson.education?.length) {
-    lines.push('EDUCATION');
-    for (const edu of resumeJson.education) {
-      lines.push(`${edu.school || edu.school_name} | ${edu.program || edu.degree || ''} | ${edu.dates || ''}`);
-    }
-    lines.push('');
-  }
-
-  return lines.join('\n');
-}
-
-/**
- * Render markdown bold to Word XML inline runs.
- */
-function markdownToWordXml(text) {
-  if (!text) return '';
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map(part => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      const inner = part.slice(2, -2);
-      return `<w:r><w:rPr><w:b/><w:sz w:val="22"/></w:rPr><w:t xml:space="preserve">${escapeXml(inner)}</w:t></w:r>`;
-    }
-    return `<w:r><w:rPr><w:sz w:val="22"/></w:rPr><w:t xml:space="preserve">${escapeXml(part)}</w:t></w:r>`;
-  }).join('');
-}
-
-function markdownToWordXmlWithBullet(text) {
-  const xmlContent = markdownToWordXml(text);
-  return `<w:p><w:pPr><w:pStyle w:val="ListBullet"/></w:pPr>${xmlContent}</w:p>`;
-}
-
-function escapeXml(str) {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-
-function clearedText(text) {
-  if (!text) return '';
-  return text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
-}
-
-function generateDocx(resumeJson) {
-  const templatePath = path.join(__dirname, '..', 'templates', 'resume-template.docx');
-  const content = fs.readFileSync(templatePath, 'binary');
-  const zip = new PizZip(content);
-  const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
-
-  const templateData = {
-    name: resumeJson.name || '',
-    phone: resumeJson.contact?.phonenumber || '',
-    email: resumeJson.contact?.email || '',
-    linkedinURL: resumeJson.contact?.linkedinURL || '',
-    location: resumeJson.contact?.location || '',
-    contact: [
-      resumeJson.contact?.location,
-      resumeJson.contact?.email,
-      resumeJson.contact?.phonenumber,
-      resumeJson.contact?.linkedinURL,
-    ].filter(Boolean).join(' | '),
-    summary: markdownToWordXml(resumeJson.summary) || '',
-    achievements: (resumeJson.achievements || []).map(achievement => {
-      const text = typeof achievement === 'object' ? achievement.text : achievement;
-      const company = typeof achievement === 'object' ? achievement.company : null;
-      const line = company ? `${text} - at **${company}**` : text;
-      return { rawXml: markdownToWordXmlWithBullet(line) };
-    }),
-    experience: (resumeJson.experience || []).map(exp => ({
-      company: clearedText(exp.company) || '',
-      location: clearedText(exp.location) || '',
-      position: clearedText(exp.position) || '',
-      dates: clearedText(exp.dates) || '',
-      bullets: (exp.bullets || []).map(bullet => ({
-        rawXml: markdownToWordXmlWithBullet(bullet),
-      })),
-    })),
-    skills: (resumeJson.skills || []).map(section => {
-      if (section?.section && section?.list) {
-        return { list: markdownToWordXml(`**${section.section}**: ${section.list.join(', ')}`) };
-      }
-      return null;
-    }).filter(Boolean),
-    education: (resumeJson.education || []).map(edu => ({
-      school: clearedText(edu.school) || '',
-      location: clearedText(edu.location) || '',
-      program: clearedText(edu.program) || '',
-      dates: clearedText(edu.dates) || '',
-    })),
-    certifications: (resumeJson.certifications || []).map(cert => ({
-      name: clearedText(cert.name) || '',
-      issued: clearedText(cert.issued) || '',
-    })),
-  };
-
-  doc.render(templateData);
-
-  return doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' });
-}
-
-/**
- * Convert a DOCX buffer to PDF via Cloudmersive API.
- */
-function convertDocxToPdf(docxBuffer) {
-  const defaultClient = CloudmersiveConvertApiClient.ApiClient.instance;
-  const Apikey = defaultClient.authentications['Apikey'];
-  Apikey.apiKey = process.env.CLOUDMERSIVE_API_KEY || '6416621d-ea78-4176-a8cc-26dac58c50c0';
-
-  const convertApi = new CloudmersiveConvertApiClient.ConvertDocumentApi();
-  return new Promise((resolve, reject) => {
-    convertApi.convertDocumentDocxToPdf(docxBuffer, (err, data) => {
-      if (err) reject(new Error(`DOCX→PDF conversion failed: ${err.message || err}`));
-      else resolve(data);
-    });
-  });
-}
-
-function generateCoverLetterDocx(contentText, { name, role, address, phone, mail }) {
-  const templatePath = path.join(__dirname, '..', 'templates', 'cover-letter-template.docx');
-  const content = fs.readFileSync(templatePath, 'binary');
-  const zip = new PizZip(content);
-  const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
-
-  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
-  doc.render({
-    name: name || '',
-    role: role || '',
-    address: address || '',
-    phone: phone || '',
-    mail: mail || '',
-    current_date: today,
-    content: contentText || '',
-  });
-
-  return doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' });
-}
 
 async function generateCoverLetter(openai, { jobDescription, jobTitle, companyName, userName, resumeSummary, experience, userContact }) {
   const topRoles = (experience || []).slice(0, 3).map(e =>
