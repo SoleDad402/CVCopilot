@@ -36,7 +36,8 @@ import {
   Close as CloseIcon,
   Bolt as BoltIcon,
   Work as WorkIcon,
-  Dashboard as DashboardIcon
+  Dashboard as DashboardIcon,
+  RocketLaunch as RocketIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -199,6 +200,9 @@ const Navbar = () => {
               </NavLink>
               <NavLink to="/tracker" icon={<WorkIcon sx={{ fontSize: 16 }} />}>
                 {isMobile ? '' : 'Tracker'}
+              </NavLink>
+              <NavLink to="/autobid" icon={<RocketIcon sx={{ fontSize: 16 }} />}>
+                {isMobile ? '' : 'Auto-Bid'}
               </NavLink>
               {user.is_admin && (
                 <NavLink to="/admin" icon={<AdminIcon sx={{ fontSize: 16 }} />}>

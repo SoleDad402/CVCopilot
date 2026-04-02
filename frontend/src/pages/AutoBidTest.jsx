@@ -24,6 +24,7 @@ import {
   Psychology as LearnedIcon,
   Edit as EditIcon,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { NAVBAR_HEIGHT, colors, gradients } from '../theme';
 import { autoBidService, profileService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -39,6 +40,7 @@ const SOURCE_COLORS = {
 
 export default function AutoBidTest() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [jobUrl, setJobUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [extracting, setExtracting] = useState(false);
@@ -177,9 +179,20 @@ export default function AutoBidTest() {
           <Typography variant="h5" fontWeight={700}>Auto-Bid Engine Test</Typography>
           <Chip label="Greenhouse" size="small" sx={{ bgcolor: alpha('#fff', 0.2), color: '#fff', fontWeight: 600 }} />
         </Stack>
-        <Typography variant="body2" sx={{ opacity: 0.8 }}>
-          Paste a Greenhouse job URL to preview how the auto-bid engine extracts the job, maps your profile to form fields, and generates a tailored resume.
-        </Typography>
+        <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Typography variant="body2" sx={{ opacity: 0.8, flex: 1 }}>
+            Paste a Greenhouse job URL to preview how the auto-bid engine extracts the job, maps your profile to form fields, and generates a tailored resume.
+          </Typography>
+          <Button
+            size="small"
+            startIcon={<LearnedIcon />}
+            onClick={() => navigate('/autobid/learned')}
+            sx={{ color: '#fff', borderColor: alpha('#fff', 0.3), ml: 2, whiteSpace: 'nowrap' }}
+            variant="outlined"
+          >
+            Learned Questions
+          </Button>
+        </Stack>
       </Box>
 
       {/* URL Input */}
