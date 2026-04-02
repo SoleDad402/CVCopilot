@@ -189,33 +189,15 @@ router.post('/generate', async (req, res) => {
     console.log(`[BidCopilot API] Resume generated in ${(elapsed / 1000).toFixed(1)}s`);
 
     // --- Save to generation history ---
-    try {
-      const User = require('../models/User');
-      const user = await User.findByEmail(profile.email);
-      if (user) {
-        // Save resume request
-        const requestId = await User.addResumeRequest(user.id, {
-          company_name: company_name || '',
-          role: job_title || '',
-          job_description: (job_description || '').substring(0, 5000),
-        });
-        console.log(`[BidCopilot API] Saved to history: request ${requestId} for ${user.email}`);
-
-        // Create job application entry
-        const { createClient } = require('@supabase/supabase-js');
-        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-        await supabase.from('job_applications').insert({
-          user_id: user.id,
-          company_name: company_name || '',
-          position: job_title || '',
-          status: 'applied',
-          notes: `Auto-bid via BidCopilot. Resume: ${filename}`,
-          resume_request_id: requestId,
-        });
-      }
-    } catch (histErr) {
-      console.warn('[BidCopilot API] Failed to save history (non-fatal):', histErr.message);
-    }
+    const saveGenerationHistory = require('../utils/saveGenerationHistory');
+    await saveGenerationHistory({
+      email: profile.email,
+      companyName: company_name,
+      jobTitle: job_title,
+      jobDescription: job_description,
+      source: 'autobid',
+      filename,
+    });
 
     // --- Return ResumeResponse ---
     res.json({
