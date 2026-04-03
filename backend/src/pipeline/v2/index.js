@@ -5,7 +5,7 @@ const { generateExperience } = require('./generateExperience');
 const { generateSkills } = require('./generateSkills');
 const { generateSummary } = require('./generateSummary');
 const { generateAchievements } = require('./generateAchievements');
-const { reviewResume } = require('./reviewResume');
+
 
 /**
  * V2 Resume Generation Pipeline — Multi-Pass Architecture (Performance-Optimized)
@@ -17,14 +17,13 @@ const { reviewResume } = require('./reviewResume');
  *         ↘ ↙
  *        Pass 3              (needs 1+2)
  *         ↓
- *   Pass 4a ║ Pass 4b        (parallel — 4b no longer needs 4a output)
+ *   Pass 4a ║ Pass 4b ║ 4x   (parallel — experience, skills, achievements)
  *         ↘ ↙
- *   Pass 4c ║ Pass 4d        (parallel — summary + coverage verify)
- *         ↘ ↙
- *        Pass 5              (needs everything)
+ *        Pass 4c              (summary — needs 4a+4b)
  *
- * Total sequential LLM roundtrips: 4 (was 6)
+ * Total sequential LLM roundtrips: 3
  * Pass 4a internally parallelizes all priority 1-2 roles + batches priority 3
+ * Coverage enforced deterministically (no LLM review needed)
  *
  * @param {Object} params
  * @returns {Promise<import('../types').ResumePlan>}
@@ -126,7 +125,7 @@ async function createTailoredResumeV2({
   time(`4a+4b complete — ${generatedExperience.length} roles, ${totalBullets} bullets, ${totalSkills} skills`);
 
   // ── Pass 4c (summary) ────────────────────────────────────────────────────
-  report(65, 'Writing your professional summary…');
+  report(75, 'Writing your professional summary…');
   t1 = Date.now();
   const summary = await generateSummary({
     strategy, careerIdentity, jdAnalysis,
@@ -161,21 +160,8 @@ async function createTailoredResumeV2({
     education: formattedEducation
   };
 
-  // ── Pass 5: Authenticity Review ────────────────────────────────────────────
-  report(80, 'Reviewing and polishing…');
-  t1 = Date.now();
-  const { plan: reviewedPlan, score, flags } = await reviewResume({
-    resumePlan: preReviewPlan, careerIdentity, jdAnalysis, strategy,
-    employmentHistory, openai
-  });
-  lap('Pass 5 (review)', t1);
-  console.log(`[V2]   Pass 5 output: score=${score}/10, flags=${flags.length}`);
-  if (flags.length > 0) {
-    console.log('[V2]   Flags:', JSON.stringify(flags.map(f => ({ type: f.type, loc: f.location, action: f.action }))));
-  }
-
-  // ── Final: Deterministic coverage enforcement (last line of defense) ─────
-  const finalPlan = enforcePostReviewCoverage(reviewedPlan, strategy, jdAnalysis);
+  // ── Final: Deterministic coverage enforcement ─────────────────────────────
+  const finalPlan = enforcePostReviewCoverage(preReviewPlan, strategy, jdAnalysis);
 
   // ── Pipeline summary ─────────────────────────────────────────────────────
   const totalTime = elapsed();
