@@ -35,7 +35,7 @@ const SOURCE_COLORS = {
   auto: { bg: '#dbeafe', text: '#1e40af', label: 'Auto-answered' },
   learned: { bg: '#ede9fe', text: '#5b21b6', label: 'Learned' },
   needs_input: { bg: '#fef3c7', text: '#92400e', label: 'Needs Input' },
-  needs_selection: { bg: '#fce7f3', text: '#9d174d', label: 'Needs Selection' },
+  needs_selection: { bg: '#ede9fe', text: '#5b21b6', label: 'Needs Selection' },
   optional: { bg: '#f1f5f9', text: '#475569', label: 'Optional' },
 };
 
@@ -150,10 +150,15 @@ export default function AutoBidTest() {
         jobData.title,
         jobData.description || '',
         [],
+        field.options || null,
       );
       const answer = resp.data.answer;
+      const selected = resp.data.selected || null;
       // Show in edit mode — user must accept or modify before it's tracked
-      setGeneratedAnswers(prev => ({ ...prev, [fname]: { answer, accepted: false, label: field.label } }));
+      setGeneratedAnswers(prev => ({
+        ...prev,
+        [fname]: { answer, accepted: false, label: field.label, selected, options: field.options },
+      }));
       setEditingField(fname);
       setEditText(answer);
     } catch (err) {
@@ -399,7 +404,7 @@ export default function AutoBidTest() {
                         ? { bg: '#ede9fe', text: '#5b21b6', label: 'Review' }
                         : (SOURCE_COLORS[field.source] || SOURCE_COLORS.optional);
                       const isGenerating = generatingField === fname;
-                      const canAutoGen = (field.source === 'needs_input' || field.source === 'optional') && !genEntry;
+                      const canAutoGen = (field.source === 'needs_input' || field.source === 'needs_selection' || field.source === 'optional') && !genEntry;
 
                       return (
                         <TableRow key={fname} hover sx={isEditing ? { bgcolor: alpha('#8b5cf6', 0.03) } : {}}>
@@ -456,12 +461,42 @@ export default function AutoBidTest() {
                                 {field.value}
                               </Typography>
                             ) : field.options ? (
-                              <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                              <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap alignItems="center">
                                 {field.options.slice(0, 5).map((opt, i) => (
                                   <Chip key={i} label={opt} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />
                                 ))}
                                 {field.options.length > 5 && (
                                   <Chip label={`+${field.options.length - 5}`} size="small" sx={{ fontSize: '0.75rem' }} />
+                                )}
+                                {(field.source === 'needs_input' || field.source === 'needs_selection' || field.source === 'optional') && !genEntry && (
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    startIcon={isGenerating ? <CircularProgress size={14} /> : <AutoGenIcon />}
+                                    disabled={isGenerating}
+                                    onClick={() => handleAutoGen(fname, field)}
+                                    sx={{
+                                      fontSize: '0.7rem', py: 0.25, px: 1, minWidth: 0, ml: 1,
+                                      bgcolor: '#8b5cf6',
+                                      '&:hover': { bgcolor: '#7c3aed' },
+                                    }}
+                                  >
+                                    {isGenerating ? 'Generating...' : 'Auto-gen'}
+                                  </Button>
+                                )}
+                                {(field.source === 'needs_input' || field.source === 'needs_selection') && !genEntry && (
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    startIcon={<EditIcon />}
+                                    onClick={() => { setEditingField(fname); setEditText(''); }}
+                                    sx={{
+                                      fontSize: '0.7rem', py: 0.25, px: 1, minWidth: 0,
+                                      borderColor: '#94a3b8', color: '#94a3b8',
+                                    }}
+                                  >
+                                    Edit
+                                  </Button>
                                 )}
                               </Stack>
                             ) : (

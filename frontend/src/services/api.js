@@ -233,9 +233,10 @@ export const autoBidService = {
   checkPatterns: (questions) => api.post('/api/v1/autobid/patterns/check', { questions }),
   trackPattern: (question, company, choice, answer) =>
     api.post('/api/v1/autobid/patterns/track', { question, company, choice, answer }),
-  generateAnswer: (question, company, jobTitle, jobDescription, sampleAnswers) =>
+  generateAnswer: (question, company, jobTitle, jobDescription, sampleAnswers, options) =>
     api.post('/api/v1/autobid/generate-answer', {
       question, company, job_title: jobTitle, job_description: jobDescription, sample_answers: sampleAnswers,
+      ...(options ? { options } : {}),
     }),
   getPatterns: () => api.get('/api/v1/autobid/patterns'),
   updatePattern: (id, data) => api.put(`/api/v1/autobid/patterns/${id}`, data),

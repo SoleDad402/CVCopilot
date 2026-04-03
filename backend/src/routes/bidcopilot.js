@@ -944,27 +944,55 @@ router.delete('/autobid/patterns/:id', async (req, res) => {
  * POST /api/v1/autobid/generate-answer
  *
  * Use LLM to generate an answer for a custom question.
- * Uses sample answers from learned patterns as few-shot examples.
+ * Supports both free-text questions and select/dropdown fields (pass `options` array).
+ * Optionally accepts `user_profile` for richer, profile-aware answers.
  */
 router.post('/autobid/generate-answer', async (req, res) => {
   const user = getUserFromToken(req);
   if (!user) return res.status(401).json({ error: 'Auth required' });
 
   try {
-    const { question, company, job_title, job_description, resume_text } = req.body;
+    const { question, company, job_title, job_description, resume_text, options, user_profile } = req.body;
     if (!question) return res.status(400).json({ error: 'question required' });
 
     const openai = req.app.get('openai');
     if (!openai) return res.status(503).json({ error: 'OpenAI not configured' });
+
+    // If no user_profile passed in body, try loading from DB
+    let userProfile = user_profile || null;
+    if (!userProfile && user?.id) {
+      try {
+        const db = req.app.get('db');
+        if (db) {
+          const dbUser = await db.get('SELECT * FROM users WHERE id = ?', [user.id]);
+          if (dbUser) {
+            userProfile = {
+              current_title: dbUser.current_title || '',
+              location: dbUser.location || '',
+              preferred_pronouns: dbUser.preferred_pronouns || '',
+              skills: JSON.parse(dbUser.skills || '[]'),
+            };
+          }
+        }
+      } catch (e) { /* profile enrichment is best-effort */ }
+    }
 
     const { answerQuestion } = require('../services/questionAnswerer');
     const answer = await answerQuestion(openai, {
       question,
       jobDescription: `${job_title || ''} at ${company || ''}\n\n${job_description || ''}`,
       resumeText: resume_text,
-      maxChars: 200,
+      maxChars: options ? 500 : 200,
+      options: options || null,
+      userProfile,
     });
-    res.json({ answer });
+    // For select fields, also return which options were picked
+    const isSelect = options && options.length > 0;
+    const result = { answer };
+    if (isSelect) {
+      result.selected = answer.split(' | ').map(s => s.trim()).filter(Boolean);
+    }
+    res.json(result);
   } catch (error) {
     console.error('[Patterns] Generate answer error:', error.message);
     res.status(500).json({ error: error.message });
